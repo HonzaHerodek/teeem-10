@@ -134,15 +134,34 @@ class FeedHeaderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void selectNotification(
-      NotificationModel notification, FeedController? feedController) {
+  Future<void> selectNotification(
+      NotificationModel notification, FeedController? feedController) async {
+    // Mark as read first
     _notificationRepository.markAsRead(notification.id);
+
+    // Check if this is the same notification
+    final isSameNotification = _state.selectedNotification?.id == notification.id;
+    
+    if (!isSameNotification) {
+      // Clear existing selection first if different notification
+      _state = _state.copyWith(
+        clearNotification: true,
+        isNotificationMenuOpen: true,
+      );
+      notifyListeners();
+
+      // Wait for clear to be processed
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+    
+    // Set new selection
     _state = _state.copyWith(
       selectedNotification: notification,
       isNotificationMenuOpen: true,
     );
+    notifyListeners();
 
-    // Scroll to the associated content if it's a post or project notification
+    // Handle scrolling if needed
     if (feedController != null &&
         notification.type != NotificationType.profile) {
       final itemId = notification.type == NotificationType.post
@@ -150,10 +169,23 @@ class FeedHeaderController extends ChangeNotifier {
           : notification.projectId!;
 
       final isProject = notification.type == NotificationType.project;
-      feedController.moveToItem(itemId, isProject: isProject);
+      
+      // Find item first
+      final index = await feedController.findItemIndex(itemId, isProject: isProject);
+      
+      if (index != null) {
+        // If item exists and this is a re-selection, just ensure it's visible
+        if (isSameNotification) {
+          feedController.scrollToIndex(index);
+        } else {
+          // For new selection, do full move
+          feedController.moveToItem(itemId, isProject: isProject);
+        }
+      } else {
+        // If item not found, refresh feed
+        feedController.refresh();
+      }
     }
-
-    notifyListeners();
   }
 
   void clearNotificationSelection() {

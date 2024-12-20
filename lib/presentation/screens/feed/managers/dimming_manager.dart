@@ -118,6 +118,8 @@ class DimmingManager {
           ?.findRenderObject() as RenderBox?;
       final RenderBox? plusBox = plusActionButtonKey.currentContext
           ?.findRenderObject() as RenderBox?;
+      final RenderBox? notificationBox = headerController.notificationBarKey.currentContext
+          ?.findRenderObject() as RenderBox?;
 
       // Calculate source position for dimming effect
       Offset? source;
@@ -129,6 +131,10 @@ class DimmingManager {
           final targetPosition = targetBox.localToGlobal(Offset.zero);
           source = targetPosition + Offset(targetBox.size.width / 2, targetBox.size.height / 2);
         }
+      } else if (isNotificationMenuOpen && notificationBox != null) {
+        // Use notification bar as source when notification menu is open
+        final notificationPosition = notificationBox.localToGlobal(Offset.zero);
+        source = notificationPosition + Offset(notificationBox.size.width / 2, notificationBox.size.height / 2);
       }
 
       onDimmingUpdate(

@@ -96,30 +96,38 @@ class FeedController extends ChangeNotifier {
     positionTracker.updatePosition(index: index);
   }
 
-  Future<int?> moveToItem(String itemId, {bool isProject = false}) async {
-    int? targetIndex;
-    
-    // Find the item's index
+  // Find item index without scrolling
+  Future<int?> findItemIndex(String itemId, {bool isProject = false}) async {
     for (int i = 0; i < itemService.totalItemCount; i++) {
       if (isProject) {
         final project = itemService.getProjectAtPosition(i);
         if (project?.id == itemId) {
-          targetIndex = i;
-          break;
+          return i;
         }
       } else {
         final post = itemService.getPostAtPosition(i);
         if (post?.id == itemId) {
-          targetIndex = i;
-          break;
+          return i;
         }
       }
     }
+    return null;
+  }
+
+  // Scroll to index without updating selection
+  Future<void> scrollToIndex(int index) async {
+    if (index < 0 || index >= itemService.totalItemCount) return;
+    await positionTracker.scrollToIndex(index);
+  }
+
+  // Combined method that both finds and scrolls
+  Future<int?> moveToItem(String itemId, {bool isProject = false}) async {
+    final index = await findItemIndex(itemId, isProject: isProject);
     
-    if (targetIndex != null && targetIndex != -1) {
+    if (index != null) {
       // Update selection first
       positionTracker.updatePosition(
-        index: targetIndex,
+        index: index,
         selectedItemId: itemId,
         isProject: isProject,
       );
@@ -128,10 +136,9 @@ class FeedController extends ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 50));
       
       // Then scroll to the item
-      await positionTracker.scrollToIndex(targetIndex);
+      await scrollToIndex(index);
       
-      // Return the found index
-      return targetIndex;
+      return index;
     }
     
     // If item not found, try refreshing the feed
