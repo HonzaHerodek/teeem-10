@@ -69,16 +69,26 @@ class FeedPositionTracker extends ChangeNotifier {
     final maxScroll = scrollController.position.maxScrollExtent;
     
     // Calculate position that will show item in upper portion of screen
+    // Use 20% from the top for better visibility
     final adjustedOffset = targetOffset - (viewportHeight * 0.2);
     
     // Ensure we don't scroll beyond bounds
     final safeOffset = adjustedOffset.clamp(0.0, maxScroll);
     
-    // Perform scroll with easing
+    // First quickly scroll near the target
+    if ((safeOffset - scrollController.offset).abs() > viewportHeight * 2) {
+      await scrollController.animateTo(
+        safeOffset - (viewportHeight * 0.5),
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
+    }
+    
+    // Then smoothly scroll to the exact position
     await scrollController.animateTo(
       safeOffset,
       duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOutCubic,
+      curve: Curves.easeOutCubic,
     );
   }
 

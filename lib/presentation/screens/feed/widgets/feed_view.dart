@@ -45,38 +45,32 @@ class _FeedViewState extends State<FeedView> {
   late final FeedController _feedController;
   late final DimmingManager _dimmingManager;
 
-  Future<void> _tryMoveToItem(String itemId, bool isProject,
-      [int attempts = 0]) async {
-    if (attempts >= 5) return; // Give up after more attempts
-
+  Future<void> _tryMoveToItem(String itemId, bool isProject) async {
     if (!mounted) return;
 
+    // Create key before scrolling
+    setState(() {
+      _selectedItemKey = GlobalKey();
+    });
+
+    // Wait for next frame to ensure the key is properly attached
+    await Future.delayed(const Duration(milliseconds: 50));
+
     // Try to find and scroll to item
-    final foundIndex =
-        await _feedController.moveToItem(itemId, isProject: isProject);
+    final foundIndex = await _feedController.moveToItem(itemId, isProject: isProject);
 
     if (mounted) {
       if (foundIndex != null) {
-        // Create key and update dimming only after item is found and scrolled to
-        setState(() {
-          _selectedItemKey = GlobalKey();
-        });
-
-        // Wait for next frame to ensure the key is properly attached
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _dimmingManager.updateDimming(
-              isProfileOpen: _isProfileOpen,
-              selectedItemKey: _selectedItemKey,
-            );
-          }
-        });
+        // Update dimming after scrolling is complete
+        _dimmingManager.updateDimming(
+          isProfileOpen: _isProfileOpen,
+          selectedItemKey: _selectedItemKey,
+        );
       } else {
-        // If item not found, wait a bit longer and try again
-        await Future.delayed(const Duration(milliseconds: 200));
-        if (mounted && attempts < 4) {
-          _tryMoveToItem(itemId, isProject, attempts + 1);
-        }
+        // If item not found, clear the key
+        setState(() {
+          _selectedItemKey = null;
+        });
       }
     }
   }
@@ -124,12 +118,10 @@ class _FeedViewState extends State<FeedView> {
             ),
           );
 
-          // Wait for feed to be ready before trying to find item
-          Future.delayed(const Duration(milliseconds: 100), () {
-            if (mounted) {
-              _tryMoveToItem(itemId, isProject);
-            }
-          });
+          // Try to find and scroll to item immediately
+          if (mounted) {
+            _tryMoveToItem(itemId, isProject);
+          }
         }
       }
     });

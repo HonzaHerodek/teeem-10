@@ -98,41 +98,42 @@ class FeedController extends ChangeNotifier {
 
   Future<int?> moveToItem(String itemId, {bool isProject = false}) async {
     int? targetIndex;
-
-    if (isProject) {
-      // For projects, use direct search
-      for (int i = 0; i < itemService.totalItemCount; i++) {
+    
+    // Find the item's index
+    for (int i = 0; i < itemService.totalItemCount; i++) {
+      if (isProject) {
         final project = itemService.getProjectAtPosition(i);
         if (project?.id == itemId) {
           targetIndex = i;
           break;
         }
+      } else {
+        final post = itemService.getPostAtPosition(i);
+        if (post?.id == itemId) {
+          targetIndex = i;
+          break;
+        }
       }
-    } else {
-      // For posts, use the helper method
-      targetIndex = itemService.getFeedPositionForPost(itemId);
     }
-
+    
     if (targetIndex != null && targetIndex != -1) {
-      final index = targetIndex; // Non-null copy for use in closures
-      
       // Update selection first
       positionTracker.updatePosition(
-        index: index,
+        index: targetIndex,
         selectedItemId: itemId,
         isProject: isProject,
       );
-
-      // Scroll to the item immediately
-      await positionTracker.scrollToIndex(index);
-
-      // Wait a bit to ensure scroll is complete
-      await Future.delayed(const Duration(milliseconds: 100));
-
+      
+      // Wait for selection to be processed
+      await Future.delayed(const Duration(milliseconds: 50));
+      
+      // Then scroll to the item
+      await positionTracker.scrollToIndex(targetIndex);
+      
       // Return the found index
-      return index;
+      return targetIndex;
     }
-
+    
     // If item not found, try refreshing the feed
     feedBloc.add(const FeedRefreshed());
     return null;
