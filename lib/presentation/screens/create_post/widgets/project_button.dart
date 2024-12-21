@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/project_model.dart';
-import './borderless_square_button.dart';
 
 class ProjectButton extends StatelessWidget {
   final ProjectModel? selectedProject;
   final bool isLoading;
   final VoidCallback onShowDialog;
   final VoidCallback? onRemoveProject;
+  final bool isNewlyCreated;
 
   const ProjectButton({
     super.key,
@@ -14,6 +14,7 @@ class ProjectButton extends StatelessWidget {
     required this.isLoading,
     required this.onShowDialog,
     this.onRemoveProject,
+    this.isNewlyCreated = false,
   });
 
   @override
@@ -22,35 +23,41 @@ class ProjectButton extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          BorderlessSquareButton(
-            icon: selectedProject != null ? Icons.folder_special : Icons.add_box_outlined,
-            onPressed: isLoading ? () {} : onShowDialog,
-            size: 40,
-          ),
-          if (selectedProject != null)
-            Positioned(
-              right: -8,
-              top: -8,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+          Stack(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: selectedProject != null && isNewlyCreated
+                      ? Border.all(color: Colors.white, width: 1.0)
+                      : null,
                 ),
-                child: IconButton(
-                  icon: const Icon(Icons.close, size: 16),
-                  onPressed: onRemoveProject,
-                  color: Colors.black,
-                  tooltip: 'Remove project',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 24,
-                    minHeight: 24,
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(14),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: isLoading 
+                        ? () {} 
+                        : (selectedProject != null && isNewlyCreated 
+                            ? onRemoveProject 
+                            : onShowDialog),
+                    child: Center(
+                      child: Icon(
+                        selectedProject != null 
+                            ? (isNewlyCreated ? Icons.close_outlined : Icons.folder_special)
+                            : Icons.add_box_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
         ],
       ),
     );

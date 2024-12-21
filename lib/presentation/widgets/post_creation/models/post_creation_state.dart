@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/step_type_model.dart';
 import '../../../../data/models/post_model.dart';
+import '../../../../data/models/project_model.dart';
 import '../post_step_widget.dart';
 
 class PostCreationState {
@@ -9,6 +10,7 @@ class PostCreationState {
   final List<StepTypeModel> availableStepTypes;
   final bool isLoading;
   final int currentPage;
+  final ProjectModel? selectedProject;
 
   const PostCreationState({
     required this.stepKeys,
@@ -16,6 +18,7 @@ class PostCreationState {
     required this.availableStepTypes,
     required this.isLoading,
     required this.currentPage,
+    this.selectedProject,
   });
 
   PostCreationState copyWith({
@@ -24,6 +27,7 @@ class PostCreationState {
     List<StepTypeModel>? availableStepTypes,
     bool? isLoading,
     int? currentPage,
+    ProjectModel? selectedProject,
   }) {
     return PostCreationState(
       stepKeys: stepKeys ?? this.stepKeys,
@@ -31,6 +35,7 @@ class PostCreationState {
       availableStepTypes: availableStepTypes ?? this.availableStepTypes,
       isLoading: isLoading ?? this.isLoading,
       currentPage: currentPage ?? this.currentPage,
+      selectedProject: selectedProject ?? this.selectedProject,
     );
   }
 

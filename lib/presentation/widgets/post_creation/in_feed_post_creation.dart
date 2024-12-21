@@ -27,7 +27,8 @@ class InFeedPostCreation extends StatefulWidget {
   });
 
   static InFeedPostCreationController? of(BuildContext context) {
-    final state = context.findRootAncestorStateOfType<InFeedPostCreationState>();
+    final state =
+        context.findRootAncestorStateOfType<InFeedPostCreationState>();
     return state;
   }
 
@@ -43,7 +44,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
   final _postRepository = getIt<PostRepository>();
   final _stepTypeRepository = getIt<StepTypeRepository>();
   final _pageController = PageController();
-  
+
   late PostCreationState _state;
 
   @override
@@ -128,8 +129,9 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
 
   void _updateStepsAfterRemoval(int index) {
     final newSteps = List<PostStepWidget>.from(_state.steps);
-    final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
-    
+    final newStepKeys =
+        List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+
     newSteps.removeAt(index);
     newStepKeys.removeAt(index);
 
@@ -165,9 +167,10 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
       // Reset step type selection to allow choosing a different type
       setState(() {
         final stepKey = GlobalKey<PostStepWidgetState>();
-        final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+        final newStepKeys =
+            List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
         final newSteps = List<PostStepWidget>.from(_state.steps);
-        
+
         newStepKeys[_state.currentPage - 1] = stepKey;
         newSteps[_state.currentPage - 1] = PostStepWidget(
           key: stepKey,

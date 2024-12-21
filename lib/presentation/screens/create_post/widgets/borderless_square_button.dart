@@ -5,6 +5,7 @@ class BorderlessSquareButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isBold;
   final double size;
+  final Widget? customIcon;
 
   const BorderlessSquareButton({
     super.key,
@@ -12,6 +13,7 @@ class BorderlessSquareButton extends StatelessWidget {
     required this.onPressed,
     this.isBold = false,
     this.size = 40.0,
+    this.customIcon,
   });
 
   @override
@@ -28,7 +30,7 @@ class BorderlessSquareButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           child: Center(
-            child: Icon(
+            child: customIcon ?? Icon(
               icon,
               key: ValueKey('action_button_icon_$icon'),
               color: Colors.white,
