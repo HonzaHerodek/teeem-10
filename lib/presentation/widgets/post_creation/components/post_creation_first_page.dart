@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/presentation/widgets/common/shadowed_text.dart';
 
-class PostCreationFirstPage extends StatelessWidget {
+class PostCreationFirstPage extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
   final bool isLoading;
@@ -18,6 +19,46 @@ class PostCreationFirstPage extends StatelessWidget {
     required this.pageController,
   }) : super(key: key);
 
+  @override
+  State<PostCreationFirstPage> createState() => _PostCreationFirstPageState();
+}
+
+class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
+  bool _titleHasText = false;
+  bool _descriptionHasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.titleController.addListener(_updateTitleState);
+    widget.descriptionController.addListener(_updateDescriptionState);
+  }
+
+  @override
+  void dispose() {
+    widget.titleController.removeListener(_updateTitleState);
+    widget.descriptionController.removeListener(_updateDescriptionState);
+    super.dispose();
+  }
+
+  void _updateTitleState() {
+    final hasText = widget.titleController.text.isNotEmpty;
+    if (hasText != _titleHasText) {
+      setState(() {
+        _titleHasText = hasText;
+      });
+    }
+  }
+
+  void _updateDescriptionState() {
+    final hasText = widget.descriptionController.text.isNotEmpty;
+    if (hasText != _descriptionHasText) {
+      setState(() {
+        _descriptionHasText = hasText;
+      });
+    }
+  }
+
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -29,24 +70,7 @@ class PostCreationFirstPage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isLarger
-                  ? Colors.red.withOpacity(0.5)
-                  : Colors.blue.withOpacity(0.5),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.6),
-                width: 1,
-              ),
-            ),
-            child: Padding(
-              padding: isLarger
-                  ? const EdgeInsets.all(16)
-                  : const EdgeInsets.all(12),
-              child: Icon(icon, color: Colors.white, size: isLarger ? 28 : 24),
-            ),
-          ),
+          Icon(icon, color: Colors.white, size: isLarger ? 48 : 24),
           if (label != null) ...[
             const SizedBox(height: 4),
             Text(
@@ -71,22 +95,61 @@ class PostCreationFirstPage extends StatelessWidget {
           children: [
             const SizedBox(height: 40),
             TextFormField(
-              controller: titleController,
-              enabled: !isLoading,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                labelStyle: TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(),
+              controller: widget.titleController,
+              enabled: !widget.isLoading,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    blurRadius: 3,
+                    color: Colors.black,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              decoration: InputDecoration(
+                label: _titleHasText
+                    ? null
+                    : const Center(
+                        child: ShadowedText(
+                          text: 'Title',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                floatingLabelAlignment: FloatingLabelAlignment.center,
+                border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _titleHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white30),
-                ),
+                    borderSide: BorderSide(
+                        color: _titleHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
+                    borderSide: BorderSide(
+                        color:
+                            _titleHasText ? Colors.transparent : Colors.white)),
                 hintText: 'Title of Task',
-                hintStyle: TextStyle(color: Colors.white30),
-                contentPadding: EdgeInsets.symmetric(
+                hintStyle: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 3,
+                      color: Colors.black,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
                 ),
@@ -100,22 +163,62 @@ class PostCreationFirstPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextFormField(
-              controller: descriptionController,
-              enabled: !isLoading,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                labelStyle: TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(),
+              controller: widget.descriptionController,
+              enabled: !widget.isLoading,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16, // Description size stays at 16
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    blurRadius: 3,
+                    color: Colors.black,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              decoration: InputDecoration(
+                label: _descriptionHasText
+                    ? null
+                    : const Center(
+                        child: ShadowedText(
+                          text: 'Description',
+                          fontSize: 16, // Description size stays at 16
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                floatingLabelAlignment: FloatingLabelAlignment.center,
+                border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _descriptionHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white30),
-                ),
+                    borderSide: BorderSide(
+                        color: _descriptionHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
+                    borderSide: BorderSide(
+                        color: _descriptionHasText
+                            ? Colors.transparent
+                            : Colors.white)),
                 hintText: 'short summary of the goal',
-                hintStyle: TextStyle(color: Colors.white30),
-                contentPadding: EdgeInsets.symmetric(
+                hintStyle: const TextStyle(
+                  fontSize: 16, // Description size stays at 16
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 3,
+                      color: Colors.black,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
                 ),
@@ -163,20 +266,20 @@ class PostCreationFirstPage extends StatelessWidget {
                   isLarger: true,
                 ),
                 _buildActionButton(
-                  icon: steps.isEmpty
+                  icon: widget.steps.isEmpty
                       ? Icons.add_circle
                       : Icons.format_list_numbered,
-                  onPressed: steps.isEmpty
-                      ? onAddStep
+                  onPressed: widget.steps.isEmpty
+                      ? widget.onAddStep
                       : () {
-                          if (steps.isNotEmpty) {
-                            pageController.nextPage(
+                          if (widget.steps.isNotEmpty) {
+                            widget.pageController.nextPage(
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
                             );
                           }
                         },
-                  label: steps.isEmpty ? 'Add Step' : 'Steps',
+                  label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
                 ),
               ],
             ),

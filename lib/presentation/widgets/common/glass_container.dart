@@ -106,19 +106,22 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final clipper = isCircular ? CircularClipper() : RoundedRectClipper(borderRadius ?? BorderRadius.circular(32.0));
-    
+    final clipper = isCircular
+        ? CircularClipper()
+        : RoundedRectClipper(borderRadius ?? BorderRadius.circular(32.0));
+
     return Container(
       decoration: BoxDecoration(
         shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: !isCircular ? (borderRadius ?? BorderRadius.circular(32.0)) : null,
+        borderRadius:
+            !isCircular ? (borderRadius ?? BorderRadius.circular(32.0)) : null,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: gradientColors,
           stops: gradientStops,
         ),
-        border: GradientBoxBorder(
+        border: borderGradientColors.isEmpty ? null : GradientBoxBorder(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

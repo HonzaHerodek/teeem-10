@@ -13,7 +13,7 @@ class PostCreationCancelButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: -24,
+      top: 0,
       left: 0,
       right: 0,
       child: Center(

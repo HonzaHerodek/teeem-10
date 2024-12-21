@@ -28,7 +28,8 @@ class InFeedPostCreation extends StatefulWidget {
   });
 
   static InFeedPostCreationController? of(BuildContext context) {
-    final state = context.findRootAncestorStateOfType<InFeedPostCreationState>();
+    final state =
+        context.findRootAncestorStateOfType<InFeedPostCreationState>();
     return state;
   }
 
@@ -129,7 +130,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
 
   void _updateStepsAfterRemoval(int index) {
     final newSteps = List<PostStepWidget>.from(_state.steps);
-    final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+    final newStepKeys =
+        List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
 
     newSteps.removeAt(index);
     newStepKeys.removeAt(index);
@@ -166,7 +168,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
       // Reset step type selection to allow choosing a different type
       setState(() {
         final stepKey = GlobalKey<PostStepWidgetState>();
-        final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+        final newStepKeys =
+            List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
         final newSteps = List<PostStepWidget>.from(_state.steps);
 
         newStepKeys[_state.currentPage - 1] = stepKey;
@@ -266,6 +269,11 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
       margin: const EdgeInsets.only(top: 20.0, left: 16.0, right: 16.0),
       child: GlassContainer(
         isCircular: true,
+        borderGradientColors: const [], // Remove border while keeping other effects
+        gradientColors: const [
+          Color.fromRGBO(255, 255, 255, 0.5),  // More opaque white
+          Color.fromRGBO(255, 255, 255, 0.8),  // Still maintaining some transparency for glass effect
+        ],
         child: SizedBox(
           width: size,
           height: size,
