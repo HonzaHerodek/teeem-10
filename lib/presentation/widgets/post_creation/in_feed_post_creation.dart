@@ -5,6 +5,7 @@ import '../../../domain/repositories/post_repository.dart';
 import '../../../domain/repositories/step_type_repository.dart';
 import '../../../data/models/post_model.dart';
 import '../../bloc/auth/auth_bloc.dart';
+import '../../widgets/common/glass_container.dart';
 import './post_step_widget.dart';
 import './components/post_creation_first_page.dart';
 import './components/post_creation_navigation.dart';
@@ -27,8 +28,7 @@ class InFeedPostCreation extends StatefulWidget {
   });
 
   static InFeedPostCreationController? of(BuildContext context) {
-    final state =
-        context.findRootAncestorStateOfType<InFeedPostCreationState>();
+    final state = context.findRootAncestorStateOfType<InFeedPostCreationState>();
     return state;
   }
 
@@ -129,8 +129,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
 
   void _updateStepsAfterRemoval(int index) {
     final newSteps = List<PostStepWidget>.from(_state.steps);
-    final newStepKeys =
-        List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+    final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
 
     newSteps.removeAt(index);
     newStepKeys.removeAt(index);
@@ -167,8 +166,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
       // Reset step type selection to allow choosing a different type
       setState(() {
         final stepKey = GlobalKey<PostStepWidgetState>();
-        final newStepKeys =
-            List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+        final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
         final newSteps = List<PostStepWidget>.from(_state.steps);
 
         newStepKeys[_state.currentPage - 1] = stepKey;
@@ -266,37 +264,11 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
   Widget _buildContent(double size) {
     return Container(
       margin: const EdgeInsets.only(top: 20.0, left: 16.0, right: 16.0),
-      child: ClipOval(
-        child: Container(
+      child: GlassContainer(
+        isCircular: true,
+        child: SizedBox(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.3),
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.15),
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 35,
-                spreadRadius: 8,
-                offset: const Offset(0, 15),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 25,
-                spreadRadius: 5,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
           child: Form(
             key: _formKey,
             child: Center(
