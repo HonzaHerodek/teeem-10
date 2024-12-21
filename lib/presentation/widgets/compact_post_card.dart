@@ -3,7 +3,6 @@ import '../../data/models/post_model.dart';
 import 'common/animated_profile_picture.dart';
 import 'common/expandable_post_content.dart';
 import 'mixins/expandable_content_mixin.dart';
-import 'constants/post_widget_constants.dart';
 
 class CompactPostCard extends StatefulWidget {
   final PostModel post;

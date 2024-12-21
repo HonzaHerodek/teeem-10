@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/dimming_effect.dart';
+import '../../../../data/models/project_model.dart';
 import '../controllers/feed_controller.dart';
 import '../controllers/feed_header_controller.dart';
 import '../managers/dimming_manager.dart';
-import '../managers/notification_item_manager.dart';
 import '../managers/feed_layout_manager.dart';
+import '../managers/notification_item_manager.dart';
 
-/// Manages feed state and coordinates between different managers
 class FeedStateManager {
   final FeedController feedController;
   final FeedHeaderController headerController;
@@ -22,7 +22,7 @@ class FeedStateManager {
   }) onDimmingChanged;
   final Function(GlobalKey?) onKeyChanged;
 
-  const FeedStateManager({
+  FeedStateManager({
     required this.feedController,
     required this.headerController,
     required this.dimmingManager,
@@ -33,46 +33,55 @@ class FeedStateManager {
     required this.onKeyChanged,
   });
 
-  /// Handles post creation completion
-  void handlePostComplete(bool success) {
-    onCreatePostChanged(false);
-    if (success) feedController.refresh();
-  }
-
-  /// Handles dimming updates
-  void handleDimmingUpdate({
-    required bool isDimmed,
-    required List<GlobalKey> excludedKeys,
-    required DimmingConfig config,
-    Offset? source,
-  }) {
-    onDimmingChanged(
-      isDimmed: isDimmed,
-      config: config,
-      excludedKeys: excludedKeys,
-      source: source,
-    );
-  }
-
-  /// Handles profile state changes
-  void handleProfileStateChange(bool isOpen) {
-    notificationManager.updateDimming();
-  }
-
-  /// Updates managers when feed state changes
   void updateManagers({
     required bool isProfileOpen,
     required bool isCreatingPost,
     required GlobalKey? selectedItemKey,
   }) {
-    notificationManager.updateDimming();
-    layoutManager.updateDimming();
+    // Update layout manager state directly
+    layoutManager.isProfileOpen = isProfileOpen;
+    layoutManager.isCreatingPost = isCreatingPost;
+    layoutManager.selectedItemKey = selectedItemKey;
+    
+    // Update notification manager state directly
+    notificationManager.isProfileOpen = isProfileOpen;
+    notificationManager.selectedItemKey = selectedItemKey;
   }
 
-  /// Disposes of resources
+  void handlePostComplete(bool success, [ProjectModel? project]) {
+    onCreatePostChanged(false);
+    if (success) {
+      feedController.refresh();
+      if (project != null) {
+        feedController.addPostToProject(
+          projectId: project.id,
+          postId: '', // This will be set by the backend
+        );
+      }
+    }
+  }
+
+  void handleProfileStateChange(bool isOpen) {
+    if (isOpen) {
+      dimmingManager.onDimmingUpdate(
+        isDimmed: true,
+        excludedKeys: const [],
+        config: const DimmingConfig(
+          dimmingStrength: 0.7,
+          glowBlur: 10,
+        ),
+      );
+    } else {
+      dimmingManager.onDimmingUpdate(
+        isDimmed: false,
+        excludedKeys: const [],
+        config: const DimmingConfig(),
+      );
+    }
+  }
+
   void dispose() {
-    headerController.removeListener(notificationManager.updateDimming);
-    headerController.dispose();
     feedController.dispose();
+    headerController.dispose();
   }
 }

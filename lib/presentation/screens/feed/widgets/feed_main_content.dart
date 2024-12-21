@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../data/models/notification_model.dart';
+import '../../../../data/models/project_model.dart';
 import '../../../widgets/error_view.dart';
 import '../../../widgets/post_creation/in_feed_post_creation.dart';
 import '../feed_bloc/feed_bloc.dart';
@@ -16,7 +17,7 @@ class FeedMainContent extends StatelessWidget {
   final bool isCreatingPost;
   final GlobalKey<InFeedPostCreationState> postCreationKey;
   final VoidCallback onCancel;
-  final Function(bool) onComplete;
+  final Function(bool, ProjectModel?) onComplete;
   final double topPadding;
   final GlobalKey? selectedItemKey;
   final NotificationModel? selectedNotification;
@@ -56,7 +57,6 @@ class FeedMainContent extends StatelessWidget {
         }
 
         if (state is FeedSuccess) {
-          // Only use notification ID for key to prevent unnecessary rebuilds
           return KeyedSubtree(
             key: ValueKey(selectedNotification?.id),
             child: MediaQuery.removePadding(

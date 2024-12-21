@@ -27,7 +27,6 @@ class FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<FeedView> {
-  // State
   bool _isCreatingPost = false;
   bool _isProfileOpen = false;
   bool _isDimmed = false;
@@ -36,7 +35,6 @@ class _FeedViewState extends State<FeedView> {
   Offset? _dimmingSource;
   GlobalKey? _selectedItemKey;
 
-  // Controllers and Keys
   final _scrollController = ScrollController();
   final _postCreationKey = GlobalKey<InFeedPostCreationState>();
   final _plusActionButtonKey = GlobalKey();
@@ -44,7 +42,6 @@ class _FeedViewState extends State<FeedView> {
   final _searchBarKey = GlobalKey();
   final _filtersKey = GlobalKey();
 
-  // Controllers and Managers
   late final FeedHeaderController _headerController;
   late final FeedPositionTracker _positionTracker;
   late final FeedController _feedController;
@@ -52,6 +49,17 @@ class _FeedViewState extends State<FeedView> {
   late final FeedLayoutManager _layoutManager;
   late final NotificationItemManager _notificationManager;
   late final FeedStateManager _stateManager;
+
+  List<Rect> _getExcludedRects() {
+    final excludedAreas = _layoutManager.getExcludedAreas(context);
+    return excludedAreas.map((key) {
+      final RenderBox? renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox == null) return Rect.zero;
+      
+      final position = renderBox.localToGlobal(Offset.zero);
+      return position & renderBox.size;
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -102,19 +110,6 @@ class _FeedViewState extends State<FeedView> {
       isProfileOpen: _isProfileOpen,
       isCreatingPost: _isCreatingPost,
       selectedItemKey: _selectedItemKey,
-      onDimmingUpdate: ({
-        required bool isDimmed,
-        required List<GlobalKey> excludedKeys,
-        required DimmingConfig config,
-        Offset? source,
-      }) {
-        _dimmingManager.onDimmingUpdate(
-          isDimmed: isDimmed,
-          excludedKeys: excludedKeys,
-          config: config,
-          source: source,
-        );
-      },
     );
 
     _notificationManager = NotificationItemManager(
@@ -123,9 +118,6 @@ class _FeedViewState extends State<FeedView> {
       dimmingManager: _dimmingManager,
       isProfileOpen: _isProfileOpen,
       selectedItemKey: _selectedItemKey,
-      onKeyUpdate: (key) {
-        if (mounted) setState(() => _selectedItemKey = key);
-      },
     );
 
     _stateManager = FeedStateManager(
@@ -183,25 +175,6 @@ class _FeedViewState extends State<FeedView> {
     }
   }
 
-  Future<void> _handleActionButton() async {
-    if (_isCreatingPost) {
-      if (_postCreationKey.currentState != null) {
-        await _postCreationKey.currentState!.save();
-        _stateManager.handlePostComplete(true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: Could not save post'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        _stateManager.handlePostComplete(false);
-      }
-    } else {
-      setState(() => _isCreatingPost = !_isCreatingPost);
-    }
-  }
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -221,19 +194,21 @@ class _FeedViewState extends State<FeedView> {
           fit: StackFit.expand,
           children: [
             AnimatedGradientBackground(
-              child: FeedMainContent(
-                scrollController: _scrollController,
-                feedController: _feedController,
-                isCreatingPost: _isCreatingPost,
-                postCreationKey: _postCreationKey,
-                onCancel: () => setState(() => _isCreatingPost = false),
-                onComplete: (success) {
-                  setState(() => _isCreatingPost = false);
-                  if (success) _feedController.refresh();
-                },
-                topPadding: _layoutManager.getTopPadding(context),
-                selectedItemKey: _selectedItemKey,
-                selectedNotification: _headerController.selectedNotification,
+              child: Builder(
+                builder: (context) => FeedMainContent(
+                  scrollController: _scrollController,
+                  feedController: _feedController,
+                  isCreatingPost: _isCreatingPost,
+                  postCreationKey: _postCreationKey,
+                  onCancel: () => setState(() => _isCreatingPost = false),
+                  onComplete: (success, project) {
+                    setState(() => _isCreatingPost = false);
+                    if (success) _feedController.refresh();
+                  },
+                  topPadding: _layoutManager.getTopPadding(context),
+                  selectedItemKey: _selectedItemKey,
+                  selectedNotification: _headerController.selectedNotification,
+                ),
               ),
             ).withDimming(
               isDimmed: _isDimmed,
@@ -247,15 +222,35 @@ class _FeedViewState extends State<FeedView> {
               searchBarKey: _searchBarKey,
               filtersKey: _filtersKey,
             ),
-            FeedActionButtons(
-              plusActionButtonKey: _plusActionButtonKey,
-              profileButtonKey: _profileButtonKey,
-              isCreatingPost: _isCreatingPost,
-              onProfileTap: () {
-                setState(() => _isProfileOpen = !_isProfileOpen);
-                _stateManager.handleProfileStateChange(_isProfileOpen);
-              },
-              onActionButtonTap: _handleActionButton,
+            Builder(
+              builder: (context) => FeedActionButtons(
+                plusActionButtonKey: _plusActionButtonKey,
+                profileButtonKey: _profileButtonKey,
+                isCreatingPost: _isCreatingPost,
+                onProfileTap: () {
+                  setState(() => _isProfileOpen = !_isProfileOpen);
+                  _stateManager.handleProfileStateChange(_isProfileOpen);
+                },
+                onActionButtonTap: () async {
+                  if (_isCreatingPost) {
+                    final controller = InFeedPostCreation.of(context);
+                    if (controller != null) {
+                      await controller.save();
+                      _stateManager.handlePostComplete(true);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Error: Could not save post'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      _stateManager.handlePostComplete(false);
+                    }
+                  } else {
+                    setState(() => _isCreatingPost = !_isCreatingPost);
+                  }
+                },
+              ),
             ),
             SlidingPanel(
               isOpen: _isProfileOpen,
@@ -263,7 +258,7 @@ class _FeedViewState extends State<FeedView> {
                 setState(() => _isProfileOpen = false);
                 _stateManager.handleProfileStateChange(false);
               },
-              excludeFromOverlay: _layoutManager.getExcludedAreas(context),
+              excludeFromOverlay: _getExcludedRects(),
               child: const ProfileScreen(),
             ),
           ],

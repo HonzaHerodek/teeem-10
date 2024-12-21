@@ -4,6 +4,7 @@ import '../../../../data/models/project_model.dart';
 import '../../../widgets/post_card.dart';
 import '../../../widgets/project_card.dart';
 import '../../../widgets/post_creation/in_feed_post_creation.dart';
+import '../../../widgets/post_creation/in_feed_post_creation_wrapper.dart';
 import '../controllers/feed_controller.dart';
 
 class FeedItem extends StatelessWidget {
@@ -13,7 +14,7 @@ class FeedItem extends StatelessWidget {
   final bool isCreatingPost;
   final GlobalKey<InFeedPostCreationState>? postCreationKey;
   final VoidCallback? onCancel;
-  final Function(bool)? onComplete;
+  final Function(bool, ProjectModel?)? onComplete;
   final FeedController feedController;
   final bool isSelected;
 
@@ -36,10 +37,18 @@ class FeedItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isCreatingPost) {
-      return InFeedPostCreation(
-        key: postCreationKey,
+      return InFeedPostCreationWrapper(
+        postCreationKey: postCreationKey,
         onCancel: onCancel ?? () {},
-        onComplete: onComplete ?? (_) {},
+        onComplete: (success, project) {
+          if (success && project != null) {
+            feedController.addPostToProject(
+              projectId: project.id,
+              postId: post?.id ?? '',
+            );
+          }
+          onComplete?.call(success, project);
+        },
       );
     }
 

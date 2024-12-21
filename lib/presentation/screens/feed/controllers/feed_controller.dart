@@ -18,7 +18,6 @@ class FeedController extends ChangeNotifier {
     required this.positionTracker,
     required this.context,
   }) {
-    // Initialize with empty service
     _itemService = FeedItemService(
       posts: const [],
       projects: const [],
@@ -40,14 +39,16 @@ class FeedController extends ChangeNotifier {
     feedBloc.add(FeedProjectSelected(projectId));
   }
 
+  void addPostToProject({required String projectId, required String postId}) {
+    feedBloc.add(FeedPostAddedToProject(projectId: projectId, postId: postId));
+  }
+
   void updateSelection(String itemId, {required bool isProject}) {
-    // Update position tracker
     positionTracker.updatePosition(
       selectedItemId: itemId,
       isProject: isProject,
     );
 
-    // Find the item's index
     int targetIndex = -1;
     for (int i = 0; i < itemService.totalItemCount; i++) {
       if (isProject) {
@@ -66,7 +67,6 @@ class FeedController extends ChangeNotifier {
     }
 
     if (targetIndex != -1) {
-      // Update position with found index
       positionTracker.updatePosition(
         index: targetIndex,
         selectedItemId: itemId,
@@ -74,7 +74,6 @@ class FeedController extends ChangeNotifier {
       );
     }
 
-    // Notify listeners to trigger UI updates
     notifyListeners();
   }
 
@@ -86,17 +85,14 @@ class FeedController extends ChangeNotifier {
         isProject: position.isProject,
       );
     }
-    // Step selection logic can be expanded based on requirements
   }
 
   Future<void> moveToPosition(int index) async {
     if (index < 0 || index >= itemService.totalItemCount) return;
-
     await positionTracker.scrollToIndex(index);
     positionTracker.updatePosition(index: index);
   }
 
-  // Find item index without scrolling
   Future<int?> findItemIndex(String itemId, {bool isProject = false}) async {
     for (int i = 0; i < itemService.totalItemCount; i++) {
       if (isProject) {
@@ -114,34 +110,27 @@ class FeedController extends ChangeNotifier {
     return null;
   }
 
-  // Scroll to index without updating selection
   Future<void> scrollToIndex(int index) async {
     if (index < 0 || index >= itemService.totalItemCount) return;
     await positionTracker.scrollToIndex(index);
   }
 
-  // Combined method that both finds and scrolls
   Future<int?> moveToItem(String itemId, {bool isProject = false}) async {
     final index = await findItemIndex(itemId, isProject: isProject);
     
     if (index != null) {
-      // Update selection first
       positionTracker.updatePosition(
         index: index,
         selectedItemId: itemId,
         isProject: isProject,
       );
       
-      // Wait for selection to be processed
       await Future.delayed(const Duration(milliseconds: 50));
-      
-      // Then scroll to the item
       await scrollToIndex(index);
       
       return index;
     }
     
-    // If item not found, try refreshing the feed
     feedBloc.add(const FeedRefreshed());
     return null;
   }

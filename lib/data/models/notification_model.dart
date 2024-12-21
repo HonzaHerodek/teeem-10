@@ -20,6 +20,7 @@ class NotificationModel {
   final String? profileId;   // For profile notifications
   final DateTime timestamp;
   final bool isRead;
+  final DateTime? lastInteractionTime;
 
   const NotificationModel({
     required this.id,
@@ -30,6 +31,7 @@ class NotificationModel {
     this.profileId,
     required this.timestamp,
     this.isRead = false,
+    this.lastInteractionTime,
   }) : assert(
          (type == NotificationType.post && postId != null) ||
          (type == NotificationType.project && projectId != null) ||
@@ -47,6 +49,9 @@ class NotificationModel {
       profileId: json['profileId'] as String?,
       timestamp: DateTime.parse(json['timestamp'] as String),
       isRead: json['isRead'] as bool? ?? false,
+      lastInteractionTime: json['lastInteractionTime'] != null 
+          ? DateTime.parse(json['lastInteractionTime'] as String)
+          : null,
     );
   }
 
@@ -59,5 +64,6 @@ class NotificationModel {
     'profileId': profileId,
     'timestamp': timestamp.toIso8601String(),
     'isRead': isRead,
+    'lastInteractionTime': lastInteractionTime?.toIso8601String(),
   };
 }

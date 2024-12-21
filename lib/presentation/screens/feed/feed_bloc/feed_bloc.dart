@@ -3,6 +3,7 @@ import 'package:myapp/domain/repositories/auth_repository.dart';
 import 'package:myapp/domain/repositories/post_repository.dart';
 import 'package:myapp/domain/repositories/project_repository.dart';
 import 'package:myapp/core/services/rating_service.dart';
+import '../models/filter_type.dart';
 import '../services/filter_service.dart';
 import 'feed_event.dart';
 import 'feed_state.dart';
@@ -86,7 +87,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState>
     // Project actions
     on<FeedProjectSelected>((event, emit) => 
       handleProjectSelection(event.projectId, _projectRepository, emit));
-    on<FeedAddPostToProject>((event, emit) => 
+    on<FeedPostAddedToProject>((event, emit) => 
       handleAddPostToProject(event.projectId, event.postId, _projectRepository, emit));
     on<FeedRemovePostFromProject>((event, emit) => 
       handleRemovePostFromProject(event.projectId, event.postId, _projectRepository, emit));
@@ -113,7 +114,17 @@ class FeedBloc extends Bloc<FeedEvent, FeedState>
     
     final currentState = state as FeedSuccess;
     try {
-      _filterService.setFilter(event.filterType);
+      // Convert string filter type to enum
+      final filterType = FilterType.values.firstWhere(
+        (type) => type.toString().split('.').last.toLowerCase() == event.filterType.toLowerCase(),
+        orElse: () => FilterType.none,
+      );
+      
+      _filterService.setFilter(filterType);
+      if (event.filter.isNotEmpty) {
+        _filterService.setSearchQuery(event.filter);
+      }
+      
       final currentUser = await _authRepository.getCurrentUser();
       if (currentUser == null) throw Exception('User not authenticated');
       

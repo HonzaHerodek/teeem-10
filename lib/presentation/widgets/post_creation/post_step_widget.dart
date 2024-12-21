@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/post_model.dart';
 import '../../../data/models/step_type_model.dart';
+import '../../../core/utils/step_type_utils.dart';
 import '../common/honeycomb_grid.dart';
 
 class PostStepWidget extends StatefulWidget {
@@ -48,12 +49,19 @@ class PostStepWidgetState extends State<PostStepWidget>
     return _selectedStepType;
   }
 
+  StepType _getStepTypeFromId(String id) {
+    return StepType.values.firstWhere(
+      (type) => type.toString().split('.').last == id,
+      orElse: () => StepType.text,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    if (_selectedStepType != null) {
-      _initializeOptionControllers();
-      _restoreOptionValues();
+    // Auto-select the first step type if available
+    if (widget.stepTypes.isNotEmpty) {
+      _onStepTypeSelected(widget.stepTypes.first);
     }
   }
 
@@ -116,57 +124,14 @@ class PostStepWidgetState extends State<PostStepWidget>
       id: 'step_${DateTime.now().millisecondsSinceEpoch}',
       title: _titleController.text,
       description: _descriptionController.text,
-      type: StepType.values.firstWhere(
-        (t) => t.name == _selectedStepType!.id,
-        orElse: () => StepType.text,
-      ),
+      type: _getStepTypeFromId(_selectedStepType!.id),
       content: content,
     );
   }
 
-  IconData _getIconData(String iconString) {
-    if (iconString.isEmpty) {
-      return Icons.article;
-    }
-
-    try {
-      switch (iconString.toLowerCase()) {
-        case 'text':
-          return Icons.text_fields;
-        case 'image':
-          return Icons.image;
-        case 'video':
-          return Icons.videocam;
-        case 'audio':
-          return Icons.audiotrack;
-        case 'quiz':
-          return Icons.quiz;
-        case 'code':
-          return Icons.code;
-        case 'ar':
-          return Icons.view_in_ar;
-        case 'vr':
-          return Icons.vrpano;
-        case 'document':
-          return Icons.description;
-        case 'link':
-          return Icons.link;
-        default:
-          return Icons.article;
-      }
-    } catch (e) {
-      return Icons.article;
-    }
-  }
-
   Widget _buildStepTypeMiniature(StepTypeModel type) {
-    // Parse color with a fallback
-    Color backgroundColor;
-    try {
-      backgroundColor = Color(int.parse(type.color.replaceAll('#', '0xFF')));
-    } catch (e) {
-      backgroundColor = Colors.grey;
-    }
+    final stepType = _getStepTypeFromId(type.id);
+    final color = StepTypeUtils.getColorForStepType(stepType);
 
     return GestureDetector(
       onTap: widget.enabled ? () => _onStepTypeSelected(type) : null,
@@ -180,8 +145,8 @@ class PostStepWidgetState extends State<PostStepWidget>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  backgroundColor,
-                  backgroundColor.withOpacity(0.8),
+                  color,
+                  color.withOpacity(0.8),
                 ],
               ),
             ),
@@ -189,7 +154,7 @@ class PostStepWidgetState extends State<PostStepWidget>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  _getIconData(type.icon),
+                  StepTypeUtils.getIconForStepType(stepType),
                   color: Colors.white,
                   size: 32,
                 ),
@@ -217,108 +182,167 @@ class PostStepWidgetState extends State<PostStepWidget>
   }
 
   Widget _buildStepForm() {
-    return Form(
-      key: _formKey,
+    final stepType = _selectedStepType != null ? _getStepTypeFromId(_selectedStepType!.id) : null;
+    final color = stepType != null ? StepTypeUtils.getColorForStepType(stepType) : Colors.grey;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextFormField(
-            controller: _titleController,
-            enabled: widget.enabled,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: 'Step Title',
-              labelStyle: TextStyle(color: Colors.white70),
-              border: OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white30),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              hintText: 'e.g., Mix the ingredients',
-              hintStyle: TextStyle(color: Colors.white30),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+          // Step header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a step title';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              updateKeepAlive();
-            },
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _descriptionController,
-            enabled: widget.enabled,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: 'Step Description',
-              labelStyle: TextStyle(color: Colors.white70),
-              border: OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white30),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              hintText: 'Brief description of this step',
-              hintStyle: TextStyle(color: Colors.white30),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            maxLines: 2,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a step description';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              updateKeepAlive();
-            },
-          ),
-          ..._selectedStepType!.options.map((option) => Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: TextFormField(
-                  controller: _optionControllers[option.id],
-                  enabled: widget.enabled,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: option.label,
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    border: const OutlineInputBorder(),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white30),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    hintStyle: const TextStyle(color: Colors.white30),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+            child: Row(
+              children: [
+                Text(
+                  'Step ${widget.stepNumber}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                if (stepType != null) ...[
+                  Icon(
+                    StepTypeUtils.getIconForStepType(stepType),
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    StepTypeUtils.getStepTypeDisplayName(stepType),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please fill in this field';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    updateKeepAlive();
-                  },
+                ],
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white70),
+                  onPressed: widget.enabled ? widget.onRemove : null,
+                  tooltip: 'Remove step',
                 ),
-              )),
+              ],
+            ),
+          ),
+          // Step form
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    enabled: widget.enabled,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Step Title',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      hintText: 'e.g., Mix the ingredients',
+                      hintStyle: TextStyle(color: Colors.white30),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a step title';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      updateKeepAlive();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _descriptionController,
+                    enabled: widget.enabled,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Step Description',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      hintText: 'Brief description of this step',
+                      hintStyle: TextStyle(color: Colors.white30),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    maxLines: 2,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a step description';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      updateKeepAlive();
+                    },
+                  ),
+                  ..._selectedStepType!.options.map((option) => Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextFormField(
+                          controller: _optionControllers[option.id],
+                          enabled: widget.enabled,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: option.label,
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            border: const OutlineInputBorder(),
+                            enabledBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white30),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white),
+                            ),
+                            hintStyle: const TextStyle(color: Colors.white30),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please fill in this field';
+                            }
+                            return null;
+                          },
+                          onChanged: (value) {
+                            updateKeepAlive();
+                          },
+                        ),
+                      )),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -330,27 +354,44 @@ class PostStepWidgetState extends State<PostStepWidget>
     return Padding(
       padding: const EdgeInsets.all(12),
       child: _selectedStepType == null
-          ? SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return HoneycombGrid(
-                      cellSize: 100,
-                      spacing: 8,
-                      config: HoneycombConfig.area(
-                        maxWidth: constraints.maxWidth,
-                        maxItemsPerRow: 3,
-                      ),
-                      children: widget.stepTypes
-                          .map((type) => _buildStepTypeMiniature(type))
-                          .toList(),
-                    );
-                  },
-                ),
-              ),
+          ? LayoutBuilder(
+              builder: (context, constraints) {
+                return HoneycombGrid(
+                  cellSize: 100,
+                  spacing: 8,
+                  config: HoneycombConfig.area(
+                    maxWidth: constraints.maxWidth,
+                    maxItemsPerRow: 3,
+                  ),
+                  children: widget.stepTypes
+                      .map((type) => _buildStepTypeMiniature(type))
+                      .toList(),
+                );
+              },
             )
           : _buildStepForm(),
     );
   }
+}
+
+class HexagonClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final h = size.height;
+    final w = size.width;
+
+    path.moveTo(w * 0.25, 0);
+    path.lineTo(w * 0.75, 0);
+    path.lineTo(w, h * 0.5);
+    path.lineTo(w * 0.75, h);
+    path.lineTo(w * 0.25, h);
+    path.lineTo(0, h * 0.5);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

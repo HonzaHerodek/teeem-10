@@ -66,7 +66,7 @@ class _NotificationBarState extends State<NotificationBar> {
       return Container(
         key: widget.barKey,
         height: 56,
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.only(left: 16, right: 16, top: 4),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
@@ -104,7 +104,7 @@ class _NotificationBarState extends State<NotificationBar> {
     return Container(
       key: widget.barKey,
       height: 56,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 4),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.centerLeft,

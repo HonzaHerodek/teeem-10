@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../data/models/post_model.dart';
 import '../../../../data/models/project_model.dart';
 import '../../../widgets/post_creation/in_feed_post_creation.dart';
+import '../../../widgets/post_creation/in_feed_post_creation_wrapper.dart';
 import '../services/feed_item_service.dart';
 import '../controllers/feed_controller.dart';
 import 'feed_item.dart';
@@ -14,7 +15,7 @@ class FeedContent extends StatelessWidget {
   final bool isCreatingPost;
   final GlobalKey<InFeedPostCreationState> postCreationKey;
   final VoidCallback onCancel;
-  final Function(bool) onComplete;
+  final Function(bool, ProjectModel?) onComplete;
   final double topPadding;
   final FeedController feedController;
   final GlobalKey? selectedItemKey;
@@ -40,7 +41,6 @@ class FeedContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Only update item service if data has changed
     final currentService = feedController.itemService;
     if (currentService.posts != posts || 
         currentService.projects != projects || 
@@ -68,25 +68,22 @@ class FeedContent extends StatelessWidget {
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                // Show post creation widget at the very top if active
                 if (itemService.isCreatingPostPosition(index)) {
-                  return FeedItem(
-                    isCreatingPost: true,
-                    postCreationKey: postCreationKey,
-                    onCancel: onCancel,
-                    onComplete: onComplete,
-                    feedController: feedController,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: InFeedPostCreationWrapper(
+                      postCreationKey: postCreationKey,
+                      onCancel: onCancel,
+                      onComplete: onComplete,
+                    ),
                   );
                 }
 
-                // Adjust index for post creation widget
                 final adjustedIndex = isCreatingPost ? index - 1 : index;
 
-                // Check if this position should show a project
                 final project = itemService.getProjectAtPosition(adjustedIndex);
                 if (project != null) {
                   final isSelected = project.id == selectedProjectId;
-                  // Only use selectedItemKey if the project matches the selected project ID
                   final key = isSelected && selectedItemKey != null 
                       ? selectedItemKey 
                       : ValueKey(project.id);
@@ -98,11 +95,9 @@ class FeedContent extends StatelessWidget {
                   );
                 }
 
-                // Get post for this position
                 final post = itemService.getPostAtPosition(adjustedIndex);
                 if (post != null) {
                   final isSelected = post.id == selectedPostId;
-                  // Only use selectedItemKey if the post matches the selected post ID
                   final key = isSelected && selectedItemKey != null 
                       ? selectedItemKey 
                       : ValueKey(post.id);
@@ -115,7 +110,6 @@ class FeedContent extends StatelessWidget {
                   );
                 }
 
-                // Show loading indicator at the end
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16.0),

@@ -8,7 +8,6 @@ import '../../core/di/injection.dart';
 import 'common/animated_profile_picture.dart';
 import 'common/other_posts_list.dart';
 import 'mixins/expandable_content_mixin.dart';
-import 'constants/post_widget_constants.dart';
 import 'rating_stars.dart';
 import 'rating_count_star.dart';
 import 'user_traits/user_trait_chip.dart';

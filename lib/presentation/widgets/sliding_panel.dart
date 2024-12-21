@@ -67,11 +67,11 @@ class _SlidingPanelState extends State<SlidingPanel>
 
   void _handleDragUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
-    
+
     final dragDistance = details.localPosition.dx - _dragStartX;
     final screenWidth = MediaQuery.of(context).size.width;
     final normalizedDrag = dragDistance / screenWidth;
-    
+
     if (normalizedDrag < 0) {
       _controller.value = 1.0 + normalizedDrag;
     }
@@ -91,7 +91,7 @@ class _SlidingPanelState extends State<SlidingPanel>
 
   bool _shouldHandleTap(Offset position) {
     if (widget.excludeFromOverlay == null) return true;
-    
+
     for (final excludedArea in widget.excludeFromOverlay!) {
       if (excludedArea.contains(position)) {
         return false;
@@ -129,8 +129,7 @@ class _SlidingPanelState extends State<SlidingPanel>
                       }
                     },
                     child: Container(
-                      color: Colors.black
-                          .withOpacity(0.14 * _controller.value),
+                      color: Colors.black.withOpacity(0.14 * _controller.value),
                     ),
                   ),
                 ),

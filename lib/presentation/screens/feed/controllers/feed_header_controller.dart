@@ -88,6 +88,7 @@ class FeedHeaderController extends ChangeNotifier {
   NotificationModel? get selectedNotification => _state.selectedNotification;
   List<NotificationModel> get notifications => _state.notifications;
   int get unreadNotificationCount => _notificationRepository.getUnreadCount();
+  Duration? get longestIgnoredDuration => _notificationRepository.getLongestIgnoredDuration();
 
   Future<void> _loadNotifications() async {
     final notifications = await _notificationRepository.getNotifications();
@@ -136,8 +137,9 @@ class FeedHeaderController extends ChangeNotifier {
 
   Future<void> selectNotification(
       NotificationModel notification, FeedController? feedController) async {
-    // Mark as read first
-    _notificationRepository.markAsRead(notification.id);
+    // Mark as read and record interaction
+    await _notificationRepository.markAsRead(notification.id);
+    await _notificationRepository.recordInteraction(notification.id);
 
     // Check if this is the same notification
     final isSameNotification = _state.selectedNotification?.id == notification.id;
