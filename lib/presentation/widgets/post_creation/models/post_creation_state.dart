@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../../data/models/step_type_model.dart';
 import '../../../../data/models/post_model.dart';
-import '../../../../data/models/project_model.dart';
+import '../../../../data/models/step_type_model.dart';
 import '../post_step_widget.dart';
 
+@immutable
 class PostCreationState {
   final List<GlobalKey<PostStepWidgetState>> stepKeys;
   final List<PostStepWidget> steps;
   final List<StepTypeModel> availableStepTypes;
   final bool isLoading;
   final int currentPage;
-  final ProjectModel? selectedProject;
 
   const PostCreationState({
     required this.stepKeys,
@@ -18,8 +17,36 @@ class PostCreationState {
     required this.availableStepTypes,
     required this.isLoading,
     required this.currentPage,
-    this.selectedProject,
   });
+
+  bool get isFirstPage => currentPage == 0;
+  bool get hasSteps => steps.isNotEmpty;
+  bool get hasSelectedStepType {
+    if (currentPage <= 0 || currentPage > stepKeys.length) return false;
+    final state = stepKeys[currentPage - 1].currentState;
+    return state?.hasSelectedStepType ?? false;
+  }
+
+  List<PostStep> getValidSteps() {
+    final validSteps = <PostStep>[];
+    for (var i = 0; i < stepKeys.length; i++) {
+      final state = stepKeys[i].currentState;
+      if (state != null && state.validate()) {
+        final step = state.getStepData();
+        validSteps.add(step);
+      }
+    }
+    return validSteps;
+  }
+
+  bool validateSteps() {
+    if (steps.isEmpty) return false;
+    for (var key in stepKeys) {
+      final state = key.currentState;
+      if (state == null || !state.validate()) return false;
+    }
+    return true;
+  }
 
   PostCreationState copyWith({
     List<GlobalKey<PostStepWidgetState>>? stepKeys,
@@ -27,7 +54,6 @@ class PostCreationState {
     List<StepTypeModel>? availableStepTypes,
     bool? isLoading,
     int? currentPage,
-    ProjectModel? selectedProject,
   }) {
     return PostCreationState(
       stepKeys: stepKeys ?? this.stepKeys,
@@ -35,39 +61,6 @@ class PostCreationState {
       availableStepTypes: availableStepTypes ?? this.availableStepTypes,
       isLoading: isLoading ?? this.isLoading,
       currentPage: currentPage ?? this.currentPage,
-      selectedProject: selectedProject ?? this.selectedProject,
     );
-  }
-
-  bool get hasSteps => steps.isNotEmpty;
-  
-  bool get isFirstPage => currentPage == 0;
-  
-  bool get hasSelectedStepType {
-    if (currentPage == 0 || steps.isEmpty || currentPage > steps.length) {
-      return false;
-    }
-    final stepState = stepKeys[currentPage - 1].currentState;
-    return stepState?.getSelectedStepType() != null;
-  }
-
-  bool validateSteps() {
-    bool isValid = true;
-    for (var i = 0; i < stepKeys.length; i++) {
-      final state = stepKeys[i].currentState;
-      if (state == null || !state.validate()) {
-        isValid = false;
-        print('Step ${i + 1} validation failed');
-      }
-    }
-    return isValid;
-  }
-
-  List<PostStep> getValidSteps() {
-    return steps
-        .map((stepWidget) => stepWidget.toPostStep())
-        .where((step) => step != null)
-        .cast<PostStep>()
-        .toList();
   }
 }

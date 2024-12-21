@@ -235,8 +235,18 @@ class _FeedViewState extends State<FeedView> {
                   if (_isCreatingPost) {
                     final controller = InFeedPostCreation.of(context);
                     if (controller != null) {
-                      await controller.save();
-                      _stateManager.handlePostComplete(true);
+                      try {
+                        await controller.save();
+                        _stateManager.handlePostComplete(true);
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to save post: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        _stateManager.handlePostComplete(false);
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

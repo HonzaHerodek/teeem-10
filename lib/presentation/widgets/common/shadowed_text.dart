@@ -8,6 +8,8 @@ class ShadowedText extends StatelessWidget {
   final TextAlign textAlign;
   final int maxLines;
   final double strokeWidth;
+  final double shadowOpacity;
+  final Color shadowColor;
 
   const ShadowedText({
     super.key,
@@ -18,6 +20,8 @@ class ShadowedText extends StatelessWidget {
     this.textAlign = TextAlign.center,
     this.maxLines = 1,
     this.strokeWidth = 3,
+    this.shadowOpacity = 0.5,
+    this.shadowColor = Colors.black,
   });
 
   @override
@@ -34,7 +38,7 @@ class ShadowedText extends StatelessWidget {
             foreground: Paint()
               ..style = PaintingStyle.stroke
               ..strokeWidth = strokeWidth
-              ..color = Colors.black.withOpacity(0.5),
+              ..color = shadowColor.withOpacity(shadowOpacity),
           ),
           textAlign: textAlign,
           maxLines: maxLines,

@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/di/injection.dart';
-import '../../../domain/repositories/post_repository.dart';
-import '../../../domain/repositories/step_type_repository.dart';
-import '../../../data/models/post_model.dart';
-import '../../bloc/auth/auth_bloc.dart';
 import '../../widgets/common/glass_container.dart';
+import '../../../../data/models/step_type_model.dart';
 import './post_step_widget.dart';
 import './components/post_creation_first_page.dart';
 import './components/post_creation_navigation.dart';
 import './components/post_creation_step_button.dart';
 import './components/post_creation_cancel_button.dart';
 import './models/post_creation_state.dart';
-
-abstract class InFeedPostCreationController {
-  Future<void> save();
-}
+import './controllers/in_feed_post_creation_controller.dart';
 
 class InFeedPostCreation extends StatefulWidget {
   final VoidCallback onCancel;
@@ -27,30 +19,54 @@ class InFeedPostCreation extends StatefulWidget {
     required this.onComplete,
   });
 
-  static InFeedPostCreationController? of(BuildContext context) {
+  static PostCreationController? of(BuildContext context) {
     final state =
         context.findRootAncestorStateOfType<InFeedPostCreationState>();
-    return state;
+    if (state == null) return null;
+
+    return LegacyPostCreationController(state);
   }
 
   @override
   State<InFeedPostCreation> createState() => InFeedPostCreationState();
 }
 
-class InFeedPostCreationState extends State<InFeedPostCreation>
-    implements InFeedPostCreationController {
+class LegacyPostCreationController implements PostCreationController {
+  final InFeedPostCreationState _state;
+
+  LegacyPostCreationController(this._state);
+
+  @override
+  Future<List<StepTypeModel>> loadStepTypes() {
+    return _state._controller.loadStepTypes();
+  }
+
+  @override
+  Future<void> save([PostCreationState? state]) {
+    return _state._save();
+  }
+}
+
+class InFeedPostCreationState extends State<InFeedPostCreation> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _postRepository = getIt<PostRepository>();
-  final _stepTypeRepository = getIt<StepTypeRepository>();
   final _pageController = PageController();
+  late final PostCreationController _controller;
 
   late PostCreationState _state;
 
   @override
   void initState() {
     super.initState();
+    _controller = DefaultPostCreationController(
+      context: context,
+      titleController: _titleController,
+      descriptionController: _descriptionController,
+      formKey: _formKey,
+      onComplete: widget.onComplete,
+    );
+
     _state = PostCreationState(
       stepKeys: [],
       steps: [],
@@ -71,7 +87,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
 
   Future<void> _loadStepTypes() async {
     try {
-      final types = await _stepTypeRepository.getStepTypes();
+      final types = await _controller.loadStepTypes();
       setState(() {
         _state = _state.copyWith(availableStepTypes: types);
       });
@@ -191,70 +207,13 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
     }
   }
 
-  @override
-  Future<void> save() async {
-    if (!_state.hasSteps) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one step'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (!_formKey.currentState!.validate() || !_state.validateSteps()) {
-      return;
-    }
-
+  Future<void> _save() async {
     setState(() {
       _state = _state.copyWith(isLoading: true);
     });
 
     try {
-      final authState = context.read<AuthBloc>().state;
-      if (!authState.isAuthenticated || authState.userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final steps = _state.getValidSteps();
-
-      final post = PostModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: authState.userId!,
-        username: authState.username ?? 'Anonymous',
-        userProfileImage: 'https://i.pravatar.cc/150?u=${authState.userId}',
-        title: _titleController.text,
-        description: _descriptionController.text,
-        steps: steps,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        likes: [],
-        comments: [],
-        status: PostStatus.active,
-        targetingCriteria: null,
-        aiMetadata: {
-          'tags': ['tutorial', 'multi-step'],
-          'category': 'tutorial',
-        },
-        ratings: [],
-        userTraits: [],
-      );
-
-      await _postRepository.createPost(post);
-      if (mounted) {
-        widget.onComplete(true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create post: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        widget.onComplete(false);
-      }
+      await _controller.save(_state);
     } finally {
       if (mounted) {
         setState(() {
@@ -267,50 +226,70 @@ class InFeedPostCreationState extends State<InFeedPostCreation>
   Widget _buildContent(double size) {
     return Container(
       margin: const EdgeInsets.only(top: 20.0, left: 16.0, right: 16.0),
-      child: GlassContainer(
-        isCircular: true,
-        borderGradientColors: const [], // Remove border while keeping other effects
-        gradientColors: const [
-          Color.fromRGBO(255, 255, 255, 0.5),  // More opaque white
-          Color.fromRGBO(255, 255, 255, 0.8),  // Still maintaining some transparency for glass effect
-        ],
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Form(
-            key: _formKey,
-            child: Center(
-              child: SizedBox(
-                width: size * 0.8,
-                height: size * 0.8,
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _state = _state.copyWith(currentPage: index);
-                    });
-                  },
-                  children: [
-                    PostCreationFirstPage(
-                      titleController: _titleController,
-                      descriptionController: _descriptionController,
-                      isLoading: _state.isLoading,
-                      onAddStep: _addStep,
-                      steps: _state.steps,
-                      pageController: _pageController,
-                    ),
-                    ..._state.steps.map((step) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 40),
-                                step,
-                              ],
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 35,
+              spreadRadius: 8,
+              offset: const Offset(0, 15),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 25,
+              spreadRadius: 5,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: GlassContainer(
+          isCircular: true,
+          borderGradientColors: const [],
+          gradientColors: const [
+            Color.fromRGBO(255, 255, 255, 0.5),
+            Color.fromRGBO(255, 255, 255, 0.1),
+          ],
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Form(
+              key: _formKey,
+              child: Center(
+                child: SizedBox(
+                  width: size * 0.8,
+                  height: size * 0.8,
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _state = _state.copyWith(currentPage: index);
+                      });
+                    },
+                    children: [
+                      PostCreationFirstPage(
+                        titleController: _titleController,
+                        descriptionController: _descriptionController,
+                        isLoading: _state.isLoading,
+                        onAddStep: _addStep,
+                        steps: _state.steps,
+                        pageController: _pageController,
+                      ),
+                      ..._state.steps.map((step) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 40),
+                                  step,
+                                ],
+                              ),
                             ),
-                          ),
-                        )),
-                  ],
+                          )),
+                    ],
+                  ),
                 ),
               ),
             ),

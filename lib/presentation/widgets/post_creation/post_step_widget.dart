@@ -182,8 +182,12 @@ class PostStepWidgetState extends State<PostStepWidget>
   }
 
   Widget _buildStepForm() {
-    final stepType = _selectedStepType != null ? _getStepTypeFromId(_selectedStepType!.id) : null;
-    final color = stepType != null ? StepTypeUtils.getColorForStepType(stepType) : Colors.grey;
+    final stepType = _selectedStepType != null
+        ? _getStepTypeFromId(_selectedStepType!.id)
+        : null;
+    final color = stepType != null
+        ? StepTypeUtils.getColorForStepType(stepType)
+        : Colors.grey;
 
     return Container(
       decoration: BoxDecoration(
@@ -198,7 +202,8 @@ class PostStepWidgetState extends State<PostStepWidget>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.2),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
             ),
             child: Row(
               children: [

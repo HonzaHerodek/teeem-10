@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/presentation/widgets/common/shadowed_text.dart';
+import 'package:myapp/presentation/widgets/common/shadowed_shape.dart';
+import 'package:myapp/presentation/widgets/common/add_hexagon_icon.dart';
+import 'package:myapp/presentation/widgets/post_creation/components/ai_button_shape.dart';
 
 class PostCreationFirstPage extends StatefulWidget {
   final TextEditingController titleController;
@@ -60,7 +63,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
   }
 
   Widget _buildActionButton({
-    required IconData icon,
+    required Widget Function() iconBuilder,
     required VoidCallback onPressed,
     String? label,
     bool isLarger = false,
@@ -70,15 +73,14 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: isLarger ? 48 : 24),
+          iconBuilder(),
           if (label != null) ...[
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
+            ShadowedText(
+              text: label,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              shadowOpacity: 0.35,
             ),
           ],
         ],
@@ -239,9 +241,9 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
           left: 0,
           right: 0,
           child: Container(
-            height: 100,
+            height: 130, // Increased to accommodate lower AI button
             decoration: BoxDecoration(
-              color: Colors.yellow.withOpacity(0.5),
+              color: Colors.transparent,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(200),
                 bottomRight: Radius.circular(200),
@@ -251,24 +253,41 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildActionButton(
-                  icon: Icons.settings,
+                  iconBuilder: () => ShadowedShape(
+                    icon: Icons.settings,
+                    size: 24,
+                    shadowOpacity: 0.2,
+                  ),
                   onPressed: () {
                     // TODO: Implement settings action
                   },
                   label: 'Settings',
                 ),
-                _buildActionButton(
-                  icon: Icons.auto_awesome,
-                  onPressed: () {
-                    // TODO: Implement AI action
-                  },
-                  label: 'AI',
-                  isLarger: true,
+                Transform.translate(
+                  offset: const Offset(0, 30),
+                  child: _buildActionButton(
+                    iconBuilder: () => AIButtonShape(
+                      icon: Icons.auto_awesome,
+                      size: 48,
+                    ),
+                    onPressed: () {
+                      // TODO: Implement AI action
+                    },
+                    label: 'AI',
+                    isLarger: true,
+                  ),
                 ),
                 _buildActionButton(
-                  icon: widget.steps.isEmpty
-                      ? Icons.add_circle
-                      : Icons.format_list_numbered,
+                  iconBuilder: () => widget.steps.isEmpty
+                      ? AddHexagonIcon(
+                          size: 24,
+                          shadowOpacity: 0.2,
+                        )
+                      : ShadowedShape(
+                          icon: Icons.format_list_numbered,
+                          size: 24,
+                          shadowOpacity: 0.2,
+                        ),
                   onPressed: widget.steps.isEmpty
                       ? widget.onAddStep
                       : () {
