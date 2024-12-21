@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'dart:math' as math;
 
 class AddHexagonIcon extends StatelessWidget {
   final double size;
@@ -20,129 +20,23 @@ class AddHexagonIcon extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Outermost shadow layer
-        Transform.translate(
-          offset: const Offset(3, 3),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.4,
+        // Shadow layers
+        for (var offset in [
+          const Offset(2, 2),
+          const Offset(-2, 2),
+          const Offset(2, -2),
+          const Offset(-2, -2),
+        ])
+          Transform.translate(
+            offset: offset,
+            child: CustomPaint(
+              size: Size(size, size),
+              painter: _HexagonPainter(
+                color: shadowColor,
+                opacity: shadowOpacity * 0.5,
+              ),
             ),
           ),
-        ),
-        Transform.translate(
-          offset: const Offset(-3, -3),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.4,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(3, -3),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.4,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(-3, 3),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.4,
-            ),
-          ),
-        ),
-        // Middle shadow layer
-        Transform.translate(
-          offset: const Offset(2, 2),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.6,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(-2, -2),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.6,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(2, -2),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.6,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(-2, 2),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.6,
-            ),
-          ),
-        ),
-        // Inner shadow layer
-        Transform.translate(
-          offset: const Offset(1, 1),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.8,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(-1, -1),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.8,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(1, -1),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.8,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(-1, 1),
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _HexagonPainter(
-              color: shadowColor,
-              opacity: shadowOpacity * 0.8,
-            ),
-          ),
-        ),
         // Main hexagon
         CustomPaint(
           size: Size(size, size),
@@ -153,10 +47,10 @@ class AddHexagonIcon extends StatelessWidget {
         ),
         // Plus icon with stroke
         CustomPaint(
-          size: Size(size * 0.65, size * 0.65),
+          size: Size(size * 0.6, size * 0.6),
           painter: _PlusPainter(
             color: color,
-            strokeWidth: 3.0,
+            strokeWidth: 2.5,
             shadowColor: shadowColor,
             shadowOpacity: shadowOpacity,
           ),
@@ -183,28 +77,36 @@ class _HexagonPainter extends CustomPainter {
       ..strokeWidth = 2.0;
 
     final path = Path();
-    final w = size.width;
-    final h = size.height;
-    final side = w * 0.5;
-    final centerX = w / 2;
-    final centerY = h / 2;
-
-    path.moveTo(centerX + side * cos(0), centerY + side * sin(0));
-
-    for (int i = 1; i <= 6; i++) {
-      final angle = i * (pi / 3);
-      path.lineTo(
-        centerX + side * cos(angle),
-        centerY + side * sin(angle),
+    final width = size.width;
+    final height = size.height;
+    
+    // Calculate center and radius for a regular hexagon
+    final centerX = width / 2;
+    final centerY = height / 2;
+    final radius = math.min(width / math.sqrt(3), height / 2);
+    
+    // Calculate the six vertices of the regular hexagon
+    final vertices = List.generate(6, (i) {
+      final angle = (i * 60 + 30) * math.pi / 180; // Start from top vertex (30°)
+      return Offset(
+        centerX + radius * math.cos(angle),
+        centerY + radius * math.sin(angle),
       );
-    }
+    });
 
+    // Draw the hexagon path
+    path.moveTo(vertices[0].dx, vertices[0].dy);
+    for (int i = 1; i < vertices.length; i++) {
+      path.lineTo(vertices[i].dx, vertices[i].dy);
+    }
     path.close();
+    
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(_HexagonPainter oldDelegate) => color != oldDelegate.color;
+  bool shouldRepaint(_HexagonPainter oldDelegate) => 
+    color != oldDelegate.color || opacity != oldDelegate.opacity;
 }
 
 class _PlusPainter extends CustomPainter {

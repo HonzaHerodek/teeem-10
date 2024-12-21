@@ -104,27 +104,36 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
   }
 
   void _addStep() {
-    final stepKey = GlobalKey<PostStepWidgetState>();
-    final newStep = PostStepWidget(
-      key: stepKey,
-      onRemove: () => _removeStep(_state.steps.length - 1),
-      stepNumber: _state.steps.length + 1,
-      enabled: !_state.isLoading,
-      stepTypes: _state.availableStepTypes,
-    );
-
-    setState(() {
-      _state = _state.copyWith(
-        stepKeys: [..._state.stepKeys, stepKey],
-        steps: [..._state.steps, newStep],
+    if (_state.steps.isEmpty || _state.stepKeys.last.currentState?.hasSelectedStepType == true) {
+      final stepKey = GlobalKey<PostStepWidgetState>();
+      final newStep = PostStepWidget(
+        key: stepKey,
+        onRemove: () => _removeStep(_state.steps.length - 1),
+        stepNumber: _state.steps.length + 1,
+        enabled: !_state.isLoading,
+        stepTypes: _state.availableStepTypes,
       );
-    });
 
-    _pageController.animateToPage(
-      _state.steps.length,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+      setState(() {
+        _state = _state.copyWith(
+          stepKeys: [..._state.stepKeys, stepKey],
+          steps: [..._state.steps, newStep],
+        );
+      });
+
+      _pageController.animateToPage(
+        _state.steps.length,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      // If the last step hasn't had a type selected yet, just navigate to it
+      _pageController.animateToPage(
+        _state.steps.length,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void _removeStep(int index) {
@@ -181,7 +190,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
 
     final stepState = _state.stepKeys[_state.currentPage - 1].currentState;
     if (stepState != null && stepState.hasSelectedStepType) {
-      // Reset step type selection to allow choosing a different type
+      // If a step type is selected, reset to honeycomb grid
       setState(() {
         final stepKey = GlobalKey<PostStepWidgetState>();
         final newStepKeys =
@@ -203,6 +212,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
         );
       });
     } else {
+      // If no step type selected yet, remove the step and go back
       _removeStep(_state.currentPage - 1);
     }
   }
@@ -263,6 +273,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                   height: size * 0.8,
                   child: PageView(
                     controller: _pageController,
+                    physics: const ClampingScrollPhysics(), // Allow sliding back
                     onPageChanged: (index) {
                       setState(() {
                         _state = _state.copyWith(currentPage: index);
