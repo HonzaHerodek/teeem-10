@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../../data/models/post_model.dart';
 import '../../../data/models/step_type_model.dart';
@@ -13,6 +14,8 @@ class PostStepWidget extends StatefulWidget {
   final int stepNumber;
   final bool enabled;
   final List<StepTypeModel> stepTypes;
+  final StepTypeModel? initialStepType;
+  final bool showFormInitially;
 
   const PostStepWidget({
     super.key,
@@ -20,6 +23,8 @@ class PostStepWidget extends StatefulWidget {
     required this.stepNumber,
     required this.stepTypes,
     this.enabled = true,
+    this.initialStepType,
+    this.showFormInitially = false,
   });
 
   PostStep? toPostStep() {
@@ -43,6 +48,17 @@ class PostStepWidgetState extends State<PostStepWidget>
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final Map<String, TextEditingController> _optionControllers = {};
+  bool _showForm = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStepType = widget.initialStepType;
+    _showForm = widget.showFormInitially;
+    if (_selectedStepType != null) {
+      _initializeOptionControllers();
+    }
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -75,25 +91,20 @@ class PostStepWidgetState extends State<PostStepWidget>
     }
   }
 
-  bool _showForm = false;
-
   void _onStepTypeSelected(StepTypeModel type) {
-    if (_showForm) {
-      setState(() => _showForm = false);
-      return;
-    }
-
-    if (_selectedStepType?.id == type.id) {
-      setState(() => _showForm = true);
-      _initializeOptionControllers();
-    } else {
+    // Clear existing controllers if selecting a different type
+    if (_selectedStepType?.id != type.id) {
       for (final controller in _optionControllers.values) {
         controller.dispose();
       }
       _optionControllers.clear();
-
-      setState(() => _selectedStepType = type);
     }
+
+    setState(() {
+      _selectedStepType = type;
+      _showForm = true;
+      _initializeOptionControllers();
+    });
 
     updateKeepAlive();
   }
@@ -129,9 +140,12 @@ class PostStepWidgetState extends State<PostStepWidget>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          splashColor: color.withOpacity(0.3),
-          highlightColor: color.withOpacity(0.2),
-          onTap: widget.enabled ? () => _onStepTypeSelected(type) : null,
+          splashColor: Colors.white.withOpacity(0.4),
+          highlightColor: color.withOpacity(0.3),
+          onTap: widget.enabled ? () {
+            HapticFeedback.lightImpact();
+            _onStepTypeSelected(type);
+          } : null,
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -150,21 +164,21 @@ class PostStepWidgetState extends State<PostStepWidget>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(isSelected ? 0.2 : 0.1),
+                    Colors.white.withOpacity(isSelected ? 0.3 : 0.15),
                     Colors.white.withOpacity(0.0),
                   ],
                 ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: color.withOpacity(0.6),
-                          blurRadius: 12,
-                          spreadRadius: 2,
+                          color: color.withOpacity(0.7),
+                          blurRadius: 15,
+                          spreadRadius: 3,
                         ),
                         BoxShadow(
-                          color: color.withOpacity(0.3),
-                          blurRadius: 6,
-                          spreadRadius: 1,
+                          color: color.withOpacity(0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
                           offset: const Offset(0, 2),
                         ),
                       ]
@@ -186,10 +200,17 @@ class PostStepWidgetState extends State<PostStepWidget>
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             type.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
                             ),
                             textAlign: TextAlign.center,
                             maxLines: 2,
@@ -226,68 +247,70 @@ class PostStepWidgetState extends State<PostStepWidget>
         ? StepTypeUtils.getColorForStepType(stepType)
         : Colors.grey;
 
-    return Container(
-      key: ValueKey('form_${_selectedStepType?.id}'),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          StepFormHeader(
-            stepNumber: widget.stepNumber,
-            stepType: stepType,
-            enabled: widget.enabled,
-            onBack: () => setState(() => _showForm = false),
-            onRemove: widget.onRemove,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  StepFormField(
-                    controller: _titleController,
-                    label: 'Step Title',
-                    hint: 'e.g., Mix the ingredients',
-                    enabled: widget.enabled,
-                    onChanged: updateKeepAlive,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a step title';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  StepFormField(
-                    controller: _descriptionController,
-                    label: 'Step Description',
-                    hint: 'Brief description of this step',
-                    maxLines: 2,
-                    enabled: widget.enabled,
-                    onChanged: updateKeepAlive,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a step description';
-                      }
-                      return null;
-                    },
-                  ),
-                  ..._selectedStepType!.options.map((option) => StepFormField(
-                        controller: _optionControllers[option.id]!,
-                        label: option.label,
-                        enabled: widget.enabled,
-                        onChanged: updateKeepAlive,
-                      )),
-                ],
+    return SingleChildScrollView(
+      child: Container(
+        key: ValueKey('form_${_selectedStepType?.id}'),
+        decoration: BoxDecoration(
+          color: Colors.black26,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            StepFormHeader(
+              stepNumber: widget.stepNumber,
+              stepType: stepType,
+              enabled: widget.enabled,
+              onBack: () => setState(() => _showForm = false),
+              onRemove: widget.onRemove,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StepFormField(
+                      controller: _titleController,
+                      label: 'Step Title',
+                      hint: 'e.g., Mix the ingredients',
+                      enabled: widget.enabled,
+                      onChanged: updateKeepAlive,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a step title';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    StepFormField(
+                      controller: _descriptionController,
+                      label: 'Step Description',
+                      hint: 'Brief description of this step',
+                      maxLines: 2,
+                      enabled: widget.enabled,
+                      onChanged: updateKeepAlive,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a step description';
+                        }
+                        return null;
+                      },
+                    ),
+                    ..._selectedStepType!.options.map((option) => StepFormField(
+                          controller: _optionControllers[option.id]!,
+                          label: option.label,
+                          enabled: widget.enabled,
+                          onChanged: updateKeepAlive,
+                        )),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -295,51 +318,45 @@ class PostStepWidgetState extends State<PostStepWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final size = MediaQuery.of(context).size.width - 32;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(
-            top: 20), // Add top padding to account for the circular container
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: _showForm
-                      ? const Offset(
-                          -0.3, 0) // Slide from left when showing form
-                      : const Offset(
-                          0.3, 0), // Slide from right when showing grid
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          child: _showForm
-              ? _buildStepForm()
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SizedBox(
-                      width: constraints.maxWidth,
-                      key: ValueKey('grid_${_selectedStepType?.id ?? "none"}'),
-                      child: HoneycombGrid(
-                        cellSize: 65,
-                        spacing: 0,
-                        config: HoneycombConfig.area(
-                          maxWidth: constraints.maxWidth,
-                          maxItemsPerRow: math.min(3, widget.stepTypes.length),
-                        ),
-                        children: widget.stepTypes
-                            .map((type) => _buildStepTypeMiniature(type))
-                            .toList(),
-                      ),
-                    );
-                  },
+    return SizedBox(
+      width: size,
+      height: size,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: _showForm
+                    ? const Offset(-0.3, 0) // Slide from left when showing form
+                    : const Offset(
+                        0.3, 0), // Slide from right when showing grid
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: _showForm
+            ? _buildStepForm()
+            : SizedBox(
+                width: size * 1.0,
+                height: size * 1.0,
+                child: HoneycombGrid(
+                  cellSize: 65,
+                  spacing: 0,
+                  config: HoneycombConfig.area(
+                    maxWidth: size * 1.0,
+                    maxItemsPerRow: math.min(3, widget.stepTypes.length),
+                  ),
+                  children: widget.stepTypes
+                      .map((type) => _buildStepTypeMiniature(type))
+                      .toList(),
                 ),
-        ),
+              ),
       ),
     );
   }

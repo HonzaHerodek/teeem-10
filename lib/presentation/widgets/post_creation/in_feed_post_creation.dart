@@ -112,6 +112,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
         stepNumber: _state.steps.length + 1,
         enabled: !_state.isLoading,
         stepTypes: _state.availableStepTypes,
+        initialStepType: null,
+        showFormInitially: false,
       );
 
       setState(() {
@@ -158,10 +160,23 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
     final newStepKeys =
         List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
 
+    // Store states before removal
+    final stepStates = <int, Map<String, dynamic>>{};
+    for (var i = 0; i < newSteps.length; i++) {
+      if (i == index) continue; // Skip the step being removed
+      final state = (newSteps[i].key as GlobalKey<PostStepWidgetState>).currentState;
+      if (state != null) {
+        stepStates[i > index ? i - 1 : i] = {
+          'stepType': state.getSelectedStepType(),
+          'showForm': state.hasSelectedStepType,
+        };
+      }
+    }
+
     newSteps.removeAt(index);
     newStepKeys.removeAt(index);
 
-    // Update step numbers
+    // Update step numbers and preserve states
     for (var i = 0; i < newSteps.length; i++) {
       final stepKey = GlobalKey<PostStepWidgetState>();
       newStepKeys[i] = stepKey;
@@ -171,6 +186,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
         stepNumber: i + 1,
         enabled: !_state.isLoading,
         stepTypes: _state.availableStepTypes,
+        initialStepType: stepStates[i]?['stepType'] as StepTypeModel?,
+        showFormInitially: stepStates[i]?['showForm'] as bool? ?? false,
       );
     }
 
@@ -204,6 +221,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
           stepNumber: _state.currentPage,
           enabled: !_state.isLoading,
           stepTypes: _state.availableStepTypes,
+          initialStepType: null,
+          showFormInitially: false,
         );
 
         _state = _state.copyWith(
@@ -265,42 +284,28 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
           child: SizedBox(
             width: size,
             height: size,
-            child: Form(
-              key: _formKey,
-              child: Center(
-                child: SizedBox(
-                  width: size * 0.8,
-                  height: size * 0.8,
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const ClampingScrollPhysics(), // Allow sliding back
-                    onPageChanged: (index) {
-                      setState(() {
-                        _state = _state.copyWith(currentPage: index);
-                      });
-                    },
-                    children: [
-                      PostCreationFirstPage(
-                        titleController: _titleController,
-                        descriptionController: _descriptionController,
-                        isLoading: _state.isLoading,
-                        onAddStep: _addStep,
-                        steps: _state.steps,
-                        pageController: _pageController,
-                      ),
-                      ..._state.steps.map((step) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 40),
-                                  step,
-                                ],
-                              ),
-                            ),
-                          )),
-                    ],
-                  ),
+            child: ClipOval(
+              child: Form(
+                key: _formKey,
+                child: PageView(
+                  controller: _pageController,
+                  physics: const ClampingScrollPhysics(), // Allow sliding back
+                  onPageChanged: (index) {
+                    setState(() {
+                      _state = _state.copyWith(currentPage: index);
+                    });
+                  },
+                  children: [
+                    PostCreationFirstPage(
+                      titleController: _titleController,
+                      descriptionController: _descriptionController,
+                      isLoading: _state.isLoading,
+                      onAddStep: _addStep,
+                      steps: _state.steps,
+                      pageController: _pageController,
+                    ),
+                    ..._state.steps,
+                  ],
                 ),
               ),
             ),

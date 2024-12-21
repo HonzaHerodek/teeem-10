@@ -91,55 +91,19 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
         ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.zero,
           children: [
             const SizedBox(height: 40),
-            TextFormField(
-              controller: widget.titleController,
-              enabled: !widget.isLoading,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 3,
-                    color: Colors.black,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-              decoration: InputDecoration(
-                label: _titleHasText
-                    ? null
-                    : const Center(
-                        child: ShadowedText(
-                          text: 'Title',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _titleHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _titleHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color:
-                            _titleHasText ? Colors.transparent : Colors.white)),
-                hintText: 'Title of Task',
-                hintStyle: const TextStyle(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TextFormField(
+                controller: widget.titleController,
+                enabled: !widget.isLoading,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -151,65 +115,67 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
                     ),
                   ],
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                decoration: InputDecoration(
+                  label: _titleHasText
+                      ? null
+                      : const Center(
+                          child: ShadowedText(
+                            text: 'Title',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                  floatingLabelBehavior: FloatingLabelBehavior.auto,
+                  floatingLabelAlignment: FloatingLabelAlignment.center,
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _titleHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _titleHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color:
+                              _titleHasText ? Colors.transparent : Colors.white)),
+                  hintText: 'Title of Task',
+                  hintStyle: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 3,
+                        color: Colors.black,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a title';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a title';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: widget.descriptionController,
-              enabled: !widget.isLoading,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16, // Description size stays at 16
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 3,
-                    color: Colors.black,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-              decoration: InputDecoration(
-                label: _descriptionHasText
-                    ? null
-                    : const Center(
-                        child: ShadowedText(
-                          text: 'Description',
-                          fontSize: 16, // Description size stays at 16
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _descriptionHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _descriptionHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _descriptionHasText
-                            ? Colors.transparent
-                            : Colors.white)),
-                hintText: 'short summary of the goal',
-                hintStyle: const TextStyle(
-                  fontSize: 16, // Description size stays at 16
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TextFormField(
+                controller: widget.descriptionController,
+                enabled: !widget.isLoading,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
                   shadows: [
@@ -220,18 +186,59 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
                     ),
                   ],
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                decoration: InputDecoration(
+                  label: _descriptionHasText
+                      ? null
+                      : const Center(
+                          child: ShadowedText(
+                            text: 'Description',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                  floatingLabelBehavior: FloatingLabelBehavior.auto,
+                  floatingLabelAlignment: FloatingLabelAlignment.center,
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _descriptionHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _descriptionHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _descriptionHasText
+                              ? Colors.transparent
+                              : Colors.white)),
+                  hintText: 'short summary of the goal',
+                  hintStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 3,
+                        color: Colors.black,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a description';
+                  }
+                  return null;
+                },
               ),
-              maxLines: 2,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a description';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 100),
           ],
@@ -241,10 +248,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
           left: 0,
           right: 0,
           child: Container(
-            height: 130, // Increased to accommodate lower AI button
-            decoration: BoxDecoration(
+            height: 130,
+            decoration: const BoxDecoration(
               color: Colors.transparent,
-              borderRadius: const BorderRadius.only(
+              borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(200),
                 bottomRight: Radius.circular(200),
               ),
