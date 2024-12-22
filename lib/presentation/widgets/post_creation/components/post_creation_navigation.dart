@@ -16,61 +16,48 @@ class PostCreationNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (stepsCount == 0) return const SizedBox.shrink();
+    // Don't show navigation dots on step type selection page
+    if (currentPage == 1) return const SizedBox.shrink();
 
-    return Stack(
-      children: [
-        if (currentPage > 0)
-          Positioned(
-            left: 8,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  color: Colors.white70,
-                ),
-                onPressed: () {
-                  pageController.previousPage(
+    // Adjust page index to account for step type selection page
+    final adjustedCurrentPage = currentPage > 1 ? currentPage - 1 : currentPage;
+    
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (int i = 0; i <= stepsCount; i++)
+              GestureDetector(
+                onTap: () {
+                  // Adjust target page to account for step type selection page
+                  final targetPage = i == 0 ? 0 : i + 1;
+                  pageController.animateToPage(
+                    targetPage,
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                   );
                 },
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: i == adjustedCurrentPage
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.5),
+                  ),
+                ),
               ),
-            ),
-          ),
-        if (stepsCount > 0)
-          Positioned(
-            right: 8,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: currentPage < stepsCount
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white70,
-                      ),
-                      onPressed: () {
-                        if (currentPage < stepsCount) {
-                          pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      },
-                    )
-                  : IconButton(
-                      icon: const Icon(
-                        Icons.add,
-                        color: Colors.white70,
-                      ),
-                      onPressed: onAddStep,
-                    ),
-            ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }

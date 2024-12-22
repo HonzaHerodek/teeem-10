@@ -3,6 +3,7 @@ import '../../widgets/common/glass_container.dart';
 import '../../../../data/models/step_type_model.dart';
 import './post_step_widget.dart';
 import './components/post_creation_first_page.dart';
+import './components/hexagon_grid_page.dart';
 import './components/post_creation_navigation.dart';
 import './components/post_creation_step_button.dart';
 import './components/post_creation_cancel_button.dart';
@@ -205,7 +206,15 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
       return;
     }
 
-    final stepState = _state.stepKeys[_state.currentPage - 1].currentState;
+    if (_state.currentPage == 1) { // Step type selection page
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      return;
+    }
+
+    final stepState = _state.stepKeys[_state.currentPage - 2].currentState; // -2 to account for step type page
     if (stepState != null && stepState.hasSelectedStepType) {
       // If a step type is selected, reset to honeycomb grid
       setState(() {
@@ -214,11 +223,11 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
             List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
         final newSteps = List<PostStepWidget>.from(_state.steps);
 
-        newStepKeys[_state.currentPage - 1] = stepKey;
-        newSteps[_state.currentPage - 1] = PostStepWidget(
+        newStepKeys[_state.currentPage - 2] = stepKey;
+        newSteps[_state.currentPage - 2] = PostStepWidget(
           key: stepKey,
-          onRemove: () => _removeStep(_state.currentPage - 1),
-          stepNumber: _state.currentPage,
+          onRemove: () => _removeStep(_state.currentPage - 2),
+          stepNumber: _state.currentPage - 1,
           enabled: !_state.isLoading,
           stepTypes: _state.availableStepTypes,
           initialStepType: null,
@@ -232,7 +241,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
       });
     } else {
       // If no step type selected yet, remove the step and go back
-      _removeStep(_state.currentPage - 1);
+      _removeStep(_state.currentPage - 2);
     }
   }
 
@@ -303,6 +312,9 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                       onAddStep: _addStep,
                       steps: _state.steps,
                       pageController: _pageController,
+                    ),
+                    HexagonGridPage(
+                      onHexagonClicked: () {}, // Just turn pink, no navigation
                     ),
                     ..._state.steps,
                   ],

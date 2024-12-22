@@ -278,7 +278,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
                       size: 48,
                     ),
                     onPressed: () {
-                      // TODO: Implement AI action
+                      widget.pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
                     },
                     label: 'AI',
                     isLarger: true,
