@@ -49,17 +49,16 @@ class _ScaleFadeAnimationState extends State<ScaleFadeAnimation>
   }
 
   void _initializeAnimations() {
-    // Scale animation with smooth transitions
+    // Scale animation with symmetric forward/reverse behavior
     _scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInExpo,
-      reverseCurve: Curves.easeInExpo,
     ));
 
-    // Fade animation synchronized with scale
+    // Fade animation with symmetric forward/reverse behavior
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -67,10 +66,6 @@ class _ScaleFadeAnimationState extends State<ScaleFadeAnimation>
       parent: _controller,
       curve: const Interval(
         0.0, 0.5,
-        curve: Curves.easeIn,
-      ),
-      reverseCurve: const Interval(
-        0.0, 0.4,
         curve: Curves.easeIn,
       ),
     ));
