@@ -1,46 +1,112 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
+import 'hexagon_step_input.dart';
+import '../../../../domain/repositories/step_type_repository.dart';
 
-class HexagonGridPage extends StatelessWidget {
-  final grid = HexagonGrid();
+class HexagonGridPage extends StatefulWidget {
   final VoidCallback onHexagonClicked;
+  final StepTypeRepository stepTypeRepository;
 
-  HexagonGridPage({
+  const HexagonGridPage({
     Key? key,
     required this.onHexagonClicked,
+    required this.stepTypeRepository,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(8),
-      child: LayoutBuilder(builder: (context, constraints) {
-        grid.initialize(constraints.maxWidth, constraints.maxHeight, onHexagonClicked);
-        return Container(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          color: Colors.transparent,
-          child: grid,
-        );
-      }),
-    );
-  }
+  State<HexagonGridPage> createState() => _HexagonGridPageState();
 }
 
-class HexagonGrid extends StatelessWidget {
-  final GridInitializer gridInitializer = GridInitializer();
-  final List<HexagonPaint> hexagons = [];
+class _HexagonGridPageState extends State<HexagonGridPage> {
+  late final HexagonGrid grid;
+  late final HexagonStepInput stepInput;
 
-  void initialize(final double screenWidth, final double screenHeight, VoidCallback onHexagonClicked) {
-    if (hexagons.isEmpty) {
-      hexagons.addAll(gridInitializer.getHexagons(screenWidth, screenHeight, onHexagonClicked));
+  @override
+  void initState() {
+    super.initState();
+    stepInput = HexagonStepInput(widget.stepTypeRepository);
+    grid = HexagonGrid(
+      onHexagonClicked: widget.onHexagonClicked,
+      stepInput: stepInput,
+    );
+    _initializeStepInput();
+  }
+
+  Future<void> _initializeStepInput() async {
+    await stepInput.initialize();
+    if (mounted) {
+      setState(() {}); // Trigger rebuild with new colors
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: hexagons);
+    return Container(
+      padding: EdgeInsets.all(8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Container(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            color: Colors.transparent,
+            child: grid,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class HexagonGrid extends StatefulWidget {
+  final VoidCallback onHexagonClicked;
+  final HexagonStepInput stepInput;
+
+  const HexagonGrid({
+    Key? key,
+    required this.onHexagonClicked,
+    required this.stepInput,
+  }) : super(key: key);
+
+  @override
+  State<HexagonGrid> createState() => _HexagonGridState();
+}
+
+class _HexagonGridState extends State<HexagonGrid> {
+  final GridInitializer gridInitializer = GridInitializer();
+  final List<HexagonPaint> hexagons = [];
+  bool _initialized = false;
+
+  void _initializeGrid(final double screenWidth, final double screenHeight) {
+    if (!_initialized) {
+      hexagons.clear();
+      hexagons.addAll(gridInitializer.getHexagons(
+        screenWidth,
+        screenHeight,
+        widget.onHexagonClicked,
+        widget.stepInput,
+      ));
+      _initialized = true;
+    }
+  }
+
+  @override
+  void didUpdateWidget(HexagonGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stepInput != widget.stepInput) {
+      _initialized = false;
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _initializeGrid(constraints.maxWidth, constraints.maxHeight);
+        return Stack(children: hexagons);
+      },
+    );
   }
 }
 
@@ -55,7 +121,11 @@ class GridInitializer {
   double screenHeight = 0;
 
   List<HexagonPaint> getHexagons(
-      final double screenWidth, final double screenHeight, VoidCallback onHexagonClicked) {
+    final double screenWidth,
+    final double screenHeight,
+    VoidCallback onHexagonClicked,
+    HexagonStepInput stepInput,
+  ) {
     var hexagons = <HexagonPaint>[];
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
@@ -64,9 +134,11 @@ class GridInitializer {
 
     for (int y = 0; y < nrY; y++) {
       for (int x = 0; x < nrX; x++) {
+        final index = y * nrX + x;
         hexagons.add(HexagonPaint(
           model: HexagonModel(computeCenter(x, y), radius),
           onClicked: onHexagonClicked,
+          color: stepInput.getColorForHexagon(index),
         ));
       }
     }
@@ -82,7 +154,7 @@ class GridInitializer {
   }
 
   static double heightRatioOfRadius() =>
-      math.cos(math.pi / HexagonPainter.SIDES_OF_HEXAGON);
+      math.cos(math.pi / StepTypeHexagonPainter.SIDES_OF_HEXAGON);
 
   static double totalMarginY() => (nrY - 0.5) * marginY;
 
@@ -135,11 +207,13 @@ class HexagonModel {
 class HexagonPaint extends StatefulWidget {
   final HexagonModel model;
   final VoidCallback onClicked;
+  final Color color;
   final GlobalKey<_HexagonPaintState> key = GlobalKey<_HexagonPaintState>();
 
   HexagonPaint({
     required this.model,
     required this.onClicked,
+    required this.color,
   }) : super(key: model.key);
 
   @override
@@ -166,10 +240,11 @@ class _HexagonPaintState extends State<HexagonPaint> {
             height: widget.model.radius * 2,
             color: Colors.transparent,
             child: CustomPaint(
-              painter: HexagonPainter(
-                Offset(widget.model.radius, widget.model.radius),
-                widget.model.radius,
-                widget.model.clicked,
+              painter: StepTypeHexagonPainter(
+                center: Offset(widget.model.radius, widget.model.radius),
+                radius: widget.model.radius,
+                clicked: widget.model.clicked,
+                hexagonColor: widget.color,
               ),
             ),
           ),
@@ -177,42 +252,4 @@ class _HexagonPaintState extends State<HexagonPaint> {
       ),
     );
   }
-}
-
-class HexagonPainter extends CustomPainter {
-  static const int SIDES_OF_HEXAGON = 6;
-  final double radius;
-  final Offset center;
-  final bool clicked;
-
-  HexagonPainter(this.center, this.radius, this.clicked);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = clicked ? Colors.pink : Colors.blue;
-    Path path = createHexagonPath();
-    canvas.drawPath(path, paint);
-  }
-
-  Path createHexagonPath() {
-    final path = Path();
-    var startAngle = math.pi / 2;
-    var angle = (math.pi * 2) / SIDES_OF_HEXAGON;
-
-    Offset firstPoint =
-        Offset(radius * math.cos(startAngle), radius * math.sin(startAngle));
-    path.moveTo(firstPoint.dx + center.dx, firstPoint.dy + center.dy);
-
-    for (int i = 1; i <= SIDES_OF_HEXAGON; i++) {
-      double x = radius * math.cos(startAngle + angle * i) + center.dx;
-      double y = radius * math.sin(startAngle + angle * i) + center.dy;
-      path.lineTo(x, y);
-    }
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldRepaint(HexagonPainter oldDelegate) =>
-      oldDelegate.clicked != clicked;
 }

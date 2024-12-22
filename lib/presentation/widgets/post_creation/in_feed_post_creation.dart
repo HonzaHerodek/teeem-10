@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common/glass_container.dart';
+import '../../../../core/di/injection.dart';
 import '../../../../data/models/step_type_model.dart';
+import '../../../../domain/repositories/step_type_repository.dart';
 import './post_step_widget.dart';
 import './components/post_creation_first_page.dart';
 import './components/hexagon_grid_page.dart';
@@ -315,6 +317,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                     ),
                     HexagonGridPage(
                       onHexagonClicked: () {}, // Just turn pink, no navigation
+                      stepTypeRepository: getIt<StepTypeRepository>(),
                     ),
                     ..._state.steps,
                   ],
