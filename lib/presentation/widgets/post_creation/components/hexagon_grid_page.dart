@@ -120,7 +120,7 @@ class GridInitializer {
   static const int marginY = 5;
   static const int marginX = 5;
   static const int nrX = 9;
-  static const int nrY = 6;
+  static const int nrY = 9;
   double radius = 0;
   double height = 0;
   double screenWidth = 0;
@@ -141,10 +141,12 @@ class GridInitializer {
     for (int y = 0; y < nrY; y++) {
       for (int x = 0; x < nrX; x++) {
         final index = y * nrX + x;
+        final isCenter = y == 4 && x == 4; // Center hexagon at (4,4)
         hexagons.add(HexagonPaint(
           model: HexagonModel(computeCenter(x, y), radius),
           onClicked: onHexagonClicked,
           color: stepInput.getColorForHexagon(index),
+          showSearchIcon: isCenter,
         ));
       }
     }
@@ -214,12 +216,14 @@ class HexagonPaint extends StatefulWidget {
   final HexagonModel model;
   final VoidCallback onClicked;
   final Color color;
+  final bool showSearchIcon;
   final GlobalKey<_HexagonPaintState> key = GlobalKey<_HexagonPaintState>();
 
   HexagonPaint({
     required this.model,
     required this.onClicked,
     required this.color,
+    this.showSearchIcon = false,
   }) : super(key: model.key);
 
   @override
@@ -251,6 +255,7 @@ class _HexagonPaintState extends State<HexagonPaint> {
                 radius: widget.model.radius,
                 clicked: widget.model.clicked,
                 hexagonColor: widget.color,
+                showSearchIcon: widget.showSearchIcon,
               ),
             ),
           ),
@@ -258,4 +263,80 @@ class _HexagonPaintState extends State<HexagonPaint> {
       ),
     );
   }
+}
+
+class StepTypeHexagonPainter extends CustomPainter {
+  static const int SIDES_OF_HEXAGON = 6;
+  final Offset center;
+  final double radius;
+  final bool clicked;
+  final Color hexagonColor;
+  final bool showSearchIcon;
+
+  StepTypeHexagonPainter({
+    required this.center,
+    required this.radius,
+    required this.clicked,
+    required this.hexagonColor,
+    this.showSearchIcon = false,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw hexagon
+    Paint paint = Paint()..color = clicked ? Colors.pink : hexagonColor;
+    Path path = createHexagonPath();
+    canvas.drawPath(path, paint);
+
+    // Draw search icon if needed
+    if (showSearchIcon) {
+      final iconPaint = Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0;
+
+      // Draw search circle
+      final circleRadius = radius * 0.4;
+      canvas.drawCircle(
+        Offset(center.dx, center.dy),
+        circleRadius,
+        iconPaint,
+      );
+
+      // Draw search handle
+      final handleStart = Offset(
+        center.dx + circleRadius * math.cos(math.pi / 4),
+        center.dy + circleRadius * math.sin(math.pi / 4),
+      );
+      final handleEnd = Offset(
+        center.dx + radius * 0.7 * math.cos(math.pi / 4),
+        center.dy + radius * 0.7 * math.sin(math.pi / 4),
+      );
+      canvas.drawLine(handleStart, handleEnd, iconPaint);
+    }
+  }
+
+  Path createHexagonPath() {
+    final path = Path();
+    var startAngle = math.pi / 2;
+    var angle = (math.pi * 2) / SIDES_OF_HEXAGON;
+
+    Offset firstPoint =
+        Offset(radius * math.cos(startAngle), radius * math.sin(startAngle));
+    path.moveTo(firstPoint.dx + center.dx, firstPoint.dy + center.dy);
+
+    for (int i = 1; i <= SIDES_OF_HEXAGON; i++) {
+      double x = radius * math.cos(startAngle + angle * i) + center.dx;
+      double y = radius * math.sin(startAngle + angle * i) + center.dy;
+      path.lineTo(x, y);
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(StepTypeHexagonPainter oldDelegate) =>
+      oldDelegate.clicked != clicked ||
+      oldDelegate.hexagonColor != hexagonColor ||
+      oldDelegate.showSearchIcon != showSearchIcon;
 }

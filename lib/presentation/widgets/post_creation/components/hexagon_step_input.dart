@@ -3,12 +3,14 @@ import 'dart:math' as math;
 import '../../../../domain/repositories/step_type_repository.dart';
 import '../../../../data/models/step_type_model.dart';
 import 'hexagon_grid_page.dart';
+import '../../../widgets/common/hexagon_central_tiles.dart';
 
 class HexagonStepInput {
   final StepTypeRepository _stepTypeRepository;
   List<StepTypeModel>? _stepTypes;
   final Map<int, Color> _hexagonColors = {};
   static const Color defaultColor = Colors.blue;
+  static const int numberOfCentralHexagons = 3; // Exactly 3 hexagons, made constant
 
   HexagonStepInput(this._stepTypeRepository);
 
@@ -40,6 +42,21 @@ class HexagonStepInput {
   }
 
   Color getColorForHexagon(int index) {
+    // Convert index to row and column
+    final row = index ~/ GridInitializer.nrX;
+    final col = index % GridInitializer.nrX;
+
+    // Check if this is a central hexagon
+    if (HexagonCentralTiles.isCentralHexagon(
+      row, 
+      col, 
+      GridInitializer.nrY, 
+      GridInitializer.nrX,
+      numberOfCentralHexagons
+    )) {
+      return Colors.yellow;
+    }
+
     return _hexagonColors[index] ?? defaultColor;
   }
 }
