@@ -174,8 +174,8 @@ class StepTypeHexagonPainter extends CustomPainter {
         );
         paint.shader = gradient.createShader(path.getBounds());
       } else {
-        // Step type colored tiles
-        paint.color = hexagonColor;
+        // Step type colored tiles or clicked state
+        paint.color = clicked ? Colors.pink : hexagonColor;
       }
       canvas.drawPath(path, paint);
     }
