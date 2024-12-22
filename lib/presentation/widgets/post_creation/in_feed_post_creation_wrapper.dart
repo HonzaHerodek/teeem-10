@@ -27,9 +27,41 @@ class InFeedPostCreationWrapper extends StatefulWidget {
   State<InFeedPostCreationWrapper> createState() => _InFeedPostCreationWrapperState();
 }
 
-class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper> {
+class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper> 
+    with SingleTickerProviderStateMixin {
   ProjectModel? _selectedProject;
   bool _isNewlyCreatedProject = false;
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    if (widget.isVisible) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(InFeedPostCreationWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isVisible != oldWidget.isVisible) {
+      if (widget.isVisible) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   Widget _buildProjectButton() {
     return Padding(
@@ -86,44 +118,44 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 1200),
-      curve: Curves.easeInOutCubic,
-      child: SizedBox(
-        height: widget.isVisible ? null : 0,
-        child: ScaleFadeAnimation(
-          isVisible: widget.isVisible,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_selectedProject != null && _isNewlyCreatedProject)
-                PostCreationAddProject(
-                  postCreation: InFeedPostCreation(
+    return SizeTransition(
+      sizeFactor: CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutExpo,
+      ),
+      axisAlignment: -1,
+      child: ScaleFadeAnimation(
+        isVisible: widget.isVisible,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_selectedProject != null && _isNewlyCreatedProject)
+              PostCreationAddProject(
+                postCreation: InFeedPostCreation(
+                  key: widget.postCreationKey,
+                  onCancel: widget.onCancel,
+                  onComplete: (success) => widget.onComplete(success, _selectedProject),
+                ),
+                project: _selectedProject!,
+                onRemoveProject: () => setState(() {
+                  _selectedProject = null;
+                  _isNewlyCreatedProject = false;
+                }),
+              )
+            else
+              Column(
+                children: [
+                  InFeedPostCreation(
                     key: widget.postCreationKey,
                     onCancel: widget.onCancel,
                     onComplete: (success) => widget.onComplete(success, _selectedProject),
                   ),
-                  project: _selectedProject!,
-                  onRemoveProject: () => setState(() {
-                    _selectedProject = null;
-                    _isNewlyCreatedProject = false;
-                  }),
-                )
-              else
-                Column(
-                  children: [
-                    InFeedPostCreation(
-                      key: widget.postCreationKey,
-                      onCancel: widget.onCancel,
-                      onComplete: (success) => widget.onComplete(success, _selectedProject),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildProjectButton(),
-                  ],
-                ),
-            ],
-          ),
+                  const SizedBox(height: 16),
+                  _buildProjectButton(),
+                ],
+              ),
+          ],
         ),
       ),
     );
