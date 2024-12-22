@@ -19,24 +19,25 @@ class HexagonGridPage extends StatefulWidget {
 }
 
 class _HexagonGridPageState extends State<HexagonGridPage> {
-  late final HexagonGrid grid;
   late final HexagonStepInput stepInput;
-
+  bool isLoading = true;
+  
   @override
   void initState() {
     super.initState();
     stepInput = HexagonStepInput(widget.stepTypeRepository);
-    grid = HexagonGrid(
-      onHexagonClicked: widget.onHexagonClicked,
-      stepInput: stepInput,
-    );
     _initializeStepInput();
   }
 
   Future<void> _initializeStepInput() async {
-    await stepInput.initialize();
-    if (mounted) {
-      setState(() {}); // Trigger rebuild with new colors
+    try {
+      await stepInput.initialize();
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -44,16 +45,21 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(8),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Container(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            color: Colors.transparent,
-            child: grid,
-          );
-        },
-      ),
+      child: isLoading 
+        ? Center(child: CircularProgressIndicator())
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              return Container(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                color: Colors.transparent,
+                child: HexagonGrid(
+                  onHexagonClicked: widget.onHexagonClicked,
+                  stepInput: stepInput,
+                ),
+              );
+            },
+          ),
     );
   }
 }

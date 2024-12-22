@@ -15,10 +15,13 @@ class HexagonStepInput {
   Future<void> initialize() async {
     try {
       _stepTypes = await _stepTypeRepository.getStepTypes();
+      if (_stepTypes == null || _stepTypes!.isEmpty) {
+        throw Exception('No step types found');
+      }
       _updateHexagonColors();
     } catch (e) {
-      // Handle error appropriately
       print('Error loading step types: $e');
+      rethrow; // Rethrow to let parent handle the error
     }
   }
 
