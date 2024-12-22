@@ -12,6 +12,14 @@ class HexagonStepInput {
   static const Color defaultColor = Colors.blue;
   static const int numberOfCentralHexagons = 3; // Exactly 3 hexagons, made constant
 
+  // Central indices in 9x9 grid
+  static const List<int> centralIndices = [
+    39, // Left of center (4,3)
+    41, // Right of center (4,5)
+    31, // Top of center (3,4)
+    49, // Bottom of center (5,4)
+  ];
+
   HexagonStepInput(this._stepTypeRepository);
 
   Future<void> initialize() async {
@@ -29,13 +37,14 @@ class HexagonStepInput {
 
   void _updateHexagonColors() {
     if (_stepTypes != null) {
-      for (var i = 0; i < _stepTypes!.length; i++) {
+      // Assign step type colors to the central positions
+      for (var i = 0; i < _stepTypes!.length && i < centralIndices.length; i++) {
         try {
-          _hexagonColors[i] = Color(
+          _hexagonColors[centralIndices[i]] = Color(
             int.parse(_stepTypes![i].color.replaceAll('#', '0xFF')),
           );
         } catch (e) {
-          _hexagonColors[i] = defaultColor;
+          _hexagonColors[centralIndices[i]] = defaultColor;
         }
       }
     }
@@ -46,18 +55,28 @@ class HexagonStepInput {
     final row = index ~/ GridInitializer.nrX;
     final col = index % GridInitializer.nrX;
 
-    // Check if this is a central hexagon
-    if (HexagonCentralTiles.isCentralHexagon(
-      row, 
-      col, 
-      GridInitializer.nrY, 
-      GridInitializer.nrX,
-      numberOfCentralHexagons
-    )) {
+    // Center position (4,4)
+    const centerRow = 4;
+    const centerCol = 4;
+
+    // Center tile with search icon always stays yellow
+    if (row == centerRow && col == centerCol) {
       return Colors.yellow;
     }
 
-    return _hexagonColors[index] ?? defaultColor;
+    // Check if this is within the central area
+    if (HexagonCentralTiles.isCentralHexagon(row, col, GridInitializer.nrY,
+        GridInitializer.nrX, numberOfCentralHexagons)) {
+      // If this is one of our central positions and has a step type color, use it
+      if (_hexagonColors.containsKey(index)) {
+        return _hexagonColors[index]!;
+      }
+      // Otherwise use yellow for central area
+      return Colors.yellow;
+    }
+
+    // Outside central area is blue
+    return defaultColor;
   }
 }
 
@@ -102,5 +121,6 @@ class StepTypeHexagonPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(StepTypeHexagonPainter oldDelegate) =>
-      oldDelegate.clicked != clicked || oldDelegate.hexagonColor != hexagonColor;
+      oldDelegate.clicked != clicked ||
+      oldDelegate.hexagonColor != hexagonColor;
 }
