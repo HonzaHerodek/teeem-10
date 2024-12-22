@@ -38,46 +38,52 @@ class FeedStateManager {
     required bool isCreatingPost,
     required GlobalKey? selectedItemKey,
   }) {
-    // Update layout manager state directly
-    layoutManager.isProfileOpen = isProfileOpen;
-    layoutManager.isCreatingPost = isCreatingPost;
-    layoutManager.selectedItemKey = selectedItemKey;
-    
-    // Update notification manager state directly
-    notificationManager.isProfileOpen = isProfileOpen;
-    notificationManager.selectedItemKey = selectedItemKey;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Update layout manager state
+      layoutManager.isProfileOpen = isProfileOpen;
+      layoutManager.isCreatingPost = isCreatingPost;
+      layoutManager.selectedItemKey = selectedItemKey;
+      
+      // Update notification manager state
+      notificationManager.isProfileOpen = isProfileOpen;
+      notificationManager.selectedItemKey = selectedItemKey;
+    });
   }
 
   void handlePostComplete(bool success, [ProjectModel? project]) {
-    onCreatePostChanged(false);
-    if (success) {
-      feedController.refresh();
-      if (project != null) {
-        feedController.addPostToProject(
-          projectId: project.id,
-          postId: '', // This will be set by the backend
-        );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      onCreatePostChanged(false);
+      if (success) {
+        feedController.refresh();
+        if (project != null) {
+          feedController.addPostToProject(
+            projectId: project.id,
+            postId: '', // This will be set by the backend
+          );
+        }
       }
-    }
+    });
   }
 
   void handleProfileStateChange(bool isOpen) {
-    if (isOpen) {
-      dimmingManager.onDimmingUpdate(
-        isDimmed: true,
-        excludedKeys: const [],
-        config: const DimmingConfig(
-          dimmingStrength: 0.7,
-          glowBlur: 10,
-        ),
-      );
-    } else {
-      dimmingManager.onDimmingUpdate(
-        isDimmed: false,
-        excludedKeys: const [],
-        config: const DimmingConfig(),
-      );
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isOpen) {
+        dimmingManager.onDimmingUpdate(
+          isDimmed: true,
+          excludedKeys: const [],
+          config: const DimmingConfig(
+            dimmingStrength: 0.7,
+            glowBlur: 10,
+          ),
+        );
+      } else {
+        dimmingManager.onDimmingUpdate(
+          isDimmed: false,
+          excludedKeys: const [],
+          config: const DimmingConfig(),
+        );
+      }
+    });
   }
 
   void dispose() {

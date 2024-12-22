@@ -127,7 +127,11 @@ class _FeedViewState extends State<FeedView> {
       notificationManager: _notificationManager,
       layoutManager: _layoutManager,
       onCreatePostChanged: (value) {
-        if (mounted) setState(() => _isCreatingPost = value);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() => _isCreatingPost = value);
+          }
+        });
       },
       onDimmingChanged: ({
         required bool isDimmed,
@@ -145,13 +149,23 @@ class _FeedViewState extends State<FeedView> {
         }
       },
       onKeyChanged: (key) {
-        if (mounted) setState(() => _selectedItemKey = key);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() => _selectedItemKey = key);
+          }
+        });
       },
     );
   }
 
   void _setupListeners() {
-    _scrollController.addListener(() => _layoutManager.handleScroll(_scrollController));
+    _scrollController.addListener(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _layoutManager.handleScroll(_scrollController);
+        }
+      });
+    });
     _headerController.addListener(() => _stateManager.updateManagers(
       isProfileOpen: _isProfileOpen,
       isCreatingPost: _isCreatingPost,
@@ -164,13 +178,17 @@ class _FeedViewState extends State<FeedView> {
     if (state is FeedSuccess) {
       final notification = _headerController.selectedNotification;
       if (notification?.type != NotificationType.profile) {
-        _layoutManager.updateFeedService(state.posts, state.projects);
-        if (notification != null && mounted) {
-          final itemId = notification.type == NotificationType.post
-              ? notification.postId!
-              : notification.projectId!;
-          _notificationManager.moveToItem(itemId, notification.type == NotificationType.project);
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _layoutManager.updateFeedService(state.posts, state.projects);
+            if (notification != null) {
+              final itemId = notification.type == NotificationType.post
+                  ? notification.postId!
+                  : notification.projectId!;
+              _notificationManager.moveToItem(itemId, notification.type == NotificationType.project);
+            }
+          }
+        });
       }
     }
   }
@@ -200,10 +218,20 @@ class _FeedViewState extends State<FeedView> {
                   feedController: _feedController,
                   isCreatingPost: _isCreatingPost,
                   postCreationKey: _postCreationKey,
-                  onCancel: () => setState(() => _isCreatingPost = false),
+                  onCancel: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        setState(() => _isCreatingPost = false);
+                      }
+                    });
+                  },
                   onComplete: (success, project) {
-                    setState(() => _isCreatingPost = false);
-                    if (success) _feedController.refresh();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        setState(() => _isCreatingPost = false);
+                        if (success) _feedController.refresh();
+                      }
+                    });
                   },
                   topPadding: _layoutManager.getTopPadding(context),
                   selectedItemKey: _selectedItemKey,
@@ -228,8 +256,12 @@ class _FeedViewState extends State<FeedView> {
                 profileButtonKey: _profileButtonKey,
                 isCreatingPost: _isCreatingPost,
                 onProfileTap: () {
-                  setState(() => _isProfileOpen = !_isProfileOpen);
-                  _stateManager.handleProfileStateChange(_isProfileOpen);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() => _isProfileOpen = !_isProfileOpen);
+                      _stateManager.handleProfileStateChange(_isProfileOpen);
+                    }
+                  });
                 },
                 onActionButtonTap: () async {
                   if (_isCreatingPost) {
@@ -257,7 +289,8 @@ class _FeedViewState extends State<FeedView> {
                       _stateManager.handlePostComplete(false);
                     }
                   } else {
-                    setState(() => _isCreatingPost = !_isCreatingPost);
+                    // Ensure state change happens before any layout updates
+                    setState(() => _isCreatingPost = true);
                   }
                 },
               ),
@@ -265,8 +298,12 @@ class _FeedViewState extends State<FeedView> {
             SlidingPanel(
               isOpen: _isProfileOpen,
               onClose: () {
-                setState(() => _isProfileOpen = false);
-                _stateManager.handleProfileStateChange(false);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() => _isProfileOpen = false);
+                    _stateManager.handleProfileStateChange(false);
+                  }
+                });
               },
               excludeFromOverlay: _getExcludedRects(),
               child: const ProfileScreen(),

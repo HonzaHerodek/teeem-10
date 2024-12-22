@@ -49,6 +49,7 @@ class FeedItem extends StatelessWidget {
           }
           onComplete?.call(success, project);
         },
+        isVisible: isCreatingPost,
       );
     }
 

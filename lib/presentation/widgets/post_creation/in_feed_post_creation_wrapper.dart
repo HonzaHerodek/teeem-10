@@ -5,6 +5,7 @@ import '../../screens/create_post/widgets/project_button.dart';
 import '../../screens/create_post/widgets/project_selection_dialog.dart';
 import '../../screens/create_post/managers/post_creation_manager.dart';
 import '../../bloc/auth/auth_bloc.dart';
+import '../../widgets/common/scale_fade_animation.dart';
 import 'in_feed_post_creation.dart';
 import 'components/post_creation_add_project.dart';
 
@@ -12,12 +13,14 @@ class InFeedPostCreationWrapper extends StatefulWidget {
   final GlobalKey<InFeedPostCreationState>? postCreationKey;
   final VoidCallback onCancel;
   final Function(bool, ProjectModel?) onComplete;
+  final bool isVisible;
 
   const InFeedPostCreationWrapper({
     super.key,
     this.postCreationKey,
     required this.onCancel,
     required this.onComplete,
+    required this.isVisible,
   });
 
   @override
@@ -83,36 +86,39 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (_selectedProject != null && _isNewlyCreatedProject)
-          PostCreationAddProject(
-            postCreation: InFeedPostCreation(
-              key: widget.postCreationKey,
-              onCancel: widget.onCancel,
-              onComplete: (success) => widget.onComplete(success, _selectedProject),
-            ),
-            project: _selectedProject!,
-            onRemoveProject: () => setState(() {
-              _selectedProject = null;
-              _isNewlyCreatedProject = false;
-            }),
-          )
-        else
-          Column(
-            children: [
-              InFeedPostCreation(
+    return ScaleFadeAnimation(
+      isVisible: widget.isVisible,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_selectedProject != null && _isNewlyCreatedProject)
+            PostCreationAddProject(
+              postCreation: InFeedPostCreation(
                 key: widget.postCreationKey,
                 onCancel: widget.onCancel,
                 onComplete: (success) => widget.onComplete(success, _selectedProject),
               ),
-              const SizedBox(height: 16),
-              _buildProjectButton(),
-            ],
-          ),
-      ],
+              project: _selectedProject!,
+              onRemoveProject: () => setState(() {
+                _selectedProject = null;
+                _isNewlyCreatedProject = false;
+              }),
+            )
+          else
+            Column(
+              children: [
+                InFeedPostCreation(
+                  key: widget.postCreationKey,
+                  onCancel: widget.onCancel,
+                  onComplete: (success) => widget.onComplete(success, _selectedProject),
+                ),
+                const SizedBox(height: 16),
+                _buildProjectButton(),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }

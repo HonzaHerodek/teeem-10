@@ -42,16 +42,14 @@ class FeedContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentService = feedController.itemService;
-    if (currentService.posts != posts || 
-        currentService.projects != projects || 
+    if (currentService.posts != posts ||
+        currentService.projects != projects ||
         currentService.isCreatingPost != isCreatingPost) {
-      feedController.updateItemService(
-        FeedItemService(
-          posts: posts,
-          projects: projects,
-          isCreatingPost: isCreatingPost,
-        )
-      );
+      feedController.updateItemService(FeedItemService(
+        posts: posts,
+        projects: projects,
+        isCreatingPost: isCreatingPost,
+      ));
     }
 
     final itemService = feedController.itemService;
@@ -68,24 +66,29 @@ class FeedContent extends StatelessWidget {
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                if (itemService.isCreatingPostPosition(index)) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: InFeedPostCreationWrapper(
-                      postCreationKey: postCreationKey,
-                      onCancel: onCancel,
-                      onComplete: onComplete,
+                if (index == 0) {
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: Padding(
+                      key: ValueKey(isCreatingPost),
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: InFeedPostCreationWrapper(
+                        postCreationKey: postCreationKey,
+                        onCancel: onCancel,
+                        onComplete: onComplete,
+                        isVisible: isCreatingPost,
+                      ),
                     ),
                   );
                 }
 
-                final adjustedIndex = isCreatingPost ? index - 1 : index;
+                final adjustedIndex = index - 1;
 
                 final project = itemService.getProjectAtPosition(adjustedIndex);
                 if (project != null) {
                   final isSelected = project.id == selectedProjectId;
-                  final key = isSelected && selectedItemKey != null 
-                      ? selectedItemKey 
+                  final key = isSelected && selectedItemKey != null
+                      ? selectedItemKey
                       : ValueKey(project.id);
                   return FeedItem(
                     key: key,
@@ -98,8 +101,8 @@ class FeedContent extends StatelessWidget {
                 final post = itemService.getPostAtPosition(adjustedIndex);
                 if (post != null) {
                   final isSelected = post.id == selectedPostId;
-                  final key = isSelected && selectedItemKey != null 
-                      ? selectedItemKey 
+                  final key = isSelected && selectedItemKey != null
+                      ? selectedItemKey
                       : ValueKey(post.id);
                   return FeedItem(
                     key: key,

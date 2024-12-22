@@ -13,24 +13,21 @@ class FeedItemService {
   });
 
   int get totalItemCount {
-    int count = posts.length;
+    int count = 1; // Always include space for post creation
+    count += posts.length;
     if (projects.isNotEmpty) {
       count += 1; // First project
       count += ((posts.length - 1) / 5).floor(); // Additional projects
-    }
-    if (isCreatingPost) {
-      count += 1;
     }
     return count;
   }
 
   bool isProjectPosition(int adjustedIndex) {
     if (projects.isEmpty) return false;
-    if (adjustedIndex == 0) return true; // First project
+    if (adjustedIndex == 0) return true; // First project after post creation
     return projects.length > 1 &&
         adjustedIndex > 1 &&
-        ((adjustedIndex - 1) % 6 ==
-            5); // Every 6th position after first project
+        ((adjustedIndex - 1) % 6 == 5); // Every 6th position after first project
   }
 
   int getProjectIndex(int adjustedIndex) {
@@ -39,7 +36,7 @@ class FeedItemService {
   }
 
   int getPostIndex(int adjustedIndex) {
-    return adjustedIndex - 1 - ((adjustedIndex - 1) ~/ 6);
+    return adjustedIndex - ((adjustedIndex) ~/ 6);
   }
 
   bool isValidPostIndex(int postIndex) {
@@ -47,7 +44,7 @@ class FeedItemService {
   }
 
   bool isCreatingPostPosition(int index) {
-    return isCreatingPost && index == 0;
+    return index == 0; // Post creation is always at index 0
   }
 
   ProjectModel? getProjectAtPosition(int adjustedIndex) {
