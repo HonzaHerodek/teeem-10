@@ -67,18 +67,12 @@ class FeedContent extends StatelessWidget {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 if (index == 0) {
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: Padding(
-                      key: ValueKey(isCreatingPost),
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: InFeedPostCreationWrapper(
-                        postCreationKey: postCreationKey,
-                        onCancel: onCancel,
-                        onComplete: onComplete,
-                        isVisible: isCreatingPost,
-                      ),
-                    ),
+                  return InFeedPostCreationWrapper(
+                    key: ValueKey(isCreatingPost),
+                    postCreationKey: postCreationKey,
+                    onCancel: onCancel,
+                    onComplete: onComplete,
+                    isVisible: isCreatingPost,
                   );
                 }
 
