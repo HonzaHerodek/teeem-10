@@ -21,12 +21,19 @@ class HexagonGridPage extends StatefulWidget {
 class _HexagonGridPageState extends State<HexagonGridPage> {
   late final HexagonStepInput stepInput;
   bool isLoading = true;
-  
+  final TransformationController _transformationController = TransformationController();
+
   @override
   void initState() {
     super.initState();
     stepInput = HexagonStepInput(widget.stepTypeRepository);
     _initializeStepInput();
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeStepInput() async {
@@ -41,25 +48,55 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
     }
   }
 
+  void _centerOnSearchIcon(BuildContext context, BoxConstraints constraints) {
+    // Calculate the offset to center the search icon
+    final centerX = constraints.maxWidth / 2;
+    final centerY = constraints.maxHeight / 2;
+    
+    // The grid is 9x9 and search icon is at (4,4), so we need to offset by half the grid
+    final matrix = Matrix4.identity()
+      ..translate(
+        centerX - (constraints.maxWidth * 2 / 2),
+        centerY - (constraints.maxHeight * 2 / 2),
+      );
+    
+    _transformationController.value = matrix;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(8),
-      child: isLoading 
-        ? Center(child: CircularProgressIndicator())
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              return Container(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                color: Colors.transparent,
-                child: HexagonGrid(
-                  onHexagonClicked: widget.onHexagonClicked,
-                  stepInput: stepInput,
-                ),
-              );
-            },
-          ),
+      child: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                // Center on search icon after build
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _centerOnSearchIcon(context, constraints);
+                });
+
+                return InteractiveViewer(
+                  transformationController: _transformationController,
+                  constrained: false,
+                  panEnabled: true,
+                  scaleEnabled: false,
+                  boundaryMargin: EdgeInsets.all(double.infinity),
+                  child: Container(
+                    // Make container larger for better scrolling
+                    width: constraints.maxWidth * 2,
+                    height: constraints.maxHeight * 2,
+                    color: Colors.transparent,
+                    child: Center(
+                      child: HexagonGrid(
+                        onHexagonClicked: widget.onHexagonClicked,
+                        stepInput: stepInput,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
