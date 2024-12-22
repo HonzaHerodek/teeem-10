@@ -4,6 +4,7 @@ import '../../../../domain/repositories/step_type_repository.dart';
 import '../../../../data/models/step_type_model.dart';
 import 'hexagon_grid_page.dart';
 import '../../../widgets/common/hexagon_central_tiles.dart';
+import '../../../widgets/common/shadowed_shape.dart';
 
 class StepInfo {
   final Color color;
@@ -17,8 +18,8 @@ class HexagonStepInput {
   final StepTypeRepository _stepTypeRepository;
   List<StepTypeModel>? _stepTypes;
   final Map<int, StepInfo> _hexagonSteps = {};
-  static const Color defaultColor = Colors.blue;
-  static const int numberOfCentralHexagons = 3; // Exactly 3 hexagons, made constant
+  static const Color defaultColor = Colors.grey; // Changed from blue to grey
+  static const int numberOfCentralHexagons = 3;
 
   // Central indices in 9x9 grid
   static const List<int> centralIndices = [
@@ -28,14 +29,18 @@ class HexagonStepInput {
     49, // Bottom of center (5,4)
   ];
 
-  // Convert icon name to IconData
   IconData _getIconData(String iconName) {
     switch (iconName) {
-      case 'text_fields': return Icons.text_fields;
-      case 'image': return Icons.image;
-      case 'code': return Icons.code;
-      case 'video_library': return Icons.video_library;
-      default: return Icons.help_outline;
+      case 'text_fields':
+        return Icons.text_fields;
+      case 'image':
+        return Icons.image;
+      case 'code':
+        return Icons.code;
+      case 'video_library':
+        return Icons.video_library;
+      default:
+        return Icons.help_outline;
     }
   }
 
@@ -50,14 +55,15 @@ class HexagonStepInput {
       _updateHexagonSteps();
     } catch (e) {
       print('Error loading step types: $e');
-      rethrow; // Rethrow to let parent handle the error
+      rethrow;
     }
   }
 
   void _updateHexagonSteps() {
     if (_stepTypes != null) {
-      // Assign step type info to the central positions
-      for (var i = 0; i < _stepTypes!.length && i < centralIndices.length; i++) {
+      for (var i = 0;
+          i < _stepTypes!.length && i < centralIndices.length;
+          i++) {
         try {
           final stepType = _stepTypes![i];
           _hexagonSteps[centralIndices[i]] = StepInfo(
@@ -77,32 +83,24 @@ class HexagonStepInput {
   }
 
   Color getColorForHexagon(int index) {
-    // Convert index to row and column
     final row = index ~/ GridInitializer.nrX;
     final col = index % GridInitializer.nrX;
-
-    // Center position (4,4)
     const centerRow = 4;
     const centerCol = 4;
 
-    // Center tile with search icon always stays yellow
     if (row == centerRow && col == centerCol) {
-      return Colors.yellow;
+      return Colors.grey; // Center tile color will be handled by gradient
     }
 
-    // Check if this is within the central area
     if (HexagonCentralTiles.isCentralHexagon(row, col, GridInitializer.nrY,
         GridInitializer.nrX, numberOfCentralHexagons)) {
-      // If this is one of our central positions and has a step type color, use it
       if (_hexagonSteps.containsKey(index)) {
         return _hexagonSteps[index]!.color;
       }
-      // Otherwise use yellow for central area
-      return Colors.yellow;
+      return Colors.grey[300]!; // Light grey for yellow tiles
     }
 
-    // Outside central area is blue
-    return defaultColor;
+    return Colors.grey; // Grey for outer tiles
   }
 
   StepInfo? getStepInfoForHexagon(int index) {
@@ -130,41 +128,75 @@ class StepTypeHexagonPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw hexagon
-    Paint paint = Paint()..color = clicked ? Colors.pink : hexagonColor;
-    Path path = createHexagonPath();
-    canvas.drawPath(path, paint);
+    final path = createHexagonPath();
 
-    // Draw search icon if needed
+    // Draw hexagon with gradient and opacity
     if (showSearchIcon) {
-      final iconPaint = Paint()
-        ..color = Colors.black
+      // Center tile with search icon - gradient grey and white stroke
+      final gradient = RadialGradient(
+        center: Alignment.topLeft,
+        radius: 1.5,
+        colors: [Colors.grey[300]!, Colors.grey[600]!],
+      );
+      final paint = Paint()
+        ..shader = gradient.createShader(path.getBounds())
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(path, paint);
+
+      // White stroke for center tile
+      final strokePaint = Paint()
+        ..color = Colors.white
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0;
-
-      // Draw search circle
-      final circleRadius = radius * 0.4;
-      canvas.drawCircle(
-        Offset(center.dx, center.dy),
-        circleRadius,
-        iconPaint,
-      );
-
-      // Draw search handle
-      final handleStart = Offset(
-        center.dx + circleRadius * math.cos(math.pi / 4),
-        center.dy + circleRadius * math.sin(math.pi / 4),
-      );
-      final handleEnd = Offset(
-        center.dx + radius * 0.7 * math.cos(math.pi / 4),
-        center.dy + radius * 0.7 * math.sin(math.pi / 4),
-      );
-      canvas.drawLine(handleStart, handleEnd, iconPaint);
+      canvas.drawPath(path, strokePaint);
+    } else {
+      final paint = Paint()..style = PaintingStyle.fill;
+      if (hexagonColor == Colors.grey) {
+        // Outer tiles - lighter gradient with 65% opacity
+        final gradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromRGBO(220, 220, 220, 0.65),  // Very light grey
+            Color.fromRGBO(180, 180, 180, 0.65),  // Light grey
+          ],
+        );
+        paint.shader = gradient.createShader(path.getBounds());
+      } else if (hexagonColor == Colors.grey[300]) {
+        // Central tiles - pronounced gradient with 40% opacity
+        final gradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromRGBO(180, 180, 180, 0.4),  // Light grey
+            Color.fromRGBO(100, 100, 100, 0.4),  // Dark grey
+          ],
+        );
+        paint.shader = gradient.createShader(path.getBounds());
+      } else {
+        // Step type colored tiles
+        paint.color = hexagonColor;
+      }
+      canvas.drawPath(path, paint);
     }
 
-    // Draw step info if available
-    if (stepInfo != null) {
-      // Draw name
+    if (showSearchIcon) {
+      // Draw shadowed search icon
+      final iconSize = radius * 0.8;
+      final iconRect = Rect.fromCenter(
+        center: center,
+        width: iconSize,
+        height: iconSize,
+      );
+
+      // Use custom shadowed shape for search icon
+      canvas.save();
+      canvas.translate(center.dx - iconSize / 2, center.dy - iconSize / 2);
+      canvas.scale(iconSize / 24); // Scale to match the icon size
+      paintShadowedIcon(canvas, Icons.search, Colors.white);
+      canvas.restore();
+    } else if (stepInfo != null) {
+      // Draw step info
       final textPainter = TextPainter(
         text: TextSpan(
           text: stepInfo!.name,
@@ -178,7 +210,6 @@ class StepTypeHexagonPainter extends CustomPainter {
       );
       textPainter.layout();
 
-      // Draw icon using Material Icons
       final iconPainter = TextPainter(
         text: TextSpan(
           text: String.fromCharCode(stepInfo!.icon.codePoint),
@@ -192,7 +223,6 @@ class StepTypeHexagonPainter extends CustomPainter {
       );
       iconPainter.layout();
 
-      // Position icon above name
       iconPainter.paint(
         canvas,
         Offset(
@@ -201,7 +231,6 @@ class StepTypeHexagonPainter extends CustomPainter {
         ),
       );
 
-      // Position name below icon
       textPainter.paint(
         canvas,
         Offset(
@@ -209,7 +238,84 @@ class StepTypeHexagonPainter extends CustomPainter {
           center.dy + iconPainter.height / 4,
         ),
       );
+    } else if (hexagonColor == Colors.grey[300]) {
+      // Draw question mark icon for yellow replacement tiles
+      final iconPainter = TextPainter(
+        text: TextSpan(
+          text: String.fromCharCode(Icons.help_outline.codePoint),
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: radius * 0.5,
+            fontFamily: 'MaterialIcons',
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      iconPainter.layout();
+      iconPainter.paint(
+        canvas,
+        Offset(
+          center.dx - iconPainter.width / 2,
+          center.dy - iconPainter.height / 2,
+        ),
+      );
     }
+  }
+
+  void paintShadowedIcon(Canvas canvas, IconData icon, Color color) {
+    const shadowOffsets = [
+      Offset(3, 3),
+      Offset(-3, -3),
+      Offset(3, -3),
+      Offset(-3, 3),
+      Offset(2, 2),
+      Offset(-2, -2),
+      Offset(2, -2),
+      Offset(-2, 2),
+      Offset(1, 1),
+      Offset(-1, -1),
+      Offset(1, -1),
+      Offset(-1, 1),
+      Offset(0, 0),
+    ];
+
+    final iconPainter = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontSize: 24,
+          fontFamily: 'MaterialIcons',
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    iconPainter.layout();
+
+    for (var i = 0; i < shadowOffsets.length - 1; i++) {
+      final opacity = 0.2 * (1 - (i / shadowOffsets.length));
+      iconPainter.text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontSize: 24,
+          fontFamily: 'MaterialIcons',
+          color: Colors.black.withOpacity(opacity),
+        ),
+      );
+      iconPainter.layout();
+      iconPainter.paint(canvas, shadowOffsets[i]);
+    }
+
+    // Main icon
+    iconPainter.text = TextSpan(
+      text: String.fromCharCode(icon.codePoint),
+      style: TextStyle(
+        fontSize: 24,
+        fontFamily: 'MaterialIcons',
+        color: color,
+      ),
+    );
+    iconPainter.layout();
+    iconPainter.paint(canvas, shadowOffsets.last);
   }
 
   Path createHexagonPath() {
