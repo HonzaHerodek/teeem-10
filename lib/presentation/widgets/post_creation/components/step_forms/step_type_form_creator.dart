@@ -21,8 +21,10 @@ class StepTypeFormCreator {
     Key? key,
   }) {
     // Get the enum value from the string name
+    // Convert step type name to match enum format
+    final normalizedName = stepType.name.toLowerCase().replaceAll(' ', '_');
     final stepTypeEnum = StepType.values.firstWhere(
-      (e) => e.toString().split('.').last.toLowerCase() == stepType.name.toLowerCase(),
+      (e) => e.toString().split('.').last == normalizedName,
       orElse: () => throw Exception('Unknown step type: ${stepType.name}'),
     );
 
