@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 import 'hexagon_step_input.dart';
+import 'step_type_hexagon_painter.dart';
 import '../../../../domain/repositories/step_type_repository.dart';
 
 class HexagonGridPage extends StatefulWidget {
