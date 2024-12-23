@@ -84,39 +84,51 @@ class QuizStepFormState extends StepTypeFormBaseState<QuizStepForm> {
   Widget _buildQuestionCard(int index) {
     final question = _questions[index];
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'Question ${index + 1}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Text(
+                  'Q${index + 1}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(width: 8),
                 if (_questions.length > 1)
                   IconButton(
-                    icon: const Icon(Icons.delete),
+                    icon: const Icon(Icons.delete, size: 18),
                     onPressed: () => _removeQuestion(index),
-                    color: Colors.red,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    color: Colors.red[300],
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             TextFormField(
               controller: question.questionController,
-              decoration: const InputDecoration(
-                labelText: 'Question',
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
                 hintText: 'Enter your question...',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -125,10 +137,10 @@ class QuizStepFormState extends StepTypeFormBaseState<QuizStepForm> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             ...List.generate(4, (optionIndex) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
                     Radio<int>(
@@ -143,10 +155,17 @@ class QuizStepFormState extends StepTypeFormBaseState<QuizStepForm> {
                     Expanded(
                       child: TextFormField(
                         controller: question.optionControllers[optionIndex],
+                        style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
-                          labelText: 'Option ${optionIndex + 1}',
-                          hintText: 'Enter option ${optionIndex + 1}...',
-                          border: const OutlineInputBorder(),
+                          hintText: 'Option ${optionIndex + 1}',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -160,11 +179,14 @@ class QuizStepFormState extends StepTypeFormBaseState<QuizStepForm> {
                 ),
               );
             }),
-            const Text(
-              'Select the radio button next to the correct answer',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                '✓ Select the correct answer',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 11,
+                ),
               ),
             ),
           ],
@@ -179,10 +201,14 @@ class QuizStepFormState extends StepTypeFormBaseState<QuizStepForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ...List.generate(_questions.length, (index) => _buildQuestionCard(index)),
-        ElevatedButton.icon(
+        OutlinedButton.icon(
           onPressed: _addQuestion,
-          icon: const Icon(Icons.add),
-          label: const Text('Add Question'),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Add Question', style: TextStyle(fontSize: 14)),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+          ),
         ),
       ],
     );

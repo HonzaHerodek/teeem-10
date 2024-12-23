@@ -269,7 +269,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
 
   Widget _buildContent(double size) {
     return Container(
-      margin: const EdgeInsets.only(top: 20.0, left: 16.0, right: 16.0),
+      margin: const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -322,10 +322,25 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                     HexagonStepSelector(
                       stepTypeRepository: getIt<StepTypeRepository>(),
                       onStepFormSubmitted: (stepType, formData) {
-                        // Handle the form submission
-                        print('Selected step type: ${stepType.name}');
-                        print('Form data: $formData');
-                        
+                        // Create a new step with the form data
+                        final stepKey = GlobalKey<PostStepWidgetState>();
+                        final newStep = PostStepWidget(
+                          key: stepKey,
+                          onRemove: () => _removeStep(_state.steps.length - 1),
+                          stepNumber: _state.steps.length + 1,
+                          enabled: !_state.isLoading,
+                          stepTypes: _state.availableStepTypes,
+                          initialStepType: stepType,
+                          showFormInitially: true,
+                        );
+
+                        setState(() {
+                          _state = _state.copyWith(
+                            stepKeys: [..._state.stepKeys, stepKey],
+                            steps: [..._state.steps, newStep],
+                          );
+                        });
+
                         // Navigate to the next page
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),

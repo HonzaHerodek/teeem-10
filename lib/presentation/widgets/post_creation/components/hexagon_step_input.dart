@@ -19,16 +19,23 @@ class HexagonStepInput {
   static const int numberOfCentralHexagons = 3;
   int? _selectedIndex;
 
-  // Central indices in 9x9 grid
+  // Central indices in 9x9 grid to accommodate all step types
   static const List<int> centralIndices = [
     39, // Left of center (4,3)
     41, // Right of center (4,5)
     31, // Top of center (3,4)
     49, // Bottom of center (5,4)
+    38, // Top-left of center (4,2)
+    40, // Center-right (4,4)
+    42, // Top-right of center (4,6)
+    47, // Bottom-left of center (5,2)
+    48, // Bottom-center (5,3)
+    50, // Bottom-right of center (5,5)
   ];
 
   IconData _getIconData(String iconName) {
     switch (iconName) {
+      // Basic content types
       case 'text_fields':
         return Icons.text_fields;
       case 'image':
@@ -37,6 +44,20 @@ class HexagonStepInput {
         return Icons.code;
       case 'video_library':
         return Icons.video_library;
+      // Additional content types
+      case 'audiotrack':
+        return Icons.audiotrack;
+      case 'description':
+        return Icons.description;
+      case 'link':
+        return Icons.link;
+      case 'quiz':
+        return Icons.quiz;
+      // Immersive content types
+      case 'view_in_ar':
+        return Icons.view_in_ar;
+      case 'vrpano':
+        return Icons.vrpano;
       default:
         return Icons.help_outline;
     }

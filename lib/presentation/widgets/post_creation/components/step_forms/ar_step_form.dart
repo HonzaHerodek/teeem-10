@@ -38,7 +38,8 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
   String get titlePlaceholder => 'e.g., 3D Flutter Logo';
 
   @override
-  String get descriptionPlaceholder => 'e.g., Interactive 3D model of the Flutter logo with animations';
+  String get descriptionPlaceholder =>
+      'e.g., Interactive 3D model of the Flutter logo with animations';
 
   Future<void> _pickModel() async {
     // TODO: Implement 3D model picking functionality
@@ -67,7 +68,8 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.view_in_ar, size: 32, color: Colors.blue),
+                      const Icon(Icons.view_in_ar,
+                          size: 32, color: Colors.blue),
                       const SizedBox(height: 8),
                       Text(
                         'Model selected: ${_modelPath!}',
@@ -84,7 +86,8 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.view_in_ar, size: 48, color: Colors.grey),
+                      const Icon(Icons.view_in_ar,
+                          size: 48, color: Colors.grey),
                       const SizedBox(height: 8),
                       const Text(
                         'Supported formats: GLB, GLTF, USDZ',
@@ -132,7 +135,8 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
           controller: _instructionsController,
           decoration: const InputDecoration(
             labelText: 'Instructions',
-            hintText: 'Enter instructions for interacting with the AR content...',
+            hintText:
+                'Enter instructions for interacting with the AR content...',
             border: OutlineInputBorder(),
           ),
           maxLines: 3,

@@ -51,72 +51,97 @@ class LinkStepFormState extends StepTypeFormBaseState<LinkStepForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // URL input with fetch button
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _urlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL',
-                  hintText: 'Enter the link URL...',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a URL';
-                  }
-                  // TODO: Add URL format validation
-                  return null;
-                },
-              ),
+        TextFormField(
+          controller: _urlController,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Enter URL...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.refresh, size: 20),
               onPressed: _fetchLinkPreview,
-              child: const Text('Fetch Preview'),
+              tooltip: 'Fetch Preview',
             ),
-          ],
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter a URL';
+            }
+            final urlRegex = RegExp(
+              r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
+            );
+            if (!urlRegex.hasMatch(value)) {
+              return 'Please enter a valid URL';
+            }
+            return null;
+          },
         ),
-        const SizedBox(height: 16),
-        // Link preview section
+        const SizedBox(height: 12),
+        // Preview section
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
+            border: Border.all(color: Colors.grey.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(8),
+            color: Colors.grey[50],
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Link Preview',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.preview,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Preview',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Preview thumbnail
+              const SizedBox(height: 12),
+              // Preview thumbnail with 16:9 aspect ratio
               if (_thumbnailUrl != null)
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(_thumbnailUrl!),
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(
+                      _thumbnailUrl!,
                       fit: BoxFit.cover,
                     ),
-                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-              const SizedBox(height: 16),
-              // Preview title
+              if (_thumbnailUrl != null)
+                const SizedBox(height: 12),
+              // Preview title with compact styling
               TextFormField(
                 controller: _previewTitleController,
-                decoration: const InputDecoration(
-                  labelText: 'Preview Title',
-                  hintText: 'Enter a title for the link preview...',
-                  border: OutlineInputBorder(),
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Preview title...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -125,16 +150,23 @@ class LinkStepFormState extends StepTypeFormBaseState<LinkStepForm> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              // Preview description
+              const SizedBox(height: 12),
+              // Preview description with compact styling
               TextFormField(
                 controller: _previewDescriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Preview Description',
-                  hintText: 'Enter a description for the link preview...',
-                  border: OutlineInputBorder(),
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Preview description...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
-                maxLines: 3,
+                maxLines: 2,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a preview description';

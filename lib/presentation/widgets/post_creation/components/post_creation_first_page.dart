@@ -96,7 +96,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
         ListView(
           padding: EdgeInsets.zero,
           children: [
-            const SizedBox(height: 40),
+            const SizedBox(height: 70),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: TextFormField(
@@ -167,7 +167,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: TextFormField(
@@ -240,7 +240,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
                 },
               ),
             ),
-            const SizedBox(height: 100),
+            const SizedBox(height: 140),
           ],
         ),
         Positioned(
@@ -248,7 +248,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> {
           left: 0,
           right: 0,
           child: Container(
-            height: 130,
+            height: 180,
             decoration: const BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.only(

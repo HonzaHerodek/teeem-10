@@ -55,83 +55,191 @@ class VideoStepFormState extends StepTypeFormBaseState<VideoStepForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Video preview/upload area
-        Container(
-          height: 200,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _selectedVideoPath != null
-              ? Center(
-                  child: Text('Video selected: ${_selectedVideoPath!}'),
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+        // Video upload area with 16:9 aspect ratio
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _selectedVideoPath != null
+                ? Stack(
+                    alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.video_library, size: 48, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickVideo,
-                        child: const Text('Select Video'),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle, 
+                              color: Colors.green[400],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Video Selected',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: _pickVideo,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
                       ),
                     ],
+                  )
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.video_library,
+                          size: 36,
+                          color: Colors.grey.withOpacity(0.7),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: _pickVideo,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Select Video',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
-        const SizedBox(height: 16),
-        // Thumbnail preview/upload area
-        Container(
+        const SizedBox(height: 12),
+        // Thumbnail upload area with 16:9 aspect ratio but smaller height
+        SizedBox(
           height: 100,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _thumbnailPath != null
-              ? Image.network(
-                  _thumbnailPath!,
-                  fit: BoxFit.cover,
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.image, size: 32, color: Colors.grey),
-                      const SizedBox(height: 4),
-                      ElevatedButton(
-                        onPressed: _pickThumbnail,
-                        child: const Text('Select Thumbnail'),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _thumbnailPath != null
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            _thumbnailPath!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: IconButton(
+                            icon: const Icon(Icons.edit, size: 18),
+                            onPressed: _pickThumbnail,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image,
+                            size: 24,
+                            color: Colors.grey.withOpacity(0.7),
+                          ),
+                          const SizedBox(height: 4),
+                          ElevatedButton(
+                            onPressed: _pickThumbnail,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              'Select Thumbnail',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+            ),
+          ),
         ),
-        const SizedBox(height: 16),
-        // Video duration
+        const SizedBox(height: 12),
+        // Duration field with validation
         TextFormField(
           controller: _durationController,
-          decoration: const InputDecoration(
-            labelText: 'Duration (mm:ss)',
-            hintText: 'e.g., 05:30',
-            border: OutlineInputBorder(),
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Duration (mm:ss)',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            prefixIcon: const Icon(Icons.timer, size: 18),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter the video duration';
+              return 'Please enter the duration';
             }
-            // TODO: Add duration format validation
+            final durationRegex = RegExp(r'^\d{2}:\d{2}$');
+            if (!durationRegex.hasMatch(value)) {
+              return 'Use format: mm:ss';
+            }
+            final parts = value.split(':');
+            final minutes = int.parse(parts[0]);
+            final seconds = int.parse(parts[1]);
+            if (seconds >= 60) {
+              return 'Invalid seconds value';
+            }
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        // Video caption
+        const SizedBox(height: 12),
+        // Caption field
         TextFormField(
           controller: _captionController,
-          decoration: const InputDecoration(
-            labelText: 'Video Caption',
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
             hintText: 'Enter a caption for the video...',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -140,16 +248,23 @@ class VideoStepFormState extends StepTypeFormBaseState<VideoStepForm> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        // Video transcript
+        const SizedBox(height: 12),
+        // Transcript field
         TextFormField(
           controller: _transcriptController,
-          decoration: const InputDecoration(
-            labelText: 'Transcript',
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
             hintText: 'Enter video transcript for accessibility...',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
-          maxLines: 5,
+          maxLines: 3,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter a transcript';

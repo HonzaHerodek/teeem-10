@@ -39,21 +39,99 @@ class TextStepFormState extends StepTypeFormBaseState<TextStepForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
-          controller: _contentController,
-          decoration: const InputDecoration(
-            labelText: 'Content',
-            hintText: 'Enter your text content here...',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
+        // Text content area with formatting toolbar
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey[50],
           ),
-          maxLines: 10,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter the content';
-            }
-            return null;
-          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Formatting toolbar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.format_bold, size: 18),
+                      onPressed: () {/* TODO: Implement formatting */},
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Bold',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.format_italic, size: 18),
+                      onPressed: () {/* TODO: Implement formatting */},
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Italic',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.format_list_bulleted, size: 18),
+                      onPressed: () {/* TODO: Implement formatting */},
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Bullet List',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.format_list_numbered, size: 18),
+                      onPressed: () {/* TODO: Implement formatting */},
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Numbered List',
+                    ),
+                  ],
+                ),
+              ),
+              // Text input area
+              TextFormField(
+                controller: _contentController,
+                style: const TextStyle(fontSize: 14, height: 1.5),
+                decoration: InputDecoration(
+                  hintText: 'Enter your text content here...',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+                maxLines: 8,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the content';
+                  }
+                  return null;
+                },
+              ),
+              // Character count
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                  ),
+                ),
+                child: Text(
+                  '${_contentController.text.length} characters',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

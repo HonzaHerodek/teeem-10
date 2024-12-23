@@ -3,6 +3,7 @@ import '../models/step_type_model.dart';
 
 class MockStepTypeRepository implements StepTypeRepository {
   final List<StepTypeModel> _stepTypes = [
+    // Basic content types
     StepTypeModel(
       id: 'text',
       name: 'Text',
@@ -86,6 +87,132 @@ class MockStepTypeRepository implements StepTypeRepository {
         StepTypeOption(
           id: 'description',
           label: 'Description',
+          type: 'text',
+          config: {'multiline': true},
+        ),
+      ],
+    ),
+    // Additional content types
+    StepTypeModel(
+      id: 'audio',
+      name: 'Audio',
+      description: 'An audio clip with transcript',
+      icon: 'audiotrack',
+      color: '#FF9800', // Orange for audio
+      options: [
+        StepTypeOption(
+          id: 'audioUrl',
+          label: 'Audio URL',
+          type: 'text',
+        ),
+        StepTypeOption(
+          id: 'transcript',
+          label: 'Transcript',
+          type: 'text',
+          config: {'multiline': true},
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'document',
+      name: 'Document',
+      description: 'A document file with summary',
+      icon: 'description',
+      color: '#795548', // Brown for documents
+      options: [
+        StepTypeOption(
+          id: 'documentUrl',
+          label: 'Document URL',
+          type: 'text',
+        ),
+        StepTypeOption(
+          id: 'summary',
+          label: 'Summary',
+          type: 'text',
+          config: {'multiline': true},
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'link',
+      name: 'Link',
+      description: 'A link with preview',
+      icon: 'link',
+      color: '#607D8B', // Blue grey for links
+      options: [
+        StepTypeOption(
+          id: 'url',
+          label: 'URL',
+          type: 'text',
+        ),
+        StepTypeOption(
+          id: 'preview',
+          label: 'Preview Text',
+          type: 'text',
+          config: {'multiline': true},
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'quiz',
+      name: 'Quiz',
+      description: 'A quiz with multiple choice questions',
+      icon: 'quiz',
+      color: '#009688', // Teal for quizzes
+      options: [
+        StepTypeOption(
+          id: 'questions',
+          label: 'Questions',
+          type: 'array',
+          config: {
+            'item': {
+              'type': 'object',
+              'properties': {
+                'question': {'type': 'text'},
+                'options': {'type': 'array', 'item': {'type': 'text'}},
+                'correctAnswer': {'type': 'number'},
+              },
+            },
+          },
+        ),
+      ],
+    ),
+    // Immersive content types
+    StepTypeModel(
+      id: 'ar',
+      name: 'AR',
+      description: 'An augmented reality experience',
+      icon: 'view_in_ar',
+      color: '#00BCD4', // Cyan for AR
+      options: [
+        StepTypeOption(
+          id: 'modelUrl',
+          label: '3D Model URL',
+          type: 'text',
+        ),
+        StepTypeOption(
+          id: 'instructions',
+          label: 'Instructions',
+          type: 'text',
+          config: {'multiline': true},
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'vr',
+      name: 'VR',
+      description: 'A virtual reality experience',
+      icon: 'vrpano',
+      color: '#3F51B5', // Indigo for VR
+      options: [
+        StepTypeOption(
+          id: 'sceneUrl',
+          label: 'VR Scene URL',
+          type: 'text',
+        ),
+        StepTypeOption(
+          id: 'instructions',
+          label: 'Instructions',
           type: 'text',
           config: {'multiline': true},
         ),

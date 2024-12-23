@@ -21,12 +21,24 @@ class CodeStepForm extends StepTypeFormBase {
 
 class CodeStepFormState extends StepTypeFormBaseState<CodeStepForm> {
   final _codeController = TextEditingController();
-  final _languageController = TextEditingController();
+  String _selectedLanguage = 'dart';
+  
+  final List<String> _supportedLanguages = [
+    'dart',
+    'javascript',
+    'python',
+    'java',
+    'kotlin',
+    'swift',
+    'cpp',
+    'csharp',
+    'go',
+    'rust',
+  ];
 
   @override
   void dispose() {
     _codeController.dispose();
-    _languageController.dispose();
     super.dispose();
   }
 
@@ -41,32 +53,58 @@ class CodeStepFormState extends StepTypeFormBaseState<CodeStepForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
-          controller: _languageController,
-          decoration: const InputDecoration(
-            labelText: 'Programming Language',
-            hintText: 'e.g., dart, javascript, python',
-            border: OutlineInputBorder(),
+        DropdownButtonFormField<String>(
+          value: _selectedLanguage,
+          decoration: InputDecoration(
+            labelText: 'Language',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please specify the programming language';
+          items: _supportedLanguages.map((String language) {
+            return DropdownMenuItem<String>(
+              value: language,
+              child: Text(
+                language,
+                style: const TextStyle(fontSize: 14),
+              ),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              setState(() {
+                _selectedLanguage = newValue;
+              });
             }
-            return null;
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _codeController,
-          decoration: const InputDecoration(
-            labelText: 'Code',
+          decoration: InputDecoration(
             hintText: 'Enter your code here...',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+            ),
+            contentPadding: const EdgeInsets.all(12),
+            filled: true,
+            fillColor: Colors.grey[50],
           ),
-          maxLines: 15,
+          maxLines: 10,
           style: const TextStyle(
             fontFamily: 'monospace',
+            fontSize: 13,
+            height: 1.5,
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -83,7 +121,7 @@ class CodeStepFormState extends StepTypeFormBaseState<CodeStepForm> {
   Map<String, dynamic> getStepSpecificFormData() {
     return {
       'codeSnippet': _codeController.text,
-      'codeLanguage': _languageController.text,
+      'codeLanguage': _selectedLanguage,
     };
   }
 }

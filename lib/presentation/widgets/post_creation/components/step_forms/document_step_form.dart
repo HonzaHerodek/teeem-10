@@ -44,68 +44,130 @@ class DocumentStepFormState extends StepTypeFormBaseState<DocumentStepForm> {
     // This would typically use file_picker package
   }
 
+  IconData _getFileIcon() {
+    if (_fileType == null) return Icons.description;
+    switch (_fileType!.toLowerCase()) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+        return Icons.article;
+      case 'txt':
+        return Icons.text_snippet;
+      default:
+        return Icons.description;
+    }
+  }
+
+  String? _getFileName() {
+    if (_selectedDocumentPath == null) return null;
+    return _selectedDocumentPath!.split('/').last;
+  }
+
   @override
   Widget buildStepSpecificFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Document upload area
+        // Document upload/preview area
         Container(
-          height: 150,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
+            border: Border.all(color: Colors.grey.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(8),
+            color: Colors.grey[50],
           ),
+          padding: const EdgeInsets.all(12),
           child: _selectedDocumentPath != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.description, size: 32, color: Colors.blue),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Document selected: ${_selectedDocumentPath!}',
-                        textAlign: TextAlign.center,
+              ? Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      if (_fileType != null && _fileSize != null)
-                        Text(
-                          '$_fileType • $_fileSize',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      TextButton(
-                        onPressed: _pickDocument,
-                        child: const Text('Change Document'),
+                      child: Icon(
+                        _getFileIcon(),
+                        color: Colors.blue[400],
+                        size: 24,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _getFileName() ?? 'Document Selected',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (_fileType != null && _fileSize != null)
+                            Text(
+                              '$_fileType • $_fileSize',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18),
+                      onPressed: _pickDocument,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.upload_file, size: 48, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Supported formats: PDF, DOC, DOCX, TXT',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickDocument,
-                        child: const Text('Select Document'),
-                      ),
-                    ],
+              : InkWell(
+                  onTap: _pickDocument,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.upload_file,
+                          size: 32,
+                          color: Colors.grey.withOpacity(0.7),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'PDF, DOC, DOCX, TXT',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
         ),
-        const SizedBox(height: 16),
-        // Document display name
+        const SizedBox(height: 12),
+        // Display name field
         TextFormField(
           controller: _fileNameController,
-          decoration: const InputDecoration(
-            labelText: 'Display Name',
-            hintText: 'Enter a name for the document...',
-            border: OutlineInputBorder(),
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Display name for the document...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -114,16 +176,23 @@ class DocumentStepFormState extends StepTypeFormBaseState<DocumentStepForm> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        // Document summary
+        const SizedBox(height: 12),
+        // Summary field
         TextFormField(
           controller: _summaryController,
-          decoration: const InputDecoration(
-            labelText: 'Summary',
-            hintText: 'Enter a brief summary of the document content...',
-            border: OutlineInputBorder(),
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Brief summary of the document content...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
-          maxLines: 3,
+          maxLines: 2,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter a summary';

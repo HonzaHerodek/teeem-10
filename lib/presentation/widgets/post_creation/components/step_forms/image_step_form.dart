@@ -47,41 +47,68 @@ class ImageStepFormState extends StepTypeFormBaseState<ImageStepForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Image preview/upload area
-        Container(
-          height: 200,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _selectedImagePath != null
-              ? Image.network(
-                  _selectedImagePath!,
-                  fit: BoxFit.cover,
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.image, size: 48, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickImage,
-                        child: const Text('Select Image'),
-                      ),
-                    ],
+        // Image preview/upload area with 16:9 aspect ratio
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.5)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _selectedImagePath != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      _selectedImagePath!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.image,
+                          size: 36,
+                          color: Colors.grey.withOpacity(0.7),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: _pickImage,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Select Image',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
-        const SizedBox(height: 16),
-        // Image caption
+        const SizedBox(height: 12),
+        // Image caption with compact styling
         TextFormField(
           controller: _captionController,
-          decoration: const InputDecoration(
-            labelText: 'Image Caption',
+          decoration: InputDecoration(
             hintText: 'Enter a caption for the image...',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
+          style: const TextStyle(fontSize: 14),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter a caption';
@@ -89,15 +116,22 @@ class ImageStepFormState extends StepTypeFormBaseState<ImageStepForm> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        // Alt text for accessibility
+        const SizedBox(height: 12),
+        // Alt text with compact styling
         TextFormField(
           controller: _altTextController,
-          decoration: const InputDecoration(
-            labelText: 'Alt Text',
+          decoration: InputDecoration(
             hintText: 'Describe the image for screen readers...',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
+          style: const TextStyle(fontSize: 14),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter alt text';
