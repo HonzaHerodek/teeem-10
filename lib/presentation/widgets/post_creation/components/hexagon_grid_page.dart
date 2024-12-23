@@ -7,12 +7,12 @@ import '../../../../domain/repositories/step_type_repository.dart';
 
 class HexagonGridPage extends StatefulWidget {
   final VoidCallback onHexagonClicked;
-  final StepTypeRepository stepTypeRepository;
+  final HexagonStepInput stepInput;
 
   const HexagonGridPage({
     Key? key,
     required this.onHexagonClicked,
-    required this.stepTypeRepository,
+    required this.stepInput,
   }) : super(key: key);
 
   @override
@@ -20,16 +20,8 @@ class HexagonGridPage extends StatefulWidget {
 }
 
 class _HexagonGridPageState extends State<HexagonGridPage> {
-  late final HexagonStepInput stepInput;
-  bool isLoading = true;
+  bool isLoading = false;
   final TransformationController _transformationController = TransformationController();
-
-  @override
-  void initState() {
-    super.initState();
-    stepInput = HexagonStepInput(widget.stepTypeRepository);
-    _initializeStepInput();
-  }
 
   @override
   void dispose() {
@@ -37,24 +29,10 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
     super.dispose();
   }
 
-  Future<void> _initializeStepInput() async {
-    try {
-      await stepInput.initialize();
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
-  }
-
   void _centerOnSearchIcon(BuildContext context, BoxConstraints constraints) {
-    // Calculate the offset to center the search icon
     final centerX = constraints.maxWidth / 2;
     final centerY = constraints.maxHeight / 2;
     
-    // The grid is 9x9 and search icon is at (4,4), so we need to offset by half the grid
     final matrix = Matrix4.identity()
       ..translate(
         centerX - (constraints.maxWidth * 2 / 2),
@@ -72,7 +50,6 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
           ? Center(child: CircularProgressIndicator())
           : LayoutBuilder(
               builder: (context, constraints) {
-                // Center on search icon after build
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _centerOnSearchIcon(context, constraints);
                 });
@@ -84,14 +61,16 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
                   scaleEnabled: false,
                   boundaryMargin: EdgeInsets.all(double.infinity),
                   child: Container(
-                    // Make container larger for better scrolling
                     width: constraints.maxWidth * 2,
                     height: constraints.maxHeight * 2,
                     color: Colors.transparent,
                     child: Center(
                       child: HexagonGrid(
-                        onHexagonClicked: widget.onHexagonClicked,
-                        stepInput: stepInput,
+                        onHexagonClicked: (index) {
+                          widget.stepInput.setSelectedIndex(index);
+                          widget.onHexagonClicked();
+                        },
+                        stepInput: widget.stepInput,
                       ),
                     ),
                   ),
@@ -103,7 +82,7 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
 }
 
 class HexagonGrid extends StatefulWidget {
-  final VoidCallback onHexagonClicked;
+  final void Function(int) onHexagonClicked;
   final HexagonStepInput stepInput;
 
   const HexagonGrid({
@@ -167,7 +146,7 @@ class GridInitializer {
   List<HexagonPaint> getHexagons(
     final double screenWidth,
     final double screenHeight,
-    VoidCallback onHexagonClicked,
+    void Function(int) onHexagonClicked,
     HexagonStepInput stepInput,
   ) {
     var hexagons = <HexagonPaint>[];
@@ -179,10 +158,10 @@ class GridInitializer {
     for (int y = 0; y < nrY; y++) {
       for (int x = 0; x < nrX; x++) {
         final index = y * nrX + x;
-        final isCenter = y == 4 && x == 4; // Center hexagon at (4,4)
+        final isCenter = y == 4 && x == 4;
         hexagons.add(HexagonPaint(
           model: HexagonModel(computeCenter(x, y), radius),
-          onClicked: onHexagonClicked,
+          onClicked: () => onHexagonClicked(index),
           color: stepInput.getColorForHexagon(index),
           showSearchIcon: isCenter,
           stepInfo: stepInput.getStepInfoForHexagon(index),

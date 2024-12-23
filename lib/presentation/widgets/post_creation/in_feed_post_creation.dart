@@ -5,7 +5,7 @@ import '../../../../data/models/step_type_model.dart';
 import '../../../../domain/repositories/step_type_repository.dart';
 import './post_step_widget.dart';
 import './components/post_creation_first_page.dart';
-import './components/hexagon_grid_page.dart';
+import './components/hexagon_step_selector.dart';
 import './components/post_creation_navigation.dart';
 import './components/post_creation_step_button.dart';
 import './components/post_creation_cancel_button.dart';
@@ -107,7 +107,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
   }
 
   void _addStep() {
-    if (_state.steps.isEmpty || _state.stepKeys.last.currentState?.hasSelectedStepType == true) {
+    if (_state.steps.isEmpty ||
+        _state.stepKeys.last.currentState?.hasSelectedStepType == true) {
       final stepKey = GlobalKey<PostStepWidgetState>();
       final newStep = PostStepWidget(
         key: stepKey,
@@ -167,7 +168,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
     final stepStates = <int, Map<String, dynamic>>{};
     for (var i = 0; i < newSteps.length; i++) {
       if (i == index) continue; // Skip the step being removed
-      final state = (newSteps[i].key as GlobalKey<PostStepWidgetState>).currentState;
+      final state =
+          (newSteps[i].key as GlobalKey<PostStepWidgetState>).currentState;
       if (state != null) {
         stepStates[i > index ? i - 1 : i] = {
           'stepType': state.getSelectedStepType(),
@@ -208,7 +210,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
       return;
     }
 
-    if (_state.currentPage == 1) { // Step type selection page
+    if (_state.currentPage == 1) {
+      // Step type selection page
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -216,7 +219,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
       return;
     }
 
-    final stepState = _state.stepKeys[_state.currentPage - 2].currentState; // -2 to account for step type page
+    final stepState = _state.stepKeys[_state.currentPage - 2]
+        .currentState; // -2 to account for step type page
     if (stepState != null && stepState.hasSelectedStepType) {
       // If a step type is selected, reset to honeycomb grid
       setState(() {
@@ -315,9 +319,19 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                       steps: _state.steps,
                       pageController: _pageController,
                     ),
-                    HexagonGridPage(
-                      onHexagonClicked: () {}, // Just turn pink, no navigation
+                    HexagonStepSelector(
                       stepTypeRepository: getIt<StepTypeRepository>(),
+                      onStepFormSubmitted: (stepType, formData) {
+                        // Handle the form submission
+                        print('Selected step type: ${stepType.name}');
+                        print('Form data: $formData');
+                        
+                        // Navigate to the next page
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
                     ),
                     ..._state.steps,
                   ],

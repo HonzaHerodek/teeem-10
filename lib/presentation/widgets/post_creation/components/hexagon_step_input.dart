@@ -17,6 +17,7 @@ class HexagonStepInput {
   List<StepTypeModel>? _stepTypes;
   final Map<int, StepInfo> _hexagonSteps = {};
   static const int numberOfCentralHexagons = 3;
+  int? _selectedIndex;
 
   // Central indices in 9x9 grid
   static const List<int> centralIndices = [
@@ -74,6 +75,26 @@ class HexagonStepInput {
           );
         }
       }
+    }
+  }
+
+  StepInfo? getSelectedStepInfo() {
+    if (_selectedIndex != null) {
+      return _hexagonSteps[_selectedIndex];
+    }
+    return null;
+  }
+
+  StepTypeModel? getStepTypeFromInfo(StepInfo info) {
+    return _stepTypes?.firstWhere(
+      (type) => type.name == info.name,
+      orElse: () => throw Exception('Step type not found'),
+    );
+  }
+
+  void setSelectedIndex(int index) {
+    if (_hexagonSteps.containsKey(index)) {
+      _selectedIndex = index;
     }
   }
 
