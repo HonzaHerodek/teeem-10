@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/circular_action_button.dart';
+import '../../../widgets/user_avatar.dart';
 
 class FeedActionButtons extends StatelessWidget {
   final bool isCreatingPost;
@@ -28,11 +29,15 @@ class FeedActionButtons extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            CircularActionButton(
+            SizedBox(
               key: profileButtonKey,
-              icon: Icons.person,
-              onPressed: onProfileTap,
-              strokeWidth: 1.5,
+              child: UserAvatar(
+                imageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+                size: 56,
+                onTap: onProfileTap,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                useTransparentEdges: true,
+              ),
             ),
             CircularActionButton(
               key: plusActionButtonKey,

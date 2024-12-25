@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/utils/app_utils.dart';
+import 'dart:ui' as ui;
+import 'common/egg_clipper.dart';
 
 class UserAvatar extends StatelessWidget {
   final String? imageUrl;
@@ -12,6 +14,7 @@ class UserAvatar extends StatelessWidget {
   final bool showBorder;
   final Color borderColor;
   final double borderWidth;
+  final bool useTransparentEdges;
   final Widget? badge;
   final AlignmentGeometry badgeAlignment;
   final bool isLoading;
@@ -30,6 +33,7 @@ class UserAvatar extends StatelessWidget {
     this.badge,
     this.badgeAlignment = Alignment.bottomRight,
     this.isLoading = false,
+    this.useTransparentEdges = false,
   }) : assert(
           imageUrl != null || name != null,
           'Either imageUrl or name must be provided',
@@ -41,30 +45,41 @@ class UserAvatar extends StatelessWidget {
     final defaultBackgroundColor = theme.colorScheme.primary;
     final defaultForegroundColor = theme.colorScheme.onPrimary;
 
+    final double eggHeight = size * 1.3; // Egg shape is slightly taller
+    
     Widget avatar;
     if (isLoading) {
-      avatar = CircleAvatar(
-        radius: size / 2,
-        backgroundColor: theme.colorScheme.surface,
-        child: const CircularProgressIndicator(),
+      avatar = Container(
+        width: size,
+        height: eggHeight,
+        color: theme.colorScheme.surface,
+        child: const Center(child: CircularProgressIndicator()),
       );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       avatar = CachedNetworkImage(
         imageUrl: imageUrl!,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          radius: size / 2,
-          backgroundImage: imageProvider,
-          backgroundColor: backgroundColor ?? defaultBackgroundColor,
+        imageBuilder: (context, imageProvider) => Container(
+          width: size,
+          height: eggHeight,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: imageProvider,
+              fit: BoxFit.cover,
+            ),
+            color: backgroundColor ?? defaultBackgroundColor,
+          ),
         ),
-        placeholder: (context, url) => CircleAvatar(
-          radius: size / 2,
-          backgroundColor: theme.colorScheme.surface,
-          child: const CircularProgressIndicator(),
+        placeholder: (context, url) => Container(
+          width: size,
+          height: eggHeight,
+          color: theme.colorScheme.surface,
+          child: const Center(child: CircularProgressIndicator()),
         ),
         errorWidget: (context, url, error) => _buildInitialsAvatar(
           context,
           defaultBackgroundColor,
           defaultForegroundColor,
+          eggHeight,
         ),
       );
     } else {
@@ -72,6 +87,32 @@ class UserAvatar extends StatelessWidget {
         context,
         defaultBackgroundColor,
         defaultForegroundColor,
+        eggHeight,
+      );
+    }
+
+    // Apply egg shape clipping
+    avatar = ClipPath(
+      clipper: EggClipper(),
+      child: avatar,
+    );
+
+    if (useTransparentEdges) {
+      avatar = ShaderMask(
+        shaderCallback: (Rect bounds) {
+          return ui.Gradient.radial(
+            bounds.center,
+            bounds.width / 2,
+            [
+              Colors.black,
+              Colors.black,
+              Colors.transparent,
+            ],
+            [0.0, 0.5, 1.0],
+          );
+        },
+        blendMode: BlendMode.dstIn,
+        child: avatar,
       );
     }
 
@@ -122,16 +163,20 @@ class UserAvatar extends StatelessWidget {
     BuildContext context,
     Color defaultBackgroundColor,
     Color defaultForegroundColor,
+    double height,
   ) {
-    return CircleAvatar(
-      radius: size / 2,
-      backgroundColor: backgroundColor ?? defaultBackgroundColor,
-      child: Text(
-        name?.initials ?? '?',
-        style: TextStyle(
-          color: foregroundColor ?? defaultForegroundColor,
-          fontSize: size * 0.4,
-          fontWeight: FontWeight.bold,
+    return Container(
+      width: size,
+      height: height,
+      color: backgroundColor ?? defaultBackgroundColor,
+      child: Center(
+        child: Text(
+          name?.initials ?? '?',
+          style: TextStyle(
+            color: foregroundColor ?? defaultForegroundColor,
+            fontSize: size * 0.4,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
