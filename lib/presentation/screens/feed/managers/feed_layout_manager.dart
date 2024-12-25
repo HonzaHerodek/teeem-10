@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/dimming_effect.dart';
 import '../../../../data/models/post_model.dart';
 import '../../../../data/models/project_model.dart';
 import '../controllers/feed_controller.dart';
@@ -58,7 +59,44 @@ class FeedLayoutManager {
   }
 
   void updateDimming() {
-    // Implementation
+    final isSearchActive = headerController.state.isSearchVisible;
+    
+    final baseConfig = const DimmingConfig(
+      dimmingStrength: 0.7,
+      glowBlur: 10,
+    );
+
+    if (isSearchActive) {
+      // When search is active, use all excluded elements with their specific shapes
+      dimmingManager.updateDimming(
+        isDimmed: true,
+        config: baseConfig,
+        excludedKeys: dimmingManager.getExcludedKeys(),
+      );
+    } else if (_isProfileOpen) {
+      // Profile panel dimming - exclude plus button and target button
+      dimmingManager.updateDimming(
+        isDimmed: true,
+        config: baseConfig,
+        excludedKeys: [
+          dimmingManager.plusActionButtonKey,
+          dimmingManager.searchBarKey,
+        ],
+      );
+    } else if (_isCreatingPost) {
+      // Post creation dimming - only exclude plus button
+      dimmingManager.updateDimming(
+        isDimmed: true,
+        config: baseConfig,
+        excludedKeys: [dimmingManager.plusActionButtonKey],
+      );
+    } else {
+      // No dimming
+      dimmingManager.updateDimming(
+        isDimmed: false,
+        config: const DimmingConfig(),
+      );
+    }
   }
 
   void handleScroll(ScrollController controller) {

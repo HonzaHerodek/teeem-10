@@ -31,7 +31,7 @@ class _FeedViewState extends State<FeedView> {
   bool _isProfileOpen = false;
   bool _isDimmed = false;
   DimmingConfig _dimmingConfig = const DimmingConfig();
-  List<GlobalKey> _excludedKeys = [];
+  Map<GlobalKey, DimmingConfig> _excludedConfigs = {};
   Offset? _dimmingSource;
   GlobalKey? _selectedItemKey;
 
@@ -88,15 +88,15 @@ class _FeedViewState extends State<FeedView> {
       filtersKey: _filtersKey,
       onDimmingUpdate: ({
         required bool isDimmed,
-        required List<GlobalKey> excludedKeys,
         required DimmingConfig config,
+        required Map<GlobalKey, DimmingConfig> excludedConfigs,
         Offset? source,
       }) {
         if (mounted) {
           setState(() {
             _isDimmed = isDimmed;
             _dimmingConfig = config;
-            _excludedKeys = excludedKeys;
+            _excludedConfigs = excludedConfigs;
             _dimmingSource = source;
           });
         }
@@ -136,14 +136,14 @@ class _FeedViewState extends State<FeedView> {
       onDimmingChanged: ({
         required bool isDimmed,
         required DimmingConfig config,
-        required List<GlobalKey> excludedKeys,
+        required Map<GlobalKey, DimmingConfig> excludedConfigs,
         Offset? source,
       }) {
         if (mounted) {
           setState(() {
             _isDimmed = isDimmed;
             _dimmingConfig = config;
-            _excludedKeys = excludedKeys;
+            _excludedConfigs = excludedConfigs;
             _dimmingSource = source;
           });
         }
@@ -241,8 +241,13 @@ class _FeedViewState extends State<FeedView> {
             ).withDimming(
               isDimmed: _isDimmed,
               config: _dimmingConfig,
-              excludedKeys: _excludedKeys,
+              excludedConfigs: _excludedConfigs,
               source: _dimmingSource,
+              onDimmedAreaTap: () {
+                if (_headerController.state.isSearchVisible) {
+                  _headerController.closeSearch();
+                }
+              },
             ),
             FeedHeader(
               headerController: _headerController,

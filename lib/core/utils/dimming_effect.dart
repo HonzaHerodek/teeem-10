@@ -79,11 +79,14 @@ class DimmingOverlay extends StatelessWidget {
   /// Configuration for the dimming effect
   final DimmingConfig config;
 
-  /// List of global keys for widgets that should be excluded from dimming
-  final List<GlobalKey> excludedKeys;
+  /// Map of global keys to their specific dimming configurations
+  final Map<GlobalKey, DimmingConfig> excludedConfigs;
 
   /// Optional offset from where the dimming effect should originate
   final Offset? source;
+
+  /// Optional callback when the dimmed area is tapped
+  final VoidCallback? onDimmedAreaTap;
 
   static const Duration _animationDuration = Duration(milliseconds: 500);
   static const Curve _animationCurve = Curves.fastOutSlowIn;
@@ -93,8 +96,9 @@ class DimmingOverlay extends StatelessWidget {
     required this.child,
     required this.isDimmed,
     this.config = const DimmingConfig(),
-    this.excludedKeys = const [],
+    this.excludedConfigs = const {},
     this.source,
+    this.onDimmedAreaTap,
   });
 
   @override
@@ -102,40 +106,37 @@ class DimmingOverlay extends StatelessWidget {
     return Stack(
       children: [
         child,
-        IgnorePointer(
-          ignoring: !isDimmed,
-          child: AnimatedOpacity(
-            opacity: isDimmed ? 1.0 : 0.0,
-            duration: _animationDuration,
-            curve: _animationCurve,
+        if (isDimmed) ...[
+          // Base dimming layer with tap handling
+          GestureDetector(
+            onTap: onDimmedAreaTap,
             child: _buildDimmingLayer(context),
           ),
-        ),
+          // Excluded elements layer that allows interaction
+          Stack(
+            fit: StackFit.expand,
+            children: excludedConfigs.entries.map((entry) => 
+              _buildExcludedElement(entry.key, entry.value, context)
+            ).toList(),
+          ),
+        ],
       ],
     );
   }
 
   Widget _buildDimmingLayer(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Base dimming layer with blur
-        BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: 2.0,
-            sigmaY: 2.0,
-          ),
-          child: Container(
-            color: config.dimmingColor.withOpacity(config.dimmingStrength),
-          ),
-        ),
-        // Excluded elements with glow
-        ...excludedKeys.map((key) => _buildExcludedElement(key, context)),
-      ],
+    return BackdropFilter(
+      filter: ImageFilter.blur(
+        sigmaX: 2.0,
+        sigmaY: 2.0,
+      ),
+      child: Container(
+        color: config.dimmingColor.withOpacity(config.dimmingStrength),
+      ),
     );
   }
 
-  Widget _buildExcludedElement(GlobalKey key, BuildContext context) {
+  Widget _buildExcludedElement(GlobalKey key, DimmingConfig elementConfig, BuildContext context) {
     final RenderBox? renderBox =
         key.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return const SizedBox.shrink();
@@ -156,27 +157,27 @@ class DimmingOverlay extends StatelessWidget {
           width: size.width,
           height: size.height,
           decoration: BoxDecoration(
-            shape: config.excludeShape == DimmingExcludeShape.circle
+            shape: elementConfig.excludeShape == DimmingExcludeShape.circle
                 ? BoxShape.circle
                 : BoxShape.rectangle,
-            borderRadius: config.excludeShape == DimmingExcludeShape.rectangle
-                ? config.borderRadius
+            borderRadius: elementConfig.excludeShape == DimmingExcludeShape.rectangle
+                ? elementConfig.borderRadius
                 : null,
             boxShadow: [
               BoxShadow(
-                color: config.glowColor
-                    .withOpacity(isDimmed ? config.glowStrength : 0.0),
-                blurRadius: config.glowBlur * 2,
-                spreadRadius: config.glowSpread,
+                color: elementConfig.glowColor
+                    .withOpacity(isDimmed ? elementConfig.glowStrength : 0.0),
+                blurRadius: elementConfig.glowBlur * 2,
+                spreadRadius: elementConfig.glowSpread,
               ),
             ],
           ),
-          child: config.excludeShape == DimmingExcludeShape.circle
+          child: elementConfig.excludeShape == DimmingExcludeShape.circle
               ? ClipOval(
                   child: _buildBackdropFilter(),
                 )
               : ClipRRect(
-                  borderRadius: config.borderRadius ?? BorderRadius.zero,
+                  borderRadius: elementConfig.borderRadius ?? BorderRadius.zero,
                   child: _buildBackdropFilter(),
                 ),
         ),
@@ -202,14 +203,16 @@ extension DimmingEffect on Widget {
   Widget withDimming({
     required bool isDimmed,
     DimmingConfig? config,
-    List<GlobalKey> excludedKeys = const [],
+    Map<GlobalKey, DimmingConfig> excludedConfigs = const {},
     Offset? source,
+    VoidCallback? onDimmedAreaTap,
   }) {
     return DimmingOverlay(
       isDimmed: isDimmed,
       config: config ?? const DimmingConfig(),
-      excludedKeys: excludedKeys,
+      excludedConfigs: excludedConfigs,
       source: source,
+      onDimmedAreaTap: onDimmedAreaTap,
       child: this,
     );
   }
@@ -218,27 +221,25 @@ extension DimmingEffect on Widget {
 /// Mixin to help manage dimming state in widgets/screens
 mixin DimmingController<T extends StatefulWidget> on State<T> {
   bool _isDimmed = false;
-  final List<GlobalKey> _excludedKeys = [];
+  Map<GlobalKey, DimmingConfig> _excludedConfigs = {};
   DimmingConfig _config = const DimmingConfig();
   Offset? _source;
 
   bool get isDimmed => _isDimmed;
-  List<GlobalKey> get excludedKeys => _excludedKeys;
+  Map<GlobalKey, DimmingConfig> get excludedConfigs => _excludedConfigs;
   DimmingConfig get dimmingConfig => _config;
   Offset? get dimmingSource => _source;
 
   void setDimming({
     required bool isDimmed,
     DimmingConfig? config,
-    List<GlobalKey> excludedKeys = const [],
+    Map<GlobalKey, DimmingConfig> excludedConfigs = const {},
     Offset? source,
   }) {
     setState(() {
       _isDimmed = isDimmed;
       _config = config ?? _config;
-      _excludedKeys
-        ..clear()
-        ..addAll(excludedKeys);
+      _excludedConfigs = Map<GlobalKey, DimmingConfig>.from(excludedConfigs);
       _source = source;
     });
   }
@@ -252,7 +253,7 @@ mixin DimmingController<T extends StatefulWidget> on State<T> {
   void clearDimming() {
     setState(() {
       _isDimmed = false;
-      _excludedKeys.clear();
+      _excludedConfigs.clear();
       _source = null;
     });
   }

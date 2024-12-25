@@ -17,7 +17,7 @@ class FeedStateManager {
   final Function({
     required bool isDimmed,
     required DimmingConfig config,
-    required List<GlobalKey> excludedKeys,
+    required Map<GlobalKey, DimmingConfig> excludedConfigs,
     Offset? source,
   }) onDimmingChanged;
   final Function(GlobalKey?) onKeyChanged;
@@ -67,22 +67,9 @@ class FeedStateManager {
 
   void handleProfileStateChange(bool isOpen) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (isOpen) {
-        dimmingManager.onDimmingUpdate(
-          isDimmed: true,
-          excludedKeys: const [],
-          config: const DimmingConfig(
-            dimmingStrength: 0.7,
-            glowBlur: 10,
-          ),
-        );
-      } else {
-        dimmingManager.onDimmingUpdate(
-          isDimmed: false,
-          excludedKeys: const [],
-          config: const DimmingConfig(),
-        );
-      }
+      // Let the FeedLayoutManager handle the dimming update since it manages
+      // all the excluded elements consistently
+      layoutManager.isProfileOpen = isOpen;
     });
   }
 

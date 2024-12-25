@@ -4,8 +4,8 @@ import '../controllers/feed_header_controller.dart';
 
 typedef DimmingUpdateCallback = void Function({
   required bool isDimmed,
-  required List<GlobalKey> excludedKeys,
   required DimmingConfig config,
+  required Map<GlobalKey, DimmingConfig> excludedConfigs,
   Offset? source,
 });
 
@@ -26,6 +26,37 @@ class DimmingManager {
     required this.onDimmingUpdate,
   });
 
+  Map<GlobalKey, DimmingConfig> getExcludedConfigs() {
+    return {
+      plusActionButtonKey: const DimmingConfig(
+        excludeShape: DimmingExcludeShape.circle,
+        glowSpread: 4.0,
+        glowBlur: 8.0,
+        glowStrength: 0.5,
+      ),
+      profileButtonKey: const DimmingConfig(
+        excludeShape: DimmingExcludeShape.circle,
+        glowSpread: 4.0,
+        glowBlur: 8.0,
+        glowStrength: 0.5,
+      ),
+      searchBarKey: const DimmingConfig(
+        excludeShape: DimmingExcludeShape.rectangle,
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        glowSpread: 4.0,
+        glowBlur: 8.0,
+        glowStrength: 0.5,
+      ),
+      filtersKey: const DimmingConfig(
+        excludeShape: DimmingExcludeShape.rectangle,
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+        glowSpread: 4.0,
+        glowBlur: 8.0,
+        glowStrength: 0.5,
+      ),
+    };
+  }
+
   List<GlobalKey> getExcludedKeys() {
     return [
       plusActionButtonKey,
@@ -37,14 +68,20 @@ class DimmingManager {
 
   void updateDimming({
     required bool isDimmed,
-    required List<GlobalKey> excludedKeys,
     required DimmingConfig config,
+    List<GlobalKey> excludedKeys = const [],
     Offset? source,
   }) {
+    // Convert excludedKeys to excludedConfigs if provided, otherwise use getExcludedConfigs
+    final configs = excludedKeys.isEmpty 
+        ? getExcludedConfigs() 
+        : Map.fromEntries(excludedKeys.map((key) => 
+            MapEntry(key, getExcludedConfigs()[key] ?? config)));
+
     onDimmingUpdate(
       isDimmed: isDimmed,
-      excludedKeys: excludedKeys,
       config: config,
+      excludedConfigs: configs,
       source: source,
     );
   }

@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'models/notification_attention_state.dart';
 import 'models/notification_attention_config.dart';
 
-// TODO: We need to make the various attention states of notifications button functional - parameter: testing animation turn on/off
-
 class NotificationAttentionIcon extends StatefulWidget {
   final int? notificationCount;
   final VoidCallback onTap;
@@ -111,73 +109,69 @@ class _NotificationAttentionIconState extends State<NotificationAttentionIcon> w
       return const SizedBox(width: 56, height: 56);
     }
 
-    final iconWidget = AnimatedScale(
-      scale: currentState.buttonScale,
-      duration: const Duration(milliseconds: 300),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.isActive || currentState == NotificationAttentionState.withCircle
-                  ? Colors.pink
-                  : Colors.transparent,
+    Widget iconWidget = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.isActive || currentState == NotificationAttentionState.withCircle
+                ? Colors.pink
+                : Colors.transparent,
+          ),
+          child: AnimatedScale(
+            scale: currentState.iconScale,
+            duration: const Duration(milliseconds: 300),
+            child: IconButton(
+              icon: Icon(
+                currentState == NotificationAttentionState.normal
+                    ? Icons.notifications_outlined
+                    : Icons.notifications,
+                color: Colors.white,
+              ),
+              onPressed: widget.onTap,
             ),
-            child: AnimatedScale(
-              scale: currentState.iconScale,
-              duration: const Duration(milliseconds: 300),
-              child: IconButton(
-                icon: Icon(
-                  currentState == NotificationAttentionState.normal
-                      ? Icons.notifications_outlined
-                      : Icons.notifications,
+          ),
+        ),
+        if (widget.notificationCount != null && widget.notificationCount! > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              child: Text(
+                widget.notificationCount! > 99 ? '99+' : widget.notificationCount!.toString(),
+                style: const TextStyle(
                   color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
-                onPressed: widget.onTap,
+                textAlign: TextAlign.center,
               ),
             ),
           ),
-          if (widget.notificationCount != null && widget.notificationCount! > 0)
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.pink,
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
-                ),
-                child: Text(
-                  widget.notificationCount! > 99 ? '99+' : widget.notificationCount!.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+        if (currentState == NotificationAttentionState.withDot)
+          Positioned(
+            right: 12,
+            top: 12,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
               ),
             ),
-          if (currentState == NotificationAttentionState.withDot)
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.pink,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
 
     if (!widget.showTestModeControls) {
@@ -189,69 +183,71 @@ class _NotificationAttentionIconState extends State<NotificationAttentionIcon> w
       children: [
         iconWidget,
         const SizedBox(height: 4),
-        GestureDetector(
-          onTap: () {
-            if (mounted) {
-              if (widget.testMode) {
-                _testModeTimer?.cancel();
-                setState(() {
-                  _testModeState = NotificationAttentionState.normal;
-                  _isBlinkVisible = true;
-                });
-                widget.onTestModeChanged?.call(false);
-              } else {
-                widget.onTestModeChanged?.call(true);
-              }
-            }
-          },
+        Center(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.black45,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.testMode)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.pause,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Stop Test',
-                        style: TextStyle(
+            child: GestureDetector(
+              onTap: () {
+                if (mounted) {
+                  if (widget.testMode) {
+                    _testModeTimer?.cancel();
+                    setState(() {
+                      _testModeState = NotificationAttentionState.normal;
+                      _isBlinkVisible = true;
+                    });
+                    widget.onTestModeChanged?.call(false);
+                  } else {
+                    widget.onTestModeChanged?.call(true);
+                  }
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.testMode)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          Icons.pause,
                           color: Colors.white,
-                          fontSize: 12,
+                          size: 16,
                         ),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Test States',
-                        style: TextStyle(
+                        SizedBox(width: 4),
+                        Text(
+                          'Stop Test',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          Icons.play_arrow,
                           color: Colors.white,
-                          fontSize: 12,
+                          size: 16,
                         ),
-                      ),
-                    ],
-                  ),
-              ],
+                        SizedBox(width: 4),
+                        Text(
+                          'Test States',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),
