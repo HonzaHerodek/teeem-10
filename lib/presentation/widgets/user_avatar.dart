@@ -51,7 +51,10 @@ class UserAvatar extends StatelessWidget {
       avatar = Container(
         width: size * 0.75,
         height: ovalHeight,
-        color: theme.colorScheme.surface,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: const Center(child: CircularProgressIndicator()),
       );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
@@ -61,6 +64,7 @@ class UserAvatar extends StatelessWidget {
           width: size * 0.75,
           height: ovalHeight,
           decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
             image: DecorationImage(
               image: imageProvider,
               fit: BoxFit.cover,
@@ -71,7 +75,10 @@ class UserAvatar extends StatelessWidget {
         placeholder: (context, url) => Container(
           width: size * 0.75,
           height: ovalHeight,
-          color: theme.colorScheme.surface,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: const Center(child: CircularProgressIndicator()),
         ),
         errorWidget: (context, url, error) => _buildInitialsAvatar(
@@ -90,17 +97,13 @@ class UserAvatar extends StatelessWidget {
       );
     }
 
-    // Apply oval shape clipping with proper dimensions
-    avatar = SizedBox(
-      width: size * 0.75,
-      height: ovalHeight,
-      child: ClipPath(
-        clipper: OvalClipper(),
-        child: Container(
-          width: size * 0.75,
-          height: ovalHeight,
-          child: avatar,
-        ),
+    // Apply rounded corners
+    avatar = ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: size * 0.75,
+        height: ovalHeight,
+        child: avatar,
       ),
     );
 
@@ -156,7 +159,10 @@ class UserAvatar extends StatelessWidget {
     return Container(
       width: size * 0.75,
       height: height,
-      color: backgroundColor ?? defaultBackgroundColor,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? defaultBackgroundColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Center(
         child: Text(
           name?.initials ?? '?',
