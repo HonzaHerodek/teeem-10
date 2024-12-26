@@ -53,31 +53,102 @@ class UserAvatar extends StatelessWidget {
         height: ovalHeight,
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
         ),
         child: const Center(child: CircularProgressIndicator()),
       );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       avatar = CachedNetworkImage(
         imageUrl: imageUrl!,
-        imageBuilder: (context, imageProvider) => Container(
-          width: size * 0.75,
-          height: ovalHeight,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            image: DecorationImage(
-              image: imageProvider,
-              fit: BoxFit.cover,
+        imageBuilder: (context, imageProvider) {
+          Widget imageContainer = Container(
+            width: size * 0.75,
+            height: ovalHeight,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: imageProvider,
+                fit: BoxFit.cover,
+              ),
+              color: backgroundColor ?? defaultBackgroundColor,
             ),
-            color: backgroundColor ?? defaultBackgroundColor,
-          ),
-        ),
+          );
+
+          // First clip to oval shape
+          imageContainer = ClipPath(
+            clipper: OvalClipper(),
+            child: imageContainer,
+          );
+
+          if (useTransparentEdges) {
+            // Apply horizontal gradient masks
+            imageContainer = ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.white.withOpacity(0),
+                    Colors.white.withOpacity(0.5),
+                    Colors.white,
+                    Colors.white,
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0),
+                  ],
+                  stops: const [0.0, 0.15, 0.3, 0.7, 0.85, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn,
+              child: imageContainer,
+            );
+
+            // Apply vertical gradient masks
+            imageContainer = ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0),
+                    Colors.white.withOpacity(0.5),
+                    Colors.white,
+                    Colors.white,
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0),
+                  ],
+                  stops: const [0.0, 0.15, 0.3, 0.7, 0.85, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn,
+              child: imageContainer,
+            );
+
+            // Apply radial gradient for corner smoothing
+            return ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return RadialGradient(
+                  center: Alignment.center,
+                  radius: 1.0,
+                  colors: [
+                    Colors.white,
+                    Colors.white,
+                    Colors.white.withOpacity(0.9),
+                    Colors.white.withOpacity(0.6),
+                    Colors.white.withOpacity(0),
+                  ],
+                  stops: const [0.0, 0.6, 0.75, 0.85, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn,
+              child: imageContainer,
+            );
+          }
+
+          return imageContainer;
+        },
         placeholder: (context, url) => Container(
           width: size * 0.75,
           height: ovalHeight,
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
           ),
           child: const Center(child: CircularProgressIndicator()),
         ),
@@ -89,23 +160,16 @@ class UserAvatar extends StatelessWidget {
         ),
       );
     } else {
-      avatar = _buildInitialsAvatar(
-        context,
-        defaultBackgroundColor,
-        defaultForegroundColor,
-        ovalHeight,
+      avatar = ClipPath(
+        clipper: OvalClipper(),
+        child: _buildInitialsAvatar(
+          context,
+          defaultBackgroundColor,
+          defaultForegroundColor,
+          ovalHeight,
+        ),
       );
     }
-
-    // Apply rounded corners
-    avatar = ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        width: size * 0.75,
-        height: ovalHeight,
-        child: avatar,
-      ),
-    );
 
     if (showBorder) {
       avatar = Container(
@@ -161,7 +225,6 @@ class UserAvatar extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: backgroundColor ?? defaultBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
       ),
       child: Center(
         child: Text(
