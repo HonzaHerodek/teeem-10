@@ -4,36 +4,28 @@ class EggClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    final w = size.width * 0.65; // Much narrower width
+    final w = size.width * 0.98; // Very subtle width reduction
     final h = size.height;
     final wm = w / 2;
-    final hm = h / 2;
     
     // Center the shape
     final xOffset = (size.width - w) / 2;
     
-    path.moveTo(xOffset + wm, h); // Start from bottom center
+    // Start from bottom center
+    path.moveTo(xOffset + wm, h);
     
-    // Left side
-    path.quadraticBezierTo(
-      xOffset, h * 0.8, // Control point
-      xOffset, h * 0.5  // End point
+    // Left side - smoother curve with more control points
+    path.cubicTo(
+      xOffset,           h * 0.9,  // First control point - closer to bottom
+      xOffset,           h * 0.3,  // Second control point - higher up
+      xOffset + wm,      0         // End point
     );
     
-    path.quadraticBezierTo(
-      xOffset, h * 0.15, // Control point
-      xOffset + wm, 0    // End point
-    );
-    
-    // Right side
-    path.quadraticBezierTo(
-      xOffset + w, h * 0.15, // Control point
-      xOffset + w, h * 0.5   // End point
-    );
-    
-    path.quadraticBezierTo(
-      xOffset + w, h * 0.8, // Control point
-      xOffset + wm, h       // End point
+    // Right side - mirror the left side for symmetry
+    path.cubicTo(
+      xOffset + w,       h * 0.3,  // First control point - higher up
+      xOffset + w,       h * 0.9,  // Second control point - closer to bottom
+      xOffset + wm,      h         // End point
     );
     
     path.close();

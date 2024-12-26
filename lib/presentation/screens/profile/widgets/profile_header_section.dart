@@ -87,6 +87,7 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
                   imageUrl: user.profileImage,
                   name: user.username,
                   size: profileSize,
+                  useTransparentEdges: true,
                 ),
                 Positioned(
                   left: 50,

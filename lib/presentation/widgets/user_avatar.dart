@@ -45,7 +45,7 @@ class UserAvatar extends StatelessWidget {
     final defaultBackgroundColor = theme.colorScheme.primary;
     final defaultForegroundColor = theme.colorScheme.onPrimary;
 
-    final double eggHeight = size * 1.3; // Egg shape is slightly taller
+    final double eggHeight = size * 1.2; // Just slightly taller for subtle egg shape
     
     Widget avatar;
     if (isLoading) {
@@ -91,30 +91,36 @@ class UserAvatar extends StatelessWidget {
       );
     }
 
-    // Apply egg shape clipping
+    // First apply the egg shape clipping
     avatar = ClipPath(
       clipper: EggClipper(),
       child: avatar,
     );
 
-    if (useTransparentEdges) {
-      avatar = ShaderMask(
-        shaderCallback: (Rect bounds) {
-          return ui.Gradient.radial(
-            bounds.center,
-            bounds.width / 2,
-            [
-              Colors.black,
-              Colors.black,
-              Colors.transparent,
-            ],
-            [0.0, 0.5, 1.0],
-          );
-        },
-        blendMode: BlendMode.dstIn,
-        child: avatar,
-      );
-    }
+    // Then apply a very smooth gradient mask for edge blending
+    avatar = ShaderMask(
+      shaderCallback: (Rect bounds) {
+        return ui.Gradient.radial(
+          bounds.center,
+          bounds.width * 2.5, // Extra wide radius for maximum smoothness
+          [
+            Colors.black,
+            Colors.black,
+            Colors.black.withOpacity(0.99),
+            Colors.black.withOpacity(0.95),
+            Colors.black.withOpacity(0.8),
+            Colors.black.withOpacity(0.5),
+            Colors.black.withOpacity(0.2),
+            Colors.black.withOpacity(0.05),
+            Colors.transparent,
+          ],
+          [0.0, 0.3, 0.5, 0.65, 0.75, 0.82, 0.88, 0.94, 1.0],
+        );
+      },
+      blendMode: BlendMode.dstIn,
+      child: avatar,
+    );
+
 
     if (showBorder) {
       avatar = Container(
@@ -154,7 +160,7 @@ class UserAvatar extends StatelessWidget {
 
     return SizedBox(
       width: size,
-      height: size,
+      height: eggHeight,
       child: avatar,
     );
   }

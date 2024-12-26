@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/post_widget_constants.dart';
+import '../user_avatar.dart';
 
 class AnimatedProfilePicture extends StatelessWidget {
   final String? imageUrl;
@@ -76,18 +77,30 @@ class AnimatedProfilePicture extends StatelessWidget {
       left: 0,
       right: 0,
       child: Center(
-        child: GestureDetector(
-          onTap: canExpand && !isExpanded ? onTap : null,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: PostWidgetConstants.circularBorderDecoration,
-            child: ClipOval(
-              child: Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildErrorPlaceholder(),
-              ),
+        child: Container(
+          width: size * 1.4,
+          height: size * 1.8,
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.2,
+              colors: [
+                Colors.transparent,
+                Colors.transparent,
+                Colors.black.withOpacity(0.02),
+                Colors.black.withOpacity(0.05),
+              ],
+              stops: const [0.0, 0.4, 0.6, 1.0],
+            ),
+          ),
+          child: Center(
+            child: UserAvatar(
+              imageUrl: imageUrl,
+              name: username,
+              size: size * 1.1,
+              onTap: canExpand && !isExpanded ? onTap : null,
+              useTransparentEdges: true,
+              backgroundColor: Colors.transparent,
             ),
           ),
         ),
