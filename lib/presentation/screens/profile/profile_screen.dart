@@ -5,6 +5,9 @@ import '../../../core/di/injection.dart';
 import '../../../domain/repositories/post_repository.dart';
 import '../../../domain/repositories/user_repository.dart';
 import '../../../core/services/rating_service.dart';
+import '../../../data/models/profile_settings_model.dart';
+import '../../../domain/repositories/settings_repository.dart';
+import 'widgets/profile_settings_view.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/profile_posts_grid.dart';
 import 'widgets/profile_header_section.dart';
@@ -66,14 +69,54 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   bool _showTraits = false;
   bool _showNetwork = false;
+  bool _showSettings = false;
   bool _isAddingTrait = false;
+  late ProfileSettingsModel _settings;
+
+  @override
+  void initState() {
+    super.initState();
+    _settings = const ProfileSettingsModel();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final settingsData = await getIt<SettingsRepository>().loadSettings();
+      if (settingsData != null) {
+        setState(() {
+          _settings = ProfileSettingsModel.fromJson(settingsData);
+        });
+      }
+    } catch (e) {
+      print('Error loading settings: $e');
+    }
+  }
+
+  Future<void> _saveSettings(ProfileSettingsModel newSettings) async {
+    try {
+      await getIt<SettingsRepository>().saveSettings(newSettings.toJson());
+      setState(() {
+        _settings = newSettings;
+      });
+    } catch (e) {
+      print('Error saving settings: $e');
+    }
+  }
 
   Widget _buildContent(BuildContext context, ProfileState state) {
     if (state.user == null) {
       return const SizedBox.shrink();
     }
 
-    if (_showTraits) {
+    if (_showSettings) {
+      return ProfileSettingsView(
+        settings: _settings,
+        onSettingsChanged: (ProfileSettingsModel newSettings) {
+          _saveSettings(newSettings);
+        },
+      );
+    } else if (_showTraits) {
       print('ProfileScreen _buildContent - userId: ${state.user!.id}'); // Debug log
       print('ProfileScreen _buildContent - user: ${state.user}'); // Debug log
       return WillPopScope(
@@ -162,6 +205,25 @@ class _ProfileViewState extends State<ProfileView> {
                   _buildContent(context, state),
                   if (_showTraits || _showNetwork) const SizedBox(height: 16),
                   if (!_showTraits && !_showNetwork) ...[
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16.0),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.settings,
+                            color: Colors.white70,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showSettings = !_showSettings;
+                              _showTraits = false;
+                              _showNetwork = false;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
                     Text(
                       state.user?.username ?? '',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(

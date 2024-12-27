@@ -7,7 +7,7 @@ import 'presentation/app.dart';
 // Debug flag for development mode
 const bool kIsDebug = kDebugMode;
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Hide system UI completely
@@ -18,7 +18,7 @@ void main() {
   ));
 
   // Initialize dependencies
-  initializeDependencies();
+  await initializeDependencies();
 
   runApp(const App());
 }
