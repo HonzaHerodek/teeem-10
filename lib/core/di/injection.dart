@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../presentation/providers/background_color_provider.dart';
+import '../../presentation/providers/background_animation_provider.dart';
 import '../services/connectivity_service.dart';
 import '../services/logger_service.dart';
 import '../services/rating_service.dart';
@@ -46,4 +48,8 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<SettingsRepository>(
     () => SharedPreferencesSettingsRepository(prefs),
   );
+  
+  // Providers
+  getIt.registerLazySingleton(() => BackgroundColorProvider());
+  getIt.registerLazySingleton(() => BackgroundAnimationProvider());
 }

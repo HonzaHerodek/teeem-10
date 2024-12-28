@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/background_color_provider.dart';
 
 class AnimatedGradientBackground extends StatefulWidget {
   final Widget child;
@@ -18,13 +20,17 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  final List<Color> colorList = [
-    const Color(0xFF1E88E5),
-    const Color(0xFF1565C0),
-    const Color(0xFF0D47A1),
-    const Color(0xFF1565C0),
-    const Color(0xFF1E88E5),
-  ];
+  List<Color> _getColorList(Color baseColor) {
+    // Create variations of the base color for the gradient
+    final hslColor = HSLColor.fromColor(baseColor);
+    return [
+      hslColor.withLightness((hslColor.lightness + 0.2).clamp(0.0, 1.0)).toColor(),
+      baseColor,
+      hslColor.withLightness((hslColor.lightness - 0.2).clamp(0.0, 1.0)).toColor(),
+      baseColor,
+      hslColor.withLightness((hslColor.lightness + 0.2).clamp(0.0, 1.0)).toColor(),
+    ];
+  }
 
   @override
   void initState() {
@@ -48,25 +54,29 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: colorList,
-              stops: [
-                _animation.value.clamp(0.0, 1.0),
-                (_animation.value + 0.2).clamp(0.0, 1.0),
-                (_animation.value + 0.4).clamp(0.0, 1.0),
-                (_animation.value + 0.6).clamp(0.0, 1.0),
-                (_animation.value + 0.8).clamp(0.0, 1.0),
-              ],
-            ),
-          ),
-          child: widget.child,
+    return Consumer<BackgroundColorProvider>(
+      builder: (context, provider, _) {
+        return AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: _getColorList(provider.backgroundColor),
+                  stops: [
+                    _animation.value.clamp(0.0, 1.0),
+                    (_animation.value + 0.2).clamp(0.0, 1.0),
+                    (_animation.value + 0.4).clamp(0.0, 1.0),
+                    (_animation.value + 0.6).clamp(0.0, 1.0),
+                    (_animation.value + 0.8).clamp(0.0, 1.0),
+                  ],
+                ),
+              ),
+              child: widget.child,
+            );
+          },
         );
       },
     );

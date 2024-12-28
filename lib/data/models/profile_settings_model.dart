@@ -39,8 +39,10 @@ class ProfileSettingsModel {
     return ProfileSettingsModel(
       email: email ?? this.email,
       password: password ?? this.password,
-      backgroundAnimationColor: backgroundAnimationColor ?? this.backgroundAnimationColor,
-      backgroundAnimationEnabled: backgroundAnimationEnabled ?? this.backgroundAnimationEnabled,
+      backgroundAnimationColor:
+          backgroundAnimationColor ?? this.backgroundAnimationColor,
+      backgroundAnimationEnabled:
+          backgroundAnimationEnabled ?? this.backgroundAnimationEnabled,
       defaultTarget: defaultTarget ?? this.defaultTarget,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,

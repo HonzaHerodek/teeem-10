@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/utils/dimming_effect.dart';
 import '../../../../data/models/notification_model.dart';
-import '../../../widgets/animated_gradient_background.dart';
+import '../../../providers/background_animation_provider.dart';
+import '../../../providers/background_color_provider.dart';
+import '../../../widgets/background_animations/background_animation_manager.dart';
 import '../../../widgets/post_creation/in_feed_post_creation.dart';
 import '../../../widgets/sliding_panel.dart';
 import '../../profile/profile_screen.dart';
@@ -211,33 +214,37 @@ class _FeedViewState extends State<FeedView> {
         return Stack(
           fit: StackFit.expand,
           children: [
-            AnimatedGradientBackground(
-              child: Builder(
-                builder: (context) => FeedMainContent(
-                  scrollController: _scrollController,
-                  feedController: _feedController,
-                  isCreatingPost: _isCreatingPost,
-                  postCreationKey: _postCreationKey,
-                  onCancel: () {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() => _isCreatingPost = false);
-                      }
-                    });
-                  },
-                  onComplete: (success, project) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() => _isCreatingPost = false);
-                        if (success) _feedController.refresh();
-                      }
-                    });
-                  },
-                  topPadding: _layoutManager.getTopPadding(context),
-                  selectedItemKey: _selectedItemKey,
-                  selectedNotification: _headerController.selectedNotification,
-                ),
-              ),
+            Consumer2<BackgroundColorProvider, BackgroundAnimationProvider>(
+              builder: (context, colorProvider, animationProvider, _) {
+                return BackgroundAnimationManager(
+                  type: animationProvider.animationType,
+                  color: colorProvider.backgroundColor,
+                  child: FeedMainContent(
+                    scrollController: _scrollController,
+                    feedController: _feedController,
+                    isCreatingPost: _isCreatingPost,
+                    postCreationKey: _postCreationKey,
+                    onCancel: () {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() => _isCreatingPost = false);
+                        }
+                      });
+                    },
+                    onComplete: (success, project) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() => _isCreatingPost = false);
+                          if (success) _feedController.refresh();
+                        }
+                      });
+                    },
+                    topPadding: _layoutManager.getTopPadding(context),
+                    selectedItemKey: _selectedItemKey,
+                    selectedNotification: _headerController.selectedNotification,
+                  ),
+                );
+              },
             ).withDimming(
               isDimmed: _isDimmed,
               config: _dimmingConfig,
@@ -294,7 +301,6 @@ class _FeedViewState extends State<FeedView> {
                       _stateManager.handlePostComplete(false);
                     }
                   } else {
-                    // Ensure state change happens before any layout updates
                     setState(() => _isCreatingPost = true);
                   }
                 },

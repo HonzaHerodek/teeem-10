@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../data/models/profile_settings_model.dart';
+import '../../../providers/background_color_provider.dart';
+import '../../../providers/background_animation_provider.dart';
 import 'settings_section.dart';
 
 class ProfileSettingsView extends StatefulWidget {
@@ -172,17 +175,37 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
           SettingsSection(
             title: 'Visuals',
             children: [
-              _buildSwitch(
-                label: 'Background Animation',
-                value: _backgroundAnimationEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _backgroundAnimationEnabled = value;
-                  });
-                  _updateSettings();
-                },
+              _buildSettingField(
+                label: 'Animation Type',
+                child: Wrap(
+                  spacing: 8,
+                  children: BackgroundAnimationType.values.map((type) {
+                    final isSelected = context.select<BackgroundAnimationProvider, bool>(
+                      (provider) => provider.animationType == type,
+                    );
+                    return FilterChip(
+                      selected: isSelected,
+                      label: Text(
+                        type.displayName,
+                        style: TextStyle(
+                          color: isSelected ? Colors.black : Colors.white,
+                        ),
+                      ),
+                      selectedColor: Colors.amber,
+                      checkmarkColor: Colors.black,
+                      backgroundColor: Colors.black26,
+                      onSelected: (selected) {
+                        if (selected) {
+                          context.read<BackgroundAnimationProvider>().setAnimationType(type);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
               ),
-              if (_backgroundAnimationEnabled) ...[
+              if (context.select<BackgroundAnimationProvider, bool>(
+                (provider) => provider.animationType != BackgroundAnimationType.none,
+              )) ...[
                 const SizedBox(height: 16),
                 _buildSettingField(
                   label: 'Animation Color',
@@ -205,6 +228,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                               setState(() {
                                 _selectedColor = color;
                               });
+                              context.read<BackgroundColorProvider>().setBackgroundColor(color);
                               _updateSettings();
                             },
                             child: Container(
