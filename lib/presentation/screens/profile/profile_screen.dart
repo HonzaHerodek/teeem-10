@@ -133,7 +133,12 @@ class _ProfileViewState extends State<ProfileView> {
           });
           return false;
         },
-        child: const ProfileNetworkView(),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: const ProfileNetworkView(),
+        ),
       );
     }
     
