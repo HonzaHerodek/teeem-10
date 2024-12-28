@@ -13,6 +13,7 @@ import '../../widgets/profile_posts_grid.dart';
 import 'widgets/profile_header_section.dart';
 import 'widgets/profile_traits_view.dart';
 import 'widgets/profile_network_view.dart';
+import 'widgets/expandable_settings_section.dart';
 import 'profile_bloc/profile_bloc.dart';
 import 'profile_bloc/profile_event.dart';
 import 'profile_bloc/profile_state.dart';
@@ -109,14 +110,7 @@ class _ProfileViewState extends State<ProfileView> {
       return const SizedBox.shrink();
     }
 
-    if (_showSettings) {
-      return ProfileSettingsView(
-        settings: _settings,
-        onSettingsChanged: (ProfileSettingsModel newSettings) {
-          _saveSettings(newSettings);
-        },
-      );
-    } else if (_showTraits) {
+    if (_showTraits) {
       print('ProfileScreen _buildContent - userId: ${state.user!.id}'); // Debug log
       print('ProfileScreen _buildContent - user: ${state.user}'); // Debug log
       return WillPopScope(
@@ -205,25 +199,6 @@ class _ProfileViewState extends State<ProfileView> {
                   _buildContent(context, state),
                   if (_showTraits || _showNetwork) const SizedBox(height: 16),
                   if (!_showTraits && !_showNetwork) ...[
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.settings,
-                            color: Colors.white70,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _showSettings = !_showSettings;
-                              _showTraits = false;
-                              _showNetwork = false;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
                     Text(
                       state.user?.username ?? '',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -257,6 +232,22 @@ class _ProfileViewState extends State<ProfileView> {
                             );
                       },
                     ),
+                  if (!_showTraits && !_showNetwork) ...[
+                    const SizedBox(height: 32),
+                    ExpandableSettingsSection(
+                      settings: _settings,
+                      onSettingsChanged: _saveSettings,
+                      isExpanded: _showSettings,
+                      onToggle: () {
+                        setState(() {
+                          _showSettings = !_showSettings;
+                          _showTraits = false;
+                          _showNetwork = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                  ],
                 ],
               ),
             ),
