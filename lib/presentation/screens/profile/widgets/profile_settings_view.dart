@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../data/models/profile_settings_model.dart';
 import '../../../providers/background_color_provider.dart';
 import '../../../providers/background_animation_provider.dart';
+import '../../../providers/background_animation_provider.dart' show BackgroundAnimationType;
 import 'settings_section.dart';
 
 class ProfileSettingsView extends StatefulWidget {
@@ -177,30 +178,36 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
             children: [
               _buildSettingField(
                 label: 'Animation Type',
-                child: Wrap(
-                  spacing: 8,
-                  children: BackgroundAnimationType.values.map((type) {
-                    final isSelected = context.select<BackgroundAnimationProvider, bool>(
-                      (provider) => provider.animationType == type,
-                    );
-                    return FilterChip(
-                      selected: isSelected,
-                      label: Text(
-                        type.displayName,
-                        style: TextStyle(
-                          color: isSelected ? Colors.black : Colors.white,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    children: BackgroundAnimationType.values.map((type) {
+                      final isSelected = context.select<BackgroundAnimationProvider, bool>(
+                        (provider) => provider.animationType == type,
+                      );
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: FilterChip(
+                          selected: isSelected,
+                          label: Text(
+                            type.displayName,
+                            style: TextStyle(
+                              color: isSelected ? Colors.black : Colors.white,
+                            ),
+                          ),
+                          selectedColor: Colors.amber,
+                          checkmarkColor: Colors.black,
+                          backgroundColor: Colors.black26,
+                          onSelected: (selected) {
+                            if (selected) {
+                              context.read<BackgroundAnimationProvider>().setAnimationType(type);
+                            }
+                          },
                         ),
-                      ),
-                      selectedColor: Colors.amber,
-                      checkmarkColor: Colors.black,
-                      backgroundColor: Colors.black26,
-                      onSelected: (selected) {
-                        if (selected) {
-                          context.read<BackgroundAnimationProvider>().setAnimationType(type);
-                        }
-                      },
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               if (context.select<BackgroundAnimationProvider, bool>(
