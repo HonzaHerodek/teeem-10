@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:injectable/injectable.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../models/user_model.dart';
@@ -8,7 +7,6 @@ import '../models/rating_model.dart';
 import '../models/trophy_model.dart';
 import '../models/traits/user_trait_model.dart';
 
-@LazySingleton(as: UserRepository)
 class MockUserRepository implements UserRepository {
   final Map<String, UserModel> _users = {};
   final _delay = const Duration(milliseconds: 500); // Simulate network delay

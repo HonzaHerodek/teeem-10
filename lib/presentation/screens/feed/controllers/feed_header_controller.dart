@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../data/models/notification_model.dart';
 import '../../../../data/models/traits/trait_type_model.dart';
 import '../../../../data/repositories/mock_notification_repository.dart';
-import '../../../../data/repositories/mock_trait_repository.dart';
+import '../../../../domain/repositories/trait_repository.dart';
 import '../models/filter_type.dart';
 import '../controllers/feed_controller.dart';
 
@@ -63,16 +64,10 @@ class FeedHeaderController extends ChangeNotifier {
   FeedHeaderState _state = const FeedHeaderState();
   final GlobalKey targetIconKey = GlobalKey();
   final GlobalKey notificationBarKey = GlobalKey();
-  final MockNotificationRepository _notificationRepository;
+  final _notificationRepository = MockNotificationRepository();
+  final TraitRepository _traitRepository = GetIt.instance<TraitRepository>();
 
-  final MockTraitRepository _traitRepository;
-
-  FeedHeaderController({
-    MockNotificationRepository? notificationRepository,
-    MockTraitRepository? traitRepository,
-  })  : _notificationRepository =
-            notificationRepository ?? MockNotificationRepository(),
-        _traitRepository = traitRepository ?? MockTraitRepository() {
+  FeedHeaderController() {
     _loadNotifications();
     _loadTraitTypes();
   }

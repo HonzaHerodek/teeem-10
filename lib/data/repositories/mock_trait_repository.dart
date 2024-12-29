@@ -2,11 +2,12 @@ import '../../domain/repositories/trait_repository.dart';
 import '../models/traits/trait_type_model.dart';
 import '../models/traits/user_trait_model.dart';
 
-import 'package:get_it/get_it.dart';
 import '../../domain/repositories/user_repository.dart';
 
 class MockTraitRepository implements TraitRepository {
-  final UserRepository _userRepository = GetIt.instance<UserRepository>();
+  final UserRepository _userRepository;
+
+  MockTraitRepository(this._userRepository);
   // Mock data for trait types
   final List<TraitTypeModel> _traitTypes = [
     TraitTypeModel(

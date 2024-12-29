@@ -134,13 +134,47 @@ class _ProfileViewState extends State<ProfileView> {
               id: 'github',
               name: 'GitHub',
               description: 'Connect and share your GitHub projects',
+              detailedDescription: '''
+Connect your GitHub account to showcase your repositories, contributions, and coding activity directly on your profile.
+
+• Display your top repositories
+• Show contribution statistics
+• Highlight your best code
+• Share project updates automatically
+''',
+              symbol: '⌘',
               enabled: false,
+              features: [
+                'Repository showcase',
+                'Contribution graph',
+                'Automatic project updates',
+                'Code snippet sharing'
+              ],
+              publisher: 'GitHub Inc.',
+              version: '1.2.0',
             ),
             AddInItem(
               id: 'figma',
               name: 'Figma',
               description: 'Share your design work from Figma',
+              detailedDescription: '''
+Integrate your Figma designs seamlessly into your profile. Share your creative process and design portfolio with your audience.
+
+• Display design previews
+• Share prototypes
+• Show design system components
+• Automatic design updates
+''',
+              symbol: '✦',
               enabled: false,
+              features: [
+                'Design previews',
+                'Prototype sharing',
+                'Component library',
+                'Auto-sync designs'
+              ],
+              publisher: 'Figma Inc.',
+              version: '1.1.0',
             ),
           ],
         ),
@@ -152,13 +186,47 @@ class _ProfileViewState extends State<ProfileView> {
               id: 'analytics',
               name: 'Analytics',
               description: 'Track your profile performance',
+              detailedDescription: '''
+Get detailed insights into your profile's performance with comprehensive analytics.
+
+• View engagement metrics
+• Track growth over time
+• Analyze audience demographics
+• Generate custom reports
+''',
+              symbol: '📊',
               enabled: false,
+              features: [
+                'Engagement tracking',
+                'Growth analytics',
+                'Audience insights',
+                'Custom reporting'
+              ],
+              publisher: 'Analytics Pro',
+              version: '2.0.0',
             ),
             AddInItem(
               id: 'scheduler',
               name: 'Post Scheduler',
               description: 'Schedule posts for automatic publishing',
+              detailedDescription: '''
+Plan and schedule your content ahead of time with our advanced scheduling tools.
+
+• Schedule multiple posts
+• Set recurring schedules
+• Preview scheduled content
+• Manage posting calendar
+''',
+              symbol: '⏰',
               enabled: false,
+              features: [
+                'Advanced scheduling',
+                'Recurring posts',
+                'Content preview',
+                'Calendar view'
+              ],
+              publisher: 'Schedule Master',
+              version: '1.3.0',
             ),
           ],
         ),

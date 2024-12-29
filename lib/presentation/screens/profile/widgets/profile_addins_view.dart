@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/profile_addins_model.dart';
+import 'add_in_box.dart';
 
-class ProfileAddInsView extends StatelessWidget {
+class ProfileAddInsView extends StatefulWidget {
   final ProfileAddInsModel addIns;
   final Function(ProfileAddInsModel) onAddInsChanged;
 
@@ -11,40 +12,43 @@ class ProfileAddInsView extends StatelessWidget {
     required this.onAddInsChanged,
   }) : super(key: key);
 
-  void _onItemToggled(String categoryId, String itemId, bool value) {
-    final updatedCategories = addIns.categories.map((category) {
-      if (category.id == categoryId) {
-        final updatedItems = category.items.map((item) {
-          if (item.id == itemId) {
-            return item.copyWith(enabled: value);
-          }
-          return item;
-        }).toList();
-        return category.copyWith(items: updatedItems);
-      }
-      return category;
-    }).toList();
+  @override
+  State<ProfileAddInsView> createState() => _ProfileAddInsViewState();
+}
 
-    onAddInsChanged(addIns.copyWith(categories: updatedCategories));
+class _ProfileAddInsViewState extends State<ProfileAddInsView> {
+  String? _expandedAddInId;
+
+  void _toggleAddInExpansion(String addInId) {
+    setState(() {
+      if (_expandedAddInId == addInId) {
+        _expandedAddInId = null;
+      } else {
+        _expandedAddInId = addInId;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Add-ins',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Add-ins',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          ...addIns.categories.map((category) => _buildCategory(category)),
+          const SizedBox(height: 24),
+          ...widget.addIns.categories.map((category) => _buildCategory(category)),
         ],
       ),
     );
@@ -55,7 +59,7 @@ class ProfileAddInsView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             category.name,
             style: const TextStyle(
@@ -65,54 +69,66 @@ class ProfileAddInsView extends StatelessWidget {
             ),
           ),
         ),
-        ...category.items.map((item) => _buildItem(category.id, item)),
         const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildItem(String categoryId, AddInItem item) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (item.description.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    item.description,
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 14,
-                    ),
-                  ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _expandedAddInId != null && 
+                 category.items.any((item) => item.id == _expandedAddInId) 
+                 ? 500 : 200,
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.black,
+                  Colors.transparent,
+                  Colors.transparent,
+                  Colors.black,
                 ],
-              ],
+                stops: const [0.0, 0.05, 0.95, 1.0],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.dstOut,
+            child: ListView.builder(
+              key: PageStorageKey('addins_${category.id}'),
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: category.items.length,
+              itemBuilder: (context, index) {
+                final addIn = category.items[index];
+                return AddInBox(
+                  key: ValueKey('addin_${addIn.id}'),
+                  addIn: addIn,
+                  isExpanded: _expandedAddInId == addIn.id,
+                  onToggleExpand: () => _toggleAddInExpansion(addIn.id),
+                  onGet: () {
+                    final updatedItems = category.items.map((item) {
+                      if (item.id == addIn.id) {
+                        return item.copyWith(enabled: true);
+                      }
+                      return item;
+                    }).toList();
+
+                    final updatedCategory = category.copyWith(items: updatedItems);
+                    final updatedCategories = widget.addIns.categories.map((c) {
+                      if (c.id == category.id) {
+                        return updatedCategory;
+                      }
+                      return c;
+                    }).toList();
+
+                    widget.onAddInsChanged(
+                      widget.addIns.copyWith(categories: updatedCategories),
+                    );
+                  },
+                );
+              },
             ),
           ),
-          Switch(
-            value: item.enabled,
-            onChanged: (value) => _onItemToggled(categoryId, item.id, value),
-            activeColor: Colors.amber,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
 }

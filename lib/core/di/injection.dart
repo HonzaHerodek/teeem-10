@@ -60,9 +60,12 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
   getIt.registerLazySingleton<PostRepository>(() => MockPostRepository());
   getIt.registerLazySingleton<StepTypeRepository>(() => MockStepTypeRepository());
+  // Register repositories in correct order to handle dependencies
   getIt.registerLazySingleton<UserRepository>(() => MockUserRepository());
   getIt.registerLazySingleton<ProjectRepository>(() => MockProjectRepository());
-  getIt.registerLazySingleton<TraitRepository>(() => MockTraitRepository());
+  getIt.registerLazySingleton<TraitRepository>(
+    () => MockTraitRepository(getIt<UserRepository>()),
+  );
   getIt.registerLazySingleton<SettingsRepository>(
     () => SharedPreferencesSettingsRepository(),
   );
