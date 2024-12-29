@@ -77,34 +77,30 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
         ],
         Transform.translate(
           offset: const Offset(0, -15),
-          child: SizedBox(
-            width: 300,
-            height: profileSize,
-            child: Stack(
-              alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 300,
+              maxHeight: profileSize,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                CircularActionButton(
+                  icon: Icons.psychology,
+                  onPressed: widget.onTraitsPressed,
+                  isSelected: widget.showTraits,
+                ),
+                const SizedBox(width: 20),
                 UserAvatar(
                   imageUrl: user.profileImage,
                   name: user.username,
                   size: profileSize,
                 ),
-                Positioned(
-                  left: 50,
-                  bottom: 0,
-                  child: CircularActionButton(
-                    icon: Icons.psychology,
-                    onPressed: widget.onTraitsPressed,
-                    isSelected: widget.showTraits,
-                  ),
-                ),
-                Positioned(
-                  right: 50,
-                  bottom: 0,
-                  child: CircularActionButton(
-                    icon: Icons.people,
-                    onPressed: widget.onNetworkPressed,
-                    isSelected: widget.showNetwork,
-                  ),
+                const SizedBox(width: 20),
+                CircularActionButton(
+                  icon: Icons.people,
+                  onPressed: widget.onNetworkPressed,
+                  isSelected: widget.showNetwork,
                 ),
               ],
             ),

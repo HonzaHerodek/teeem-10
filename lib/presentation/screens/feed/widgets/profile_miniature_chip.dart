@@ -20,27 +20,38 @@ class ProfileMiniatureChip extends StatelessWidget {
   });
 
   String _getImageUrl() {
-    // Use different images for each individual
+    // Generate a consistent random number for each user
+    int randomSeed;
     switch (label) {
       case 'alex_morgan':
-        return 'https://i.pravatar.cc/150?img=1';  // Professional looking man
+        randomSeed = 101;
+        break;
       case 'sophia.lee':
-        return 'https://i.pravatar.cc/150?img=5';  // Young woman with glasses
+        randomSeed = 102;
+        break;
       case 'james_walker':
-        return 'https://i.pravatar.cc/150?img=3';  // Casual style man
+        randomSeed = 103;
+        break;
       case 'olivia_chen':
-        return 'https://i.pravatar.cc/150?img=9';  // Creative looking woman
+        randomSeed = 104;
+        break;
       case 'ethan_brown':
-        return 'https://i.pravatar.cc/150?img=13'; // Business casual man
+        randomSeed = 105;
+        break;
       case 'mia_patel':
-        return 'https://i.pravatar.cc/150?img=10'; // Professional woman
+        randomSeed = 106;
+        break;
       case 'lucas_kim':
-        return 'https://i.pravatar.cc/150?img=15'; // Young professional man
+        randomSeed = 107;
+        break;
       case 'emma_davis':
-        return 'https://i.pravatar.cc/150?img=11'; // Friendly looking woman
+        randomSeed = 108;
+        break;
       default:
-        return 'https://i.pravatar.cc/150?img=7';
+        // Use the hash code of the label to generate a consistent random number
+        randomSeed = label.hashCode.abs() % 1000;
     }
+    return 'https://picsum.photos/150/150?random=$randomSeed';
   }
 
   @override

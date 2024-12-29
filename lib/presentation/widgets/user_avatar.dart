@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/utils/app_utils.dart';
 import 'common/oval_clipper.dart';
 
@@ -57,107 +56,124 @@ class UserAvatar extends StatelessWidget {
         child: const Center(child: CircularProgressIndicator()),
       );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
-      avatar = CachedNetworkImage(
-        imageUrl: imageUrl!,
-        imageBuilder: (context, imageProvider) {
-          Widget imageContainer = Container(
+      avatar = Image.network(
+        imageUrl!,
+        width: size * 0.75,
+        height: ovalHeight,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            debugPrint('Successfully loaded image: $imageUrl');
+            Widget imageContainer = Container(
+              width: size * 0.75,
+              height: ovalHeight,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(imageUrl!),
+                  fit: BoxFit.cover,
+                ),
+                color: backgroundColor ?? defaultBackgroundColor,
+              ),
+            );
+            // First clip to oval shape
+            imageContainer = ClipPath(
+              clipper: OvalClipper(),
+              child: imageContainer,
+            );
+
+            if (useTransparentEdges) {
+              // Apply horizontal gradient masks
+              imageContainer = ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.white.withOpacity(0),
+                      Colors.white.withOpacity(0.5),
+                      Colors.white,
+                      Colors.white,
+                      Colors.white.withOpacity(0.5),
+                      Colors.white.withOpacity(0),
+                    ],
+                    stops: const [0.0, 0.15, 0.3, 0.7, 0.85, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: imageContainer,
+              );
+
+              // Apply vertical gradient masks
+              imageContainer = ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0),
+                      Colors.white.withOpacity(0.5),
+                      Colors.white,
+                      Colors.white,
+                      Colors.white.withOpacity(0.5),
+                      Colors.white.withOpacity(0),
+                    ],
+                    stops: const [0.0, 0.15, 0.3, 0.7, 0.85, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: imageContainer,
+              );
+
+              // Apply radial gradient for corner smoothing
+              imageContainer = ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return RadialGradient(
+                    center: Alignment.center,
+                    radius: 1.0,
+                    colors: [
+                      Colors.white,
+                      Colors.white,
+                      Colors.white.withOpacity(0.9),
+                      Colors.white.withOpacity(0.6),
+                      Colors.white.withOpacity(0),
+                    ],
+                    stops: const [0.0, 0.6, 0.75, 0.85, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: imageContainer,
+              );
+            }
+
+            return imageContainer;
+          }
+
+          return Container(
             width: size * 0.75,
             height: ovalHeight,
             decoration: BoxDecoration(
-              image: DecorationImage(
-                image: imageProvider,
-                fit: BoxFit.cover,
-              ),
               color: backgroundColor ?? defaultBackgroundColor,
             ),
+            child: const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
           );
-
-          // First clip to oval shape
-          imageContainer = ClipPath(
-            clipper: OvalClipper(),
-            child: imageContainer,
-          );
-
-          if (useTransparentEdges) {
-            // Apply horizontal gradient masks
-            imageContainer = ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.white.withOpacity(0),
-                    Colors.white.withOpacity(0.5),
-                    Colors.white,
-                    Colors.white,
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0),
-                  ],
-                  stops: const [0.0, 0.15, 0.3, 0.7, 0.85, 1.0],
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.dstIn,
-              child: imageContainer,
-            );
-
-            // Apply vertical gradient masks
-            imageContainer = ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0),
-                    Colors.white.withOpacity(0.5),
-                    Colors.white,
-                    Colors.white,
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0),
-                  ],
-                  stops: const [0.0, 0.15, 0.3, 0.7, 0.85, 1.0],
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.dstIn,
-              child: imageContainer,
-            );
-
-            // Apply radial gradient for corner smoothing
-            return ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.0,
-                  colors: [
-                    Colors.white,
-                    Colors.white,
-                    Colors.white.withOpacity(0.9),
-                    Colors.white.withOpacity(0.6),
-                    Colors.white.withOpacity(0),
-                  ],
-                  stops: const [0.0, 0.6, 0.75, 0.85, 1.0],
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.dstIn,
-              child: imageContainer,
-            );
-          }
-
-          return imageContainer;
         },
-        placeholder: (context, url) => Container(
-          width: size * 0.75,
-          height: ovalHeight,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-          ),
-          child: const Center(child: CircularProgressIndicator()),
-        ),
-        errorWidget: (context, url, error) => _buildInitialsAvatar(
-          context,
-          defaultBackgroundColor,
-          defaultForegroundColor,
-          ovalHeight,
-        ),
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('Error loading image: $imageUrl, Error: $error');
+          return _buildInitialsAvatar(
+            context,
+            defaultBackgroundColor,
+            defaultForegroundColor,
+            ovalHeight,
+          );
+        },
       );
     } else {
       avatar = ClipPath(

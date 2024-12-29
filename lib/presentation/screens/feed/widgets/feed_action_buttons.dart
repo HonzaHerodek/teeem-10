@@ -32,7 +32,7 @@ class FeedActionButtons extends StatelessWidget {
             SizedBox(
               key: profileButtonKey,
               child: UserAvatar(
-                imageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+                imageUrl: 'https://picsum.photos/150/150?random=1',
                 size: 56,
                 onTap: onProfileTap,
                 backgroundColor: Theme.of(context).colorScheme.primary,

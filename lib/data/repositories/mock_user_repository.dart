@@ -65,7 +65,7 @@ class MockUserRepository implements UserRepository {
       id: 'user_1',
       username: 'Test User',
       email: 'test@example.com', // Match the debug login credentials
-      profileImage: 'https://i.pravatar.cc/150?u=test@example.com',
+      profileImage: 'https://picsum.photos/150/150?random=1',
       bio: 'This is a test user account',
       followers: ['user_2', 'user_3'],
       following: ['user_2'],
@@ -107,7 +107,7 @@ class MockUserRepository implements UserRepository {
         id: userId,
         username: 'User $i',
         email: 'user$i@example.com',
-        profileImage: 'https://i.pravatar.cc/150?u=$userId',
+        profileImage: 'https://picsum.photos/150/150?random=$i',
         bio: 'This is the bio for User $i',
         followers: i % 2 == 0 ? ['user_1'] : [],
         following: i % 2 == 0 ? [] : ['user_1'],
@@ -254,7 +254,7 @@ class MockUserRepository implements UserRepository {
     final user = _users[currentUserId];
     if (user != null) {
       _users[currentUserId] = user.copyWith(
-        profileImage: 'https://i.pravatar.cc/150?u=$currentUserId&new=true',
+        profileImage: 'https://picsum.photos/150/150?random=${DateTime.now().millisecondsSinceEpoch}',
       );
     }
   }
