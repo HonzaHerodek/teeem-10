@@ -73,10 +73,14 @@ class _AddInBoxState extends State<AddInBox>
           child: Transform.scale(
             scale: scale,
             child: Container(
-              width: isExpanded ? double.infinity : 280,
+              width: isExpanded ? MediaQuery.of(context).size.width * 0.9 : 140,
+              constraints: BoxConstraints(
+                minHeight: isExpanded ? 0 : 140,
+                maxHeight: isExpanded ? double.infinity : 140,
+              ),
               margin: EdgeInsets.symmetric(
                 horizontal: isExpanded ? 16 : 8,
-                vertical: 8,
+                vertical: isExpanded ? 8 : 4,
               ),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.8),
@@ -94,129 +98,158 @@ class _AddInBoxState extends State<AddInBox>
                 ),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: isExpanded ? null : const NeverScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  widget.addIn.symbol,
-                                  style: const TextStyle(
-                                    fontSize: 24,
+                            Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: Stack(
+                                      children: [
+                                        const Icon(
+                                          Icons.extension,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                        Positioned(
+                                          right: -2,
+                                          bottom: -2,
+                                          child: Container(
+                                            width: 14,
+                                            height: 14,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.amber,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.add,
+                                                color: Colors.black,
+                                                size: 10,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.addIn.name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      if (!isExpanded) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          widget.addIn.description,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            if (isExpanded) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                widget.addIn.detailedDescription,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Features',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ...widget.addIn.features.map((feature) => Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_outline,
+                                          color: Colors.amber,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            feature,
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )),
+                              const SizedBox(height: 16),
+                              Row(
                                 children: [
                                   Text(
-                                    widget.addIn.name,
+                                    'by ${widget.addIn.publisher}',
                                     style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white70,
+                                      fontSize: 14,
                                     ),
                                   ),
-                                  if (!isExpanded) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      widget.addIn.description,
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                  const Spacer(),
+                                  Text(
+                                    'v${widget.addIn.version}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 14,
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                            ),
+                            ],
                           ],
                         ),
-                        if (isExpanded) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            widget.addIn.detailedDescription,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Features',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          ...widget.addIn.features.map((feature) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.check_circle_outline,
-                                      color: Colors.amber,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      feature,
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Text(
-                                'by ${widget.addIn.publisher}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                'v${widget.addIn.version}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(
@@ -226,7 +259,12 @@ class _AddInBoxState extends State<AddInBox>
                       ),
                     ),
                     child: TextButton(
-                      onPressed: widget.onGet,
+                      onPressed: () {
+                        if (!widget.isExpanded) {
+                          widget.onToggleExpand();
+                        }
+                        widget.onGet();
+                      },
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.amber,
                         padding: const EdgeInsets.symmetric(

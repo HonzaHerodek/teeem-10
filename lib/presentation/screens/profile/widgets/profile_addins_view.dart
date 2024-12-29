@@ -36,19 +36,8 @@ class _ProfileAddInsViewState extends State<ProfileAddInsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Add-ins',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ...widget.addIns.categories.map((category) => _buildCategory(category)),
+          ...widget.addIns.categories
+              .map((category) => _buildCategory(category)),
         ],
       ),
     );
@@ -72,9 +61,10 @@ class _ProfileAddInsViewState extends State<ProfileAddInsView> {
         const SizedBox(height: 16),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _expandedAddInId != null && 
-                 category.items.any((item) => item.id == _expandedAddInId) 
-                 ? 500 : 200,
+          height: _expandedAddInId != null &&
+                  category.items.any((item) => item.id == _expandedAddInId)
+              ? null
+              : 160,
           child: ShaderMask(
             shaderCallback: (Rect bounds) {
               return LinearGradient(
@@ -110,7 +100,8 @@ class _ProfileAddInsViewState extends State<ProfileAddInsView> {
                       return item;
                     }).toList();
 
-                    final updatedCategory = category.copyWith(items: updatedItems);
+                    final updatedCategory =
+                        category.copyWith(items: updatedItems);
                     final updatedCategories = widget.addIns.categories.map((c) {
                       if (c.id == category.id) {
                         return updatedCategory;

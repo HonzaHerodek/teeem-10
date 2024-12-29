@@ -108,11 +108,34 @@ class _ExpandableAddInsSectionState extends State<ExpandableAddInsSection>
               icon: AnimatedBuilder(
                 animation: _sizeAnimation,
                 builder: (context, child) {
-                  return Icon(
-                    Icons.extension,
-                    color: Colors.white,
-                    size: Tween<double>(begin: 28, end: 32)
-                        .evaluate(_sizeAnimation),
+                  return Stack(
+                    children: [
+                      Icon(
+                        Icons.extension,
+                        color: Colors.white,
+                        size: Tween<double>(begin: 28, end: 32)
+                            .evaluate(_sizeAnimation),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: const BoxDecoration(
+                            color: Colors.amber,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.add,
+                              color: Colors.black,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
