@@ -7,9 +7,11 @@ import '../../../domain/repositories/user_repository.dart';
 import '../../../core/services/rating_service.dart';
 import '../../../data/models/profile_settings_model.dart';
 import '../../../data/models/profile_addins_model.dart';
+import '../../../data/models/profile_accounts_model.dart';
 import '../../../domain/repositories/settings_repository.dart';
 import 'widgets/profile_settings_view.dart';
 import 'widgets/profile_addins_view.dart';
+import 'widgets/profile_accounts_view.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/profile_posts_grid.dart';
 import 'widgets/profile_header_section.dart';
@@ -74,12 +76,15 @@ class _ProfileViewState extends State<ProfileView> {
   bool _showNetwork = false;
   bool _showSettings = false;
   bool _showAddIns = false;
+  bool _showAccounts = false;
   bool _isAddingTrait = false;
   late ProfileSettingsModel _settings;
   late ProfileAddInsModel _addIns;
+  late ProfileAccountsModel _accounts;
   final ProfileScrollController _scrollController = ProfileScrollController();
   final GlobalKey _settingsKey = GlobalKey();
   final GlobalKey _addInsKey = GlobalKey();
+  final GlobalKey _accountsKey = GlobalKey();
 
   void _scrollToContent(GlobalKey key) {
     if (key.currentContext != null) {
@@ -104,6 +109,21 @@ class _ProfileViewState extends State<ProfileView> {
   void initState() {
     super.initState();
     _settings = const ProfileSettingsModel();
+    _accounts = ProfileAccountsModel(
+      accounts: [
+        AccountModel(
+          id: '1',
+          username: 'Current User',
+          email: 'user@example.com',
+          isActive: true,
+        ),
+        AccountModel(
+          id: '2',
+          username: 'Work Account',
+          email: 'work@example.com',
+        ),
+      ],
+    );
     _addIns = ProfileAddInsModel(
       categories: [
         AddInCategory(
@@ -334,6 +354,7 @@ class _ProfileViewState extends State<ProfileView> {
                               _showSettings = !_showSettings;
                               if (_showSettings) {
                                 _showAddIns = false;
+                                _showAccounts = false;
                                 _showTraits = false;
                                 _showNetwork = false;
                                 // Wait for the next frame to ensure the content is rendered
@@ -364,11 +385,43 @@ class _ProfileViewState extends State<ProfileView> {
                               _showAddIns = !_showAddIns;
                               if (_showAddIns) {
                                 _showSettings = false;
+                                _showAccounts = false;
                                 _showTraits = false;
                                 _showNetwork = false;
                                 // Wait for the next frame to ensure the content is rendered
                                 WidgetsBinding.instance.addPostFrameCallback((_) {
                                   _scrollToContent(_addInsKey);
+                                });
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.account_circle,
+                            color: Colors.white,
+                            size: _showAccounts ? 32 : 28,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showAccounts = !_showAccounts;
+                              if (_showAccounts) {
+                                _showSettings = false;
+                                _showAddIns = false;
+                                _showTraits = false;
+                                _showNetwork = false;
+                                // Wait for the next frame to ensure the content is rendered
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _scrollToContent(_accountsKey);
                                 });
                               }
                             });
@@ -395,6 +448,29 @@ class _ProfileViewState extends State<ProfileView> {
                           setState(() {
                             _addIns = newAddIns;
                           });
+                        },
+                      ),
+                    ),
+                  if (_showAccounts)
+                    Container(
+                      key: _accountsKey,
+                      child: ProfileAccountsView(
+                        accounts: _accounts,
+                        onAccountSwitch: (accountId) {
+                          final updatedAccounts = _accounts.accounts.map((account) {
+                            return account.copyWith(
+                              isActive: account.id == accountId,
+                            );
+                          }).toList();
+                          setState(() {
+                            _accounts = _accounts.copyWith(accounts: updatedAccounts);
+                          });
+                        },
+                        onAddAccount: () {
+                          // TODO: Navigate to add account screen
+                        },
+                        onLogout: () {
+                          // TODO: Handle logout
                         },
                       ),
                     ),
