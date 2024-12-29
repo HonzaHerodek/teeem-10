@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../presentation/providers/background_color_provider.dart';
@@ -26,9 +27,26 @@ import '../../presentation/screens/feed/services/filter_service.dart';
 
 final getIt = GetIt.instance;
 
+// Helper function to retry operations
+Future<T> retry<T>(Future<T> Function() operation, {
+  int maxAttempts = 3,
+  Duration delay = const Duration(milliseconds: 500),
+}) async {
+  int attempts = 0;
+  while (attempts < maxAttempts) {
+    try {
+      return await operation();
+    } catch (e) {
+      attempts++;
+      if (attempts == maxAttempts) rethrow;
+      debugPrint('Attempt $attempts failed, retrying in ${delay.inMilliseconds}ms...');
+      await Future.delayed(delay);
+    }
+  }
+  throw Exception('Failed after $maxAttempts attempts');
+}
+
 Future<void> initializeDependencies() async {
-  // Initialize SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
   
   // Services
   getIt.registerLazySingleton<NavigationService>(() => NavigationService());
@@ -46,7 +64,7 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<ProjectRepository>(() => MockProjectRepository());
   getIt.registerLazySingleton<TraitRepository>(() => MockTraitRepository());
   getIt.registerLazySingleton<SettingsRepository>(
-    () => SharedPreferencesSettingsRepository(prefs),
+    () => SharedPreferencesSettingsRepository(),
   );
   
   // Providers
