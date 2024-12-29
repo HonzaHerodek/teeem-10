@@ -199,35 +199,56 @@ class _NetworkSectionState extends State<NetworkSection> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          ..._groups.map((group) => GroupChip(
-                groupName: group.name,
-                profiles: group.members.map((member) => GroupProfileInfo(
-                  imageUrl: member.profileImage ?? '',
-                  username: member.username,
-                )).toList(),
-                onTap: () => _handleGroupTap(group),
-                isSelected: false,
-              )),
-          // Add group button
+          // Add group button styled like a group chip
           GestureDetector(
             onTap: _handleAddGroup,
             child: Container(
-              width: 60,
-              margin: const EdgeInsets.only(left: 8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 2,
-                ),
-              ),
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 24,
+              margin: const EdgeInsets.only(right: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      color: Colors.white.withOpacity(0.7),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'New Group',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+          ..._groups.map((group) => GroupChip(
+                groupName: group.name,
+                profiles: group.members.isEmpty 
+                    ? [] // Show no profiles if empty
+                    : group.members.map((member) => GroupProfileInfo(
+                        imageUrl: member.profileImage ?? '',
+                        username: member.username,
+                      )).toList(),
+                onTap: () => _handleGroupTap(group),
+                isSelected: false,
+                showAddPeople: group.members.isEmpty, // Show add people button when empty
+              )),
         ],
       ),
     );
@@ -251,17 +272,29 @@ class _NetworkSectionState extends State<NetworkSection> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: users.map((user) {
-          final (username, _) = user;
-          return ProfileMiniatureChip(
-            label: username,
+        children: [
+          // Add person button styled like a profile miniature
+          ProfileMiniatureChip(
+            label: 'Add Person',
             onTap: () {
-              // TODO: Handle user selection
+              // TODO: Handle adding new person
             },
             isSelected: false,
             spacing: 20,
-          );
-        }).toList(),
+            isAddButton: true,
+          ),
+          ...users.map((user) {
+            final (username, _) = user;
+            return ProfileMiniatureChip(
+              label: username,
+              onTap: () {
+                // TODO: Handle user selection
+              },
+              isSelected: false,
+              spacing: 20,
+            );
+          }).toList(),
+        ],
       ),
     );
   }
@@ -274,17 +307,6 @@ class _NetworkSectionState extends State<NetworkSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Network',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
           _buildGroupChips(),
           const SizedBox(height: 16),
           _buildUserChips(),

@@ -7,6 +7,7 @@ class ProfileMiniatureChip extends StatelessWidget {
   final bool isSelected;
   final double size;
   final double spacing;
+  final bool isAddButton;
 
   const ProfileMiniatureChip({
     super.key,
@@ -15,6 +16,7 @@ class ProfileMiniatureChip extends StatelessWidget {
     this.isSelected = false,
     this.size = 50,
     this.spacing = 15,
+    this.isAddButton = false,
   });
 
   String _getImageUrl() {
@@ -51,29 +53,39 @@ class ProfileMiniatureChip extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Profile picture circle
+            // Profile picture circle or add button
             Container(
               width: size,
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.15),
+                color: isAddButton ? Colors.transparent : Colors.white.withOpacity(0.15),
+                border: isAddButton ? Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 2,
+                ) : null,
               ),
-              child: ClipOval(
-                child: Image.network(
-                  _getImageUrl(),
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: size * 0.6,
-                    );
-                  },
-                ),
-              ),
+              child: isAddButton
+                  ? Icon(
+                      Icons.person_add,
+                      color: Colors.white.withOpacity(0.7),
+                      size: size * 0.5,
+                    )
+                  : ClipOval(
+                      child: Image.network(
+                        _getImageUrl(),
+                        width: size,
+                        height: size,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: size * 0.6,
+                          );
+                        },
+                      ),
+                    ),
             ),
             const SizedBox(height: 4),
             // Username with shadow

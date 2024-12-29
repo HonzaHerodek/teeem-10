@@ -18,6 +18,7 @@ class GroupChip extends StatelessWidget {
   final bool isSelected;
   final double height;
   final double spacing;
+  final bool showAddPeople;
 
   const GroupChip({
     super.key,
@@ -27,10 +28,33 @@ class GroupChip extends StatelessWidget {
     this.isSelected = false,
     this.height = 56,
     this.spacing = 20,
+    this.showAddPeople = false,
   });
 
   Widget _buildProfileGrid() {
     const double gridHeight = 50.0; // Fixed height for all layouts
+
+    if (showAddPeople) {
+      return SizedBox(
+        width: gridHeight,
+        height: gridHeight,
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Icon(
+            Icons.person_add,
+            color: Colors.white.withOpacity(0.7),
+            size: 24,
+          ),
+        ),
+      );
+    }
+
     const double smallSpacing = 2.0;
     final visibleProfiles = profiles.take(4).toList(); // Show max 4 profiles
     final shouldShowCount = profiles.length > 4;
