@@ -9,6 +9,47 @@ import '../../bloc/auth/auth_state.dart';
 import '../../widgets/animated_gradient_background.dart';
 import '../../providers/background_color_provider.dart';
 
+class DottedBorderPainter extends CustomPainter {
+  final Color color;
+  
+  DottedBorderPainter({required this.color});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+      
+    const spacing = 6.0;
+    const dotSize = 3.0;
+    
+    // Draw top line
+    for (double i = 0; i < size.width; i += spacing) {
+      canvas.drawCircle(Offset(i, dotSize), 1, paint);
+    }
+    
+    // Draw right line
+    for (double i = 0; i < size.height; i += spacing) {
+      canvas.drawCircle(Offset(size.width - dotSize, i), 1, paint);
+    }
+    
+    // Draw bottom line
+    for (double i = size.width; i > 0; i -= spacing) {
+      canvas.drawCircle(Offset(i, size.height - dotSize), 1, paint);
+    }
+    
+    // Draw left line
+    for (double i = size.height; i > 0; i -= spacing) {
+      canvas.drawCircle(Offset(dotSize, i), 1, paint);
+    }
+  }
+  
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -48,11 +89,24 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   InputBorder _buildDottedBorder({Color color = Colors.white70}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide(
         color: color,
-        width: 1,
+        width: 2,
       ),
+    );
+  }
+
+  Widget _buildDottedBorderContainer(Widget child) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white70,
+          width: 2,
+        ),
+      ),
+      child: child,
     );
   }
 
@@ -130,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: 'Email',
+                          labelText: 'Username, email, telephone, ...',
                           prefixIcon: Icon(Icons.email, color: Colors.white70),
                           labelStyle: const TextStyle(color: Colors.white70),
                           border: _buildDottedBorder(),
@@ -138,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           focusedBorder: _buildDottedBorder(color: Colors.white),
                           errorBorder: _buildDottedBorder(color: Colors.red),
                           focusedErrorBorder: _buildDottedBorder(color: Colors.red),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           filled: true,
                           fillColor: Colors.black45,
                         ),
@@ -157,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
-                          labelText: 'Password',
+                          labelText: 'Password, fingerprint, ...',
                           prefixIcon: const Icon(Icons.lock, color: Colors.white70),
                           labelStyle: const TextStyle(color: Colors.white70),
                           border: _buildDottedBorder(),
@@ -204,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(24),
                             ),
                             child: ElevatedButton(
                               onPressed: state.isAuthenticating ? null : _onLoginPressed,
@@ -217,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 shadowColor: Colors.transparent,
                                 minimumSize: const Size(double.infinity, 50),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(24),
                                 ),
                               ),
                               child: state.isAuthenticating
@@ -231,21 +286,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () {
-                          _navigationService.navigateTo(AppRoutes.signup);
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          textStyle: const TextStyle(fontSize: 16),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Don\'t have an account? Sign up'),
-                      ),
-                      const SizedBox(height: 24),
                       BlocBuilder<AuthBloc, AuthState>(
                         builder: (context, state) {
                           return Container(
@@ -257,7 +297,39 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: ElevatedButton.icon(
+                              onPressed: state.isAuthenticating
+                                  ? null
+                                  : () => _navigationService.navigateTo(AppRoutes.signup),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                                minimumSize: const Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              icon: const Icon(Icons.add),
+                              label: const Text(
+                                'Create Account',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white30),
                             ),
                             child: ElevatedButton.icon(
                               onPressed: state.isAuthenticating ? null : _onDebugLoginPressed,
@@ -270,7 +342,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 shadowColor: Colors.transparent,
                                 minimumSize: const Size(double.infinity, 50),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(24),
                                 ),
                               ),
                               icon: const Icon(Icons.bug_report),
