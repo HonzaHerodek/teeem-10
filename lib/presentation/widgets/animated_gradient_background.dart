@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import '../providers/background_color_provider.dart';
 
 class AnimatedGradientBackground extends StatefulWidget {
@@ -16,34 +17,26 @@ class AnimatedGradientBackground extends StatefulWidget {
 }
 
 class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
-  List<Color> _getColorList(Color baseColor) {
-    // Create variations of the base color for the gradient
-    final hslColor = HSLColor.fromColor(baseColor);
-    return [
-      hslColor.withLightness((hslColor.lightness + 0.2).clamp(0.0, 1.0)).toColor(),
-      baseColor,
-      hslColor.withLightness((hslColor.lightness - 0.2).clamp(0.0, 1.0)).toColor(),
-      baseColor,
-      hslColor.withLightness((hslColor.lightness + 0.2).clamp(0.0, 1.0)).toColor(),
-    ];
-  }
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 12),
       vsync: this,
     )..repeat();
 
-    _animation = Tween<double>(
-      begin: -2,
-      end: 2,
-    ).animate(_controller);
+    // Using sine wave for smooth, continuous animation with custom easing
+    _animation = TweenSequence<double>([
+      TweenSequenceItem(
+        weight: 1,
+        tween: Tween<double>(begin: 0.0, end: 1.0)
+            .chain(CurveTween(curve: const _SineWaveCurve())),
+      ),
+    ]).animate(_controller);
   }
 
   @override
@@ -59,26 +52,80 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
         return AnimatedBuilder(
           animation: _animation,
           builder: (context, child) {
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: _getColorList(provider.backgroundColor),
-                  stops: [
-                    _animation.value.clamp(0.0, 1.0),
-                    (_animation.value + 0.2).clamp(0.0, 1.0),
-                    (_animation.value + 0.4).clamp(0.0, 1.0),
-                    (_animation.value + 0.6).clamp(0.0, 1.0),
-                    (_animation.value + 0.8).clamp(0.0, 1.0),
-                  ],
+            return Stack(
+              children: [
+                // Base black background
+                Container(color: Colors.black),
+                
+                // Smooth gradient layers
+                Opacity(
+                  opacity: 0.7,
+                  child: Transform(
+                    transform: Matrix4.identity()
+                      ..rotateZ(_animation.value * math.pi / 4)
+                      ..scale(2.0),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black,
+                            Color(0xFF353535),
+                            Color(0xFF454545),
+                            Color(0xFF353535),
+                            Colors.black,
+                          ],
+                          stops: [0.0, 0.35, 0.5, 0.65, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: widget.child,
+                
+                // Second layer with slower movement
+                Opacity(
+                  opacity: 0.5,
+                  child: Transform(
+                    transform: Matrix4.identity()
+                      ..rotateZ(-_animation.value * math.pi / 6)
+                      ..scale(1.5),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.black,
+                            Color(0xFF303030),
+                            Color(0xFF404040),
+                            Color(0xFF303030),
+                            Colors.black,
+                          ],
+                          stops: [0.0, 0.35, 0.5, 0.65, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Content
+                child!,
+              ],
             );
           },
+          child: widget.child,
         );
       },
     );
+  }
+}
+
+// Custom curve that follows a sine wave pattern for smooth looping
+class _SineWaveCurve extends Curve {
+  const _SineWaveCurve();
+
+  @override
+  double transformInternal(double t) {
+    // Smoother sine wave with custom easing
+    return (math.sin(t * 2 * math.pi) + math.sin(t * math.pi) + 2) / 4;
   }
 }
