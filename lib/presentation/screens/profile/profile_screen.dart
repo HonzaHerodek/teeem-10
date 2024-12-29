@@ -6,14 +6,15 @@ import '../../../domain/repositories/post_repository.dart';
 import '../../../domain/repositories/user_repository.dart';
 import '../../../core/services/rating_service.dart';
 import '../../../data/models/profile_settings_model.dart';
+import '../../../data/models/profile_addins_model.dart';
 import '../../../domain/repositories/settings_repository.dart';
 import 'widgets/profile_settings_view.dart';
+import 'widgets/profile_addins_view.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/profile_posts_grid.dart';
 import 'widgets/profile_header_section.dart';
 import 'widgets/profile_traits_view.dart';
 import 'widgets/profile_network_view.dart';
-import 'widgets/expandable_settings_section.dart';
 import 'controllers/profile_scroll_controller.dart';
 import 'profile_bloc/profile_bloc.dart';
 import 'profile_bloc/profile_event.dart';
@@ -72,14 +73,77 @@ class _ProfileViewState extends State<ProfileView> {
   bool _showTraits = false;
   bool _showNetwork = false;
   bool _showSettings = false;
+  bool _showAddIns = false;
   bool _isAddingTrait = false;
   late ProfileSettingsModel _settings;
+  late ProfileAddInsModel _addIns;
   final ProfileScrollController _scrollController = ProfileScrollController();
+  final GlobalKey _settingsKey = GlobalKey();
+  final GlobalKey _addInsKey = GlobalKey();
+
+  void _scrollToContent(GlobalKey key) {
+    if (key.currentContext != null) {
+      final RenderBox renderBox = key.currentContext!.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero);
+      final targetScroll = _scrollController.scrollController.position.pixels + 
+                         position.dy - 
+                         120; // Offset to show some content above
+
+      _scrollController.scrollController.animateTo(
+        targetScroll.clamp(
+          0.0,
+          _scrollController.scrollController.position.maxScrollExtent,
+        ),
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _settings = const ProfileSettingsModel();
+    _addIns = ProfileAddInsModel(
+      categories: [
+        AddInCategory(
+          id: 'integrations',
+          name: 'Integrations',
+          items: [
+            AddInItem(
+              id: 'github',
+              name: 'GitHub',
+              description: 'Connect and share your GitHub projects',
+              enabled: false,
+            ),
+            AddInItem(
+              id: 'figma',
+              name: 'Figma',
+              description: 'Share your design work from Figma',
+              enabled: false,
+            ),
+          ],
+        ),
+        AddInCategory(
+          id: 'features',
+          name: 'Features',
+          items: [
+            AddInItem(
+              id: 'analytics',
+              name: 'Analytics',
+              description: 'Track your profile performance',
+              enabled: false,
+            ),
+            AddInItem(
+              id: 'scheduler',
+              name: 'Post Scheduler',
+              description: 'Schedule posts for automatic publishing',
+              enabled: false,
+            ),
+          ],
+        ),
+      ],
+    );
     _loadSettings();
   }
 
@@ -249,21 +313,91 @@ class _ProfileViewState extends State<ProfileView> {
                       },
                     ),
                   const SizedBox(height: 32),
-                  ExpandableSettingsSection(
-                    settings: _settings,
-                    onSettingsChanged: _saveSettings,
-                    isExpanded: _showSettings,
-                    scrollController: _scrollController.scrollController,
-                    onToggle: () {
-                      setState(() {
-                        _showSettings = !_showSettings;
-                        if (_showSettings) {
-                          _showTraits = false;
-                          _showNetwork = false;
-                        }
-                      });
-                    },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.settings,
+                            color: Colors.white,
+                            size: _showSettings ? 32 : 28,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showSettings = !_showSettings;
+                              if (_showSettings) {
+                                _showAddIns = false;
+                                _showTraits = false;
+                                _showNetwork = false;
+                                // Wait for the next frame to ensure the content is rendered
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _scrollToContent(_settingsKey);
+                                });
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.extension,
+                            color: Colors.white,
+                            size: _showAddIns ? 32 : 28,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showAddIns = !_showAddIns;
+                              if (_showAddIns) {
+                                _showSettings = false;
+                                _showTraits = false;
+                                _showNetwork = false;
+                                // Wait for the next frame to ensure the content is rendered
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _scrollToContent(_addInsKey);
+                                });
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 16),
+                  if (_showSettings)
+                    Container(
+                      key: _settingsKey,
+                      child: ProfileSettingsView(
+                        settings: _settings,
+                        onSettingsChanged: _saveSettings,
+                      ),
+                    ),
+                  if (_showAddIns)
+                    Container(
+                      key: _addInsKey,
+                      child: ProfileAddInsView(
+                        addIns: _addIns,
+                        onAddInsChanged: (newAddIns) {
+                          setState(() {
+                            _addIns = newAddIns;
+                          });
+                        },
+                      ),
+                    ),
                   const SizedBox(height: 32),
                 ],
               ),
