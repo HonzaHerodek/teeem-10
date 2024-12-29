@@ -14,6 +14,7 @@ import 'widgets/profile_header_section.dart';
 import 'widgets/profile_traits_view.dart';
 import 'widgets/profile_network_view.dart';
 import 'widgets/expandable_settings_section.dart';
+import 'controllers/profile_scroll_controller.dart';
 import 'profile_bloc/profile_bloc.dart';
 import 'profile_bloc/profile_event.dart';
 import 'profile_bloc/profile_state.dart';
@@ -73,12 +74,19 @@ class _ProfileViewState extends State<ProfileView> {
   bool _showSettings = false;
   bool _isAddingTrait = false;
   late ProfileSettingsModel _settings;
+  final ProfileScrollController _scrollController = ProfileScrollController();
 
   @override
   void initState() {
     super.initState();
     _settings = const ProfileSettingsModel();
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSettings() async {
@@ -111,8 +119,6 @@ class _ProfileViewState extends State<ProfileView> {
     }
 
     if (_showTraits) {
-      print('ProfileScreen _buildContent - userId: ${state.user!.id}'); // Debug log
-      print('ProfileScreen _buildContent - user: ${state.user}'); // Debug log
       return WillPopScope(
         onWillPop: () async {
           setState(() {
@@ -168,7 +174,6 @@ class _ProfileViewState extends State<ProfileView> {
         }
 
         if (state.user == null) {
-          print('ProfileScreen build - user is null'); // Debug log
           return ErrorView(
             message: state.error ?? 'Failed to load profile',
             onRetry: () {
@@ -177,9 +182,9 @@ class _ProfileViewState extends State<ProfileView> {
           );
         }
 
-        print('ProfileScreen build - user: ${state.user?.id}'); // Debug log
-
         return CustomScrollView(
+          controller: _scrollController.scrollController,
+          physics: _scrollController.physics,
           slivers: [
             SliverToBoxAdapter(
               child: Column(
@@ -190,12 +195,18 @@ class _ProfileViewState extends State<ProfileView> {
                       setState(() {
                         _showTraits = !_showTraits;
                         _showNetwork = false;
+                        if (_showSettings) {
+                          _showSettings = false;
+                        }
                       });
                     },
                     onNetworkPressed: () {
                       setState(() {
                         _showNetwork = !_showNetwork;
                         _showTraits = false;
+                        if (_showSettings) {
+                          _showSettings = false;
+                        }
                       });
                     },
                     showTraits: _showTraits,
@@ -237,22 +248,23 @@ class _ProfileViewState extends State<ProfileView> {
                             );
                       },
                     ),
-                  if (!_showTraits && !_showNetwork) ...[
-                    const SizedBox(height: 32),
-                    ExpandableSettingsSection(
-                      settings: _settings,
-                      onSettingsChanged: _saveSettings,
-                      isExpanded: _showSettings,
-                      onToggle: () {
-                        setState(() {
-                          _showSettings = !_showSettings;
+                  const SizedBox(height: 32),
+                  ExpandableSettingsSection(
+                    settings: _settings,
+                    onSettingsChanged: _saveSettings,
+                    isExpanded: _showSettings,
+                    scrollController: _scrollController.scrollController,
+                    onToggle: () {
+                      setState(() {
+                        _showSettings = !_showSettings;
+                        if (_showSettings) {
                           _showTraits = false;
                           _showNetwork = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 32),
-                  ],
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),

@@ -115,16 +115,15 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-      ),
       child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(), // Let parent handle scrolling
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SettingsSection(
               title: 'Account',
+              initiallyExpanded: true,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),

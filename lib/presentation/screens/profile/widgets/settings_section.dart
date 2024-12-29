@@ -4,12 +4,14 @@ class SettingsSection extends StatefulWidget {
   final String title;
   final List<Widget> children;
   final bool initiallyExpanded;
+  final VoidCallback? onExpanded;
 
   const SettingsSection({
     Key? key,
     required this.title,
     required this.children,
     this.initiallyExpanded = false,
+    this.onExpanded,
   }) : super(key: key);
 
   @override
@@ -18,11 +20,24 @@ class SettingsSection extends StatefulWidget {
 
 class _SettingsSectionState extends State<SettingsSection> {
   late bool _isExpanded;
+  final GlobalKey _contentKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _isExpanded = widget.initiallyExpanded;
+  }
+
+  void _ensureVisible() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_contentKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _contentKey.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
@@ -34,6 +49,10 @@ class _SettingsSectionState extends State<SettingsSection> {
           onTap: () {
             setState(() {
               _isExpanded = !_isExpanded;
+              if (_isExpanded) {
+                _ensureVisible();
+                widget.onExpanded?.call();
+              }
             });
           },
           child: Padding(
@@ -58,6 +77,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         ),
         if (_isExpanded)
           Padding(
+            key: _contentKey,
             padding: const EdgeInsets.only(left: 16, bottom: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
