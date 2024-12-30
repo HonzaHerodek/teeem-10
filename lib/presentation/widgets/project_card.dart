@@ -151,6 +151,16 @@ class ProjectCard extends StatelessWidget {
                   parentId: project.id,
                   project: newProject,
                 ));
+                
+                // Re-enter selection mode after a short delay to allow the state to update
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (context.mounted) {
+                    final state = context.read<FeedBloc>().state;
+                    if (state is FeedSuccess) {
+                      service.enterSelectionMode(state.posts, state.projects);
+                    }
+                  }
+                });
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -213,7 +223,11 @@ class ProjectCard extends StatelessWidget {
               (p) => p.id == project.id,
               orElse: () => project,
             );
-            return prevProject.postIds != currentProject.postIds;
+            
+            // Listen for changes in postIds or any changes in the projects list
+            return prevProject.postIds != currentProject.postIds ||
+                   previous.projects.length != current.projects.length ||
+                   current.projects.any((p) => p.parentId == project.id);
           }
           return false;
         },
@@ -223,10 +237,17 @@ class ProjectCard extends StatelessWidget {
               (p) => p.id == project.id,
               orElse: () => project,
             );
+            
+            final service = context.read<ProjectPostSelectionService>();
+            
+            // Update postIds if they changed
             if (updatedProject.postIds != project.postIds) {
-              context
-                  .read<ProjectPostSelectionService>()
-                  .updatePostIds(updatedProject.postIds);
+              service.updatePostIds(updatedProject.postIds);
+            }
+            
+            // Re-enter selection mode if we're already in it to refresh the available posts/projects
+            if (service.isSelectionMode) {
+              service.enterSelectionMode(state.posts, state.projects);
             }
           }
         },
