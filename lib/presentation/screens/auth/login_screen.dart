@@ -78,74 +78,43 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
 
-    // Elements scale animation (starts immediately)
     _elementsController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
-    // Background fade animation (starts after elements)
     _backgroundController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
-    // Sequential animations for elements
-    _usernameScale = CurvedAnimation(
+    final elementsCurve = CurvedAnimation(
       parent: _elementsController,
-      curve: const Interval(0.0, 0.25, curve: Curves.easeOut),
+      curve: Curves.easeOut,
     );
 
-    _passwordScale = CurvedAnimation(
-      parent: _elementsController,
-      curve: const Interval(0.25, 0.5, curve: Curves.easeOut),
-    );
-
-    _buttonsScale = CurvedAnimation(
-      parent: _elementsController,
-      curve: const Interval(0.5, 0.75, curve: Curves.easeOut),
-    );
-
-    _titleScale = CurvedAnimation(
-      parent: _elementsController,
-      curve: const Interval(0.75, 1.0, curve: Curves.easeOut),
-    );
-
-    _backgroundFade = CurvedAnimation(
+    final backgroundCurve = CurvedAnimation(
       parent: _backgroundController,
       curve: Curves.easeIn,
     );
 
-    // Set background color to black
-    Future.microtask(() {
+    _titleScale = Tween<double>(begin: 0.3, end: 1.0).animate(elementsCurve);
+    _usernameScale = Tween<double>(begin: 0.3, end: 1.0).animate(elementsCurve);
+    _passwordScale = Tween<double>(begin: 0.3, end: 1.0).animate(elementsCurve);
+    _buttonsScale = Tween<double>(begin: 0.3, end: 1.0).animate(elementsCurve);
+    _backgroundFade = Tween<double>(begin: 0.0, end: 1.0).animate(backgroundCurve);
+
+    // Set background color and start animations
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<BackgroundColorProvider>().setBackgroundColor(Colors.black);
-    });
-
-    // Delay all animations slightly to ensure proper initialization
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (!mounted) return;
       _elementsController.forward();
       _backgroundController.forward();
     });
   }
 
-  void _onElementsAnimationComplete(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
-      _backgroundController.forward();
-    }
-  }
-
   @override
   void dispose() {
-    // Cancel any pending animations
-    _elementsController.removeStatusListener(_onElementsAnimationComplete);
-    
-    // Stop animations before disposing
-    _elementsController.stop();
-    _backgroundController.stop();
-    
-    // Dispose controllers
     _elementsController.dispose();
     _backgroundController.dispose();
     _emailController.dispose();
@@ -164,17 +133,26 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _onLoginPressed() {
+    print('Login button pressed');
     if (_formKey.currentState?.validate() ?? false) {
+      print('Form validation passed');
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      print('Attempting login with email: $email');
+      
       context.read<AuthBloc>().add(
             AuthSignInRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
+              email: email,
+              password: password,
             ),
           );
+    } else {
+      print('Form validation failed');
     }
   }
 
   void _onDebugLoginPressed() {
+    print('Debug login button pressed');
     context.read<AuthBloc>().add(
           const AuthSignInRequested(
             email: 'test@example.com',
@@ -191,305 +169,289 @@ class _LoginScreenState extends State<LoginScreen>
       ),
       child: Stack(
         children: [
-          // Content
-          Scaffold(
-            backgroundColor: Colors.transparent,
-            body: BlocListener<AuthBloc, AuthState>(
-              listener: (context, state) {
-                if (state.isAuthenticated) {
-                  _navigationService.navigateToAndReplace(AppRoutes.feed);
-                } else if (state.hasError && state.error != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.error!.message),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              child: SafeArea(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Welcome Back',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 48),
-
-                          // Username field
-                          ScaleTransition(
-                            scale: _usernameScale,
-                            child: SizedBox(
-                              height: 56,
-                              child: TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  labelText: 'Username, email, telephone, ...',
-                                  prefixIcon:
-                                      Icon(Icons.email, color: Colors.white70),
-                                  labelStyle:
-                                      const TextStyle(color: Colors.white70),
-                                  border: _buildDottedBorder(),
-                                  enabledBorder: _buildDottedBorder(),
-                                  focusedBorder:
-                                      _buildDottedBorder(color: Colors.white),
-                                  errorBorder:
-                                      _buildDottedBorder(color: Colors.red),
-                                  focusedErrorBorder:
-                                      _buildDottedBorder(color: Colors.red),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  filled: true,
-                                  fillColor: Colors.black45,
-                                ),
-                                style: const TextStyle(color: Colors.white),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Password field
-                          ScaleTransition(
-                            scale: _passwordScale,
-                            child: SizedBox(
-                              height: 56,
-                              child: TextFormField(
-                                controller: _passwordController,
-                                obscureText: !_isPasswordVisible,
-                                decoration: InputDecoration(
-                                  labelText: 'Password, fingerprint, ...',
-                                  prefixIcon: const Icon(Icons.lock,
-                                      color: Colors.white70),
-                                  labelStyle:
-                                      const TextStyle(color: Colors.white70),
-                                  border: _buildDottedBorder(),
-                                  enabledBorder: _buildDottedBorder(),
-                                  focusedBorder:
-                                      _buildDottedBorder(color: Colors.white),
-                                  errorBorder:
-                                      _buildDottedBorder(color: Colors.red),
-                                  focusedErrorBorder:
-                                      _buildDottedBorder(color: Colors.red),
-                                  filled: true,
-                                  fillColor: Colors.black45,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _isPasswordVisible
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
-                                      color: Colors.white70,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _isPasswordVisible =
-                                            !_isPasswordVisible;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                style: const TextStyle(color: Colors.white),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // Buttons
-                          ScaleTransition(
-                            scale: _buttonsScale,
-                            child: Column(
-                              children: [
-                                BlocBuilder<AuthBloc, AuthState>(
-                                  builder: (context, state) {
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        gradient: state.isAuthenticating
-                                            ? null
-                                            : const LinearGradient(
-                                                colors: [
-                                                  Color(0xFF4CAF50),
-                                                  Color(0xFF2E7D32)
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ),
-                                        borderRadius: BorderRadius.circular(24),
-                                      ),
-                                      child: ElevatedButton(
-                                        onPressed: state.isAuthenticating
-                                            ? null
-                                            : _onLoginPressed,
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16),
-                                          backgroundColor: Colors.transparent,
-                                          foregroundColor: Colors.white,
-                                          disabledBackgroundColor: Colors.grey,
-                                          elevation: 0,
-                                          shadowColor: Colors.transparent,
-                                          minimumSize:
-                                              const Size(double.infinity, 50),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24),
-                                          ),
-                                        ),
-                                        child: state.isAuthenticating
-                                            ? const CircularProgressIndicator()
-                                            : const Text(
-                                                'Login',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 24),
-                                BlocBuilder<AuthBloc, AuthState>(
-                                  builder: (context, state) {
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        gradient: state.isAuthenticating
-                                            ? null
-                                            : const LinearGradient(
-                                                colors: [
-                                                  Color(0xFF2196F3),
-                                                  Color(0xFF1976D2)
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ),
-                                        borderRadius: BorderRadius.circular(24),
-                                      ),
-                                      child: ElevatedButton.icon(
-                                        onPressed: state.isAuthenticating
-                                            ? null
-                                            : () => _navigationService
-                                                .navigateTo(AppRoutes.signup),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16),
-                                          backgroundColor: Colors.transparent,
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          shadowColor: Colors.transparent,
-                                          minimumSize:
-                                              const Size(double.infinity, 50),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24),
-                                          ),
-                                        ),
-                                        icon: const Icon(Icons.add),
-                                        label: const Text(
-                                          'Create Account',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 24),
-                                BlocBuilder<AuthBloc, AuthState>(
-                                  builder: (context, state) {
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(24),
-                                        border:
-                                            Border.all(color: Colors.white30),
-                                      ),
-                                      child: ElevatedButton.icon(
-                                        onPressed: state.isAuthenticating
-                                            ? null
-                                            : _onDebugLoginPressed,
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16),
-                                          backgroundColor: Colors.transparent,
-                                          foregroundColor: Colors.white,
-                                          disabledBackgroundColor: Colors.grey,
-                                          elevation: 0,
-                                          shadowColor: Colors.transparent,
-                                          minimumSize:
-                                              const Size(double.infinity, 50),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24),
-                                          ),
-                                        ),
-                                        icon: const Icon(Icons.bug_report),
-                                        label: const Text(
-                                          'Skip Login (Debug)',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // Title
-                          ScaleTransition(
-                            scale: _titleScale,
-                            child: const Text(
-                              'Welcome Back',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+          // Background animation with opacity
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: _backgroundFade.value,
+                child: const AnimatedGradientBackground(child: SizedBox.expand()),
               ),
             ),
           ),
 
-          // Background animation with opacity
-          Opacity(
-            opacity: _backgroundFade.value,
-            child: const AnimatedGradientBackground(child: SizedBox.expand()),
+          // Content
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            body: BlocConsumer<AuthBloc, AuthState>(
+              listenWhen: (previous, current) {
+                print('Previous state: ${previous.status}, Current state: ${current.status}');
+                return previous.status != current.status || 
+                       previous.error != current.error;
+              },
+              listener: (context, state) {
+                print('Auth state changed: ${state.status}');
+                if (state.isAuthenticated) {
+                  print('User authenticated, navigating to feed');
+                  _navigationService.navigateToAndReplace('/feed');
+                } else if (state.hasError && state.error != null) {
+                  print('Auth error: ${state.error!.message}');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.error!.message),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              },
+              builder: (context, state) {
+                return SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ScaleTransition(
+                              scale: _titleScale,
+                              child: const Text(
+                                'Welcome Back',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+
+                            // Username field
+                            ScaleTransition(
+                              scale: _usernameScale,
+                              child: SizedBox(
+                                height: 56,
+                                child: TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                    labelText: 'Username, email, telephone, ...',
+                                    prefixIcon:
+                                        Icon(Icons.email, color: Colors.white70),
+                                    labelStyle:
+                                        const TextStyle(color: Colors.white70),
+                                    border: _buildDottedBorder(),
+                                    enabledBorder: _buildDottedBorder(),
+                                    focusedBorder:
+                                        _buildDottedBorder(color: Colors.white),
+                                    errorBorder:
+                                        _buildDottedBorder(color: Colors.red),
+                                    focusedErrorBorder:
+                                        _buildDottedBorder(color: Colors.red),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    filled: true,
+                                    fillColor: Colors.black45,
+                                  ),
+                                  style: const TextStyle(color: Colors.white),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your email';
+                                    }
+                                    if (!value.contains('@')) {
+                                      return 'Please enter a valid email';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Password field
+                            ScaleTransition(
+                              scale: _passwordScale,
+                              child: SizedBox(
+                                height: 56,
+                                child: TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: !_isPasswordVisible,
+                                  decoration: InputDecoration(
+                                    labelText: 'Password, fingerprint, ...',
+                                    prefixIcon: const Icon(Icons.lock,
+                                        color: Colors.white70),
+                                    labelStyle:
+                                        const TextStyle(color: Colors.white70),
+                                    border: _buildDottedBorder(),
+                                    enabledBorder: _buildDottedBorder(),
+                                    focusedBorder:
+                                        _buildDottedBorder(color: Colors.white),
+                                    errorBorder:
+                                        _buildDottedBorder(color: Colors.red),
+                                    focusedErrorBorder:
+                                        _buildDottedBorder(color: Colors.red),
+                                    filled: true,
+                                    fillColor: Colors.black45,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordVisible
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        color: Colors.white70,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  style: const TextStyle(color: Colors.white),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your password';
+                                    }
+                                    if (value.length < 6) {
+                                      return 'Password must be at least 6 characters';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            // Buttons
+                            ScaleTransition(
+                              scale: _buttonsScale,
+                              child: Column(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: state.isAuthenticating
+                                          ? null
+                                          : const LinearGradient(
+                                              colors: [
+                                                Color(0xFF4CAF50),
+                                                Color(0xFF2E7D32)
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    child: ElevatedButton(
+                                      onPressed: state.isAuthenticating ? null : _onLoginPressed,
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        backgroundColor: Colors.transparent,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor: Colors.grey,
+                                        elevation: 0,
+                                        shadowColor: Colors.transparent,
+                                        minimumSize:
+                                            const Size(double.infinity, 50),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                        ),
+                                      ),
+                                      child: state.isAuthenticating
+                                          ? const CircularProgressIndicator()
+                                          : const Text(
+                                              'Login',
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: state.isAuthenticating
+                                          ? null
+                                          : const LinearGradient(
+                                              colors: [
+                                                Color(0xFF2196F3),
+                                                Color(0xFF1976D2)
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      onPressed: state.isAuthenticating ? null : () => 
+                                          _navigationService.navigateTo('/signup'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        backgroundColor: Colors.transparent,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shadowColor: Colors.transparent,
+                                        minimumSize:
+                                            const Size(double.infinity, 50),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.add),
+                                      label: const Text(
+                                        'Create Account',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24),
+                                      border:
+                                          Border.all(color: Colors.white30),
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      onPressed: state.isAuthenticating ? null : _onDebugLoginPressed,
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        backgroundColor: Colors.transparent,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor: Colors.grey,
+                                        elevation: 0,
+                                        shadowColor: Colors.transparent,
+                                        minimumSize:
+                                            const Size(double.infinity, 50),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.bug_report),
+                                      label: const Text(
+                                        'Skip Login (Debug)',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

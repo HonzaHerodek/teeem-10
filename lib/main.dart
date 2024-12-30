@@ -12,19 +12,24 @@ void main() async {
     // Initialize Flutter binding
     WidgetsFlutterBinding.ensureInitialized();
     
-    // Remove the Flutter splash screen immediately
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    // Configure system UI
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ));
+
+    // Enable system overlays but make them transparent
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
+    );
+
     SystemChannels.platform.invokeMethod('SystemChrome.setApplicationSwitcherDescription', {
       'label': '',
       'primaryColor': 0xFF000000,
     });
-
-    // Hide system UI completely
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarDividerColor: Colors.transparent,
-    ));
 
     // Initialize dependencies
     await initializeDependencies();
