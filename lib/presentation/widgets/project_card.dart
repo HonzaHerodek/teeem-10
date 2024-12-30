@@ -14,6 +14,7 @@ import 'common/section_header.dart';
 import 'compact_post_card.dart';
 import 'compact_project_card.dart';
 import 'project/selectable_compact_post_card.dart';
+import 'project/selectable_compact_project_card.dart';
 import 'project/project_post_selection_service.dart';
 import 'project/square_action_button.dart';
 
@@ -64,25 +65,41 @@ class ProjectCard extends StatelessWidget {
               if (index == 0) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: CompactProjectCard(
-                    project: project,
-                    postThumbnails: posts.map((post) => post.userProfileImage).toList(),
-                    width: _postSize,
-                    height: _postSize,
-                  ),
+                  child: service.isSelectionMode
+                      ? SelectableCompactProjectCard(
+                          project: project,
+                          postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                          width: _postSize,
+                          height: _postSize,
+                          isSelected: service.selectedProjectIds.contains(project.id),
+                          onToggle: () => service.toggleProjectSelection(project.id),
+                          isProjectPost: true,
+                        )
+                      : CompactProjectCard(
+                          project: project,
+                          postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                          width: _postSize,
+                          height: _postSize,
+                        ),
                 );
               }
               final post = posts[index - 1];
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: SelectableCompactPostCard(
-                  post: post,
-                  width: _postSize,
-                  height: _postSize,
-                  isSelected: service.selectedPostIds.contains(post.id),
-                  onToggle: () => service.togglePostSelection(post.id),
-                  isProjectPost: true,
-                ),
+                child: service.isSelectionMode
+                    ? SelectableCompactPostCard(
+                        post: post,
+                        width: _postSize,
+                        height: _postSize,
+                        isSelected: service.selectedPostIds.contains(post.id),
+                        onToggle: () => service.togglePostSelection(post.id),
+                        isProjectPost: true,
+                      )
+                    : CompactPostCard(
+                        post: post,
+                        width: _postSize,
+                        height: _postSize,
+                      ),
               );
             }
             
@@ -92,11 +109,14 @@ class ProjectCard extends StatelessWidget {
               final subProject = service.subProjects[index];
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: CompactProjectCard(
+                child: SelectableCompactProjectCard(
                   project: subProject,
                   postThumbnails: const [], // Sub-projects might not have posts yet
                   width: _postSize,
                   height: _postSize,
+                  isSelected: service.selectedProjectIds.contains(subProject.id),
+                  onToggle: () => service.toggleProjectSelection(subProject.id),
+                  isProjectPost: false,
                 ),
               );
             }
@@ -105,14 +125,20 @@ class ProjectCard extends StatelessWidget {
             final post = posts[index - service.subProjects.length];
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: SelectableCompactPostCard(
-                post: post,
-                width: _postSize,
-                height: _postSize,
-                isSelected: service.selectedPostIds.contains(post.id),
-                onToggle: () => service.togglePostSelection(post.id),
-                isProjectPost: false,
-              ),
+              child: service.isSelectionMode
+                  ? SelectableCompactPostCard(
+                      post: post,
+                      width: _postSize,
+                      height: _postSize,
+                      isSelected: service.selectedPostIds.contains(post.id),
+                      onToggle: () => service.togglePostSelection(post.id),
+                      isProjectPost: false,
+                    )
+                  : CompactPostCard(
+                      post: post,
+                      width: _postSize,
+                      height: _postSize,
+                    ),
             );
           },
         ),
@@ -290,31 +316,7 @@ class ProjectCard extends StatelessWidget {
                                             ),
                                       ),
                                     ),
-                                    SquareActionButton(
-                                      icon: service.isSelectionMode
-                                          ? Icons.check
-                                          : Icons.settings,
-                                      onPressed: () {
-                                        if (service.isSelectionMode) {
-                                          service.handlePostsAdded(context);
-                                        } else if (state is FeedSuccess) {
-                                          service.enterSelectionMode(
-                                            state.posts,
-                                            state.projects,
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  'Unable to edit posts at this time'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      size: 40,
-                                    ),
+                                    const SizedBox(),
                                   ],
                                 ),
                               ),
@@ -417,7 +419,44 @@ class ProjectCard extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.only(
                                     top: 16.0, bottom: 8.0),
-                                child: Center(child: _buildActionButtons(context, service)),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Center(
+                                        child: _buildActionButtons(context, service),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 24.0),
+                                      child: SquareActionButton(
+                                        icon: service.isSelectionMode
+                                            ? Icons.check
+                                            : Icons.settings,
+                                        onPressed: () {
+                                          if (service.isSelectionMode) {
+                                            service.handlePostsAdded(context);
+                                          } else if (state is FeedSuccess) {
+                                            service.enterSelectionMode(
+                                              state.posts,
+                                              state.projects,
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'Unable to edit posts at this time'),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        size: 40,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

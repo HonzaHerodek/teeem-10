@@ -16,6 +16,7 @@ class ProjectPostSelectionService extends ChangeNotifier {
   List<PostModel> _availablePosts = [];
   List<ProjectModel> _subProjects = [];
   final Set<String> _selectedPostIds = {};
+  final Set<String> _selectedProjectIds = {};
   bool _isLoading = true;
   bool _isSelectionMode = false;
   String _errorMessage = '';
@@ -35,6 +36,7 @@ class ProjectPostSelectionService extends ChangeNotifier {
   List<PostModel> get availablePosts => List.unmodifiable(_availablePosts);
   List<ProjectModel> get subProjects => List.unmodifiable(_subProjects);
   Set<String> get selectedPostIds => Set.unmodifiable(_selectedPostIds);
+  Set<String> get selectedProjectIds => Set.unmodifiable(_selectedProjectIds);
   bool get isLoading => _isLoading;
   bool get isSelectionMode => _isSelectionMode;
   String get errorMessage => _errorMessage;
@@ -90,14 +92,25 @@ class ProjectPostSelectionService extends ChangeNotifier {
       (p) => p.parentId != null && p.parentId == projectId
     ).toList();
     _selectedPostIds.clear();
+    _selectedProjectIds.clear();
     notifyListeners();
   }
 
   void exitSelectionMode() {
     _isSelectionMode = false;
     _selectedPostIds.clear();
+    _selectedProjectIds.clear();
     _availablePosts = [];
     _subProjects = [];
+    notifyListeners();
+  }
+
+  void toggleProjectSelection(String projectId) {
+    if (_selectedProjectIds.contains(projectId)) {
+      _selectedProjectIds.remove(projectId);
+    } else {
+      _selectedProjectIds.add(projectId);
+    }
     notifyListeners();
   }
 
