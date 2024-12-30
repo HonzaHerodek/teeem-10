@@ -60,10 +60,12 @@ class FeedItem extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: isSelected ? Border.all(
-              color: Colors.blue.withOpacity(0.5),
-              width: 2,
-            ) : null,
+            border: isSelected
+                ? Border.all(
+                    color: Colors.blue.withOpacity(0.5),
+                    width: 2,
+                  )
+                : null,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -83,10 +85,12 @@ class FeedItem extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: isSelected ? Border.all(
-              color: Colors.blue.withOpacity(0.5),
-              width: 2,
-            ) : null,
+            border: isSelected
+                ? Border.all(
+                    color: Colors.blue.withOpacity(0.5),
+                    width: 2,
+                  )
+                : null,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),

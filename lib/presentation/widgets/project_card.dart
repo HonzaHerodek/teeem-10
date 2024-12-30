@@ -11,6 +11,7 @@ import '../../presentation/screens/feed/feed_bloc/feed_state.dart';
 import 'common/glass_container.dart';
 import 'common/section_header.dart';
 import 'compact_post_card.dart';
+import 'compact_project_card.dart';
 import 'project/selectable_compact_post_card.dart';
 import 'project/project_post_selection_service.dart';
 import 'project/square_action_button.dart';
@@ -45,11 +46,28 @@ class ProjectCard extends StatelessWidget {
         height: _postSize,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: posts.length,
+          // Add +1 to itemCount for the compact project card
+          itemCount: posts.length + (isProjectPosts ? 1 : 0),
           padding: EdgeInsets.zero,
           physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
-            final post = posts[index];
+            // Show compact project card as first item in project posts
+            if (isProjectPosts && index == 0) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: CompactProjectCard(
+                  project: project,
+                  postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                  width: _postSize,
+                  height: _postSize,
+                ),
+              );
+            }
+            
+            // Adjust index for posts to account for the project card
+            final postIndex = isProjectPosts ? index - 1 : index;
+            final post = posts[postIndex];
+            
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: isSelectable
