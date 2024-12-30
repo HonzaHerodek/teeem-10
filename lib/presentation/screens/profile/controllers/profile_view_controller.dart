@@ -59,30 +59,37 @@ class ProfileViewController {
   }
 
   void scrollToContent(GlobalKey key) {
+    if (!scrollController.hasClients) return;
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (key.currentContext != null && scrollController.hasClients) {
-        try {
-          final RenderBox renderBox = key.currentContext!.findRenderObject() as RenderBox;
-          final position = renderBox.localToGlobal(Offset.zero);
-          
-          // Get the available scroll space
-          final viewportHeight = scrollController.position.viewportDimension;
-          final contentOffset = position.dy;
-          
-          // Calculate target scroll with viewport consideration
-          final targetScroll = scrollController.offset + (contentOffset - (viewportHeight * 0.2));
-          
-          scrollController.animateTo(
-            targetScroll.clamp(
-              0.0,
-              scrollController.position.maxScrollExtent,
-            ),
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutCubic,
-          );
-        } catch (e) {
-          print('Error scrolling to content: $e');
-        }
+      if (key.currentContext == null) return;
+      
+      try {
+        final RenderBox renderBox = key.currentContext!.findRenderObject() as RenderBox;
+        if (renderBox == null) return;
+        
+        final position = renderBox.localToGlobal(Offset.zero);
+        if (!scrollController.hasClients) return;
+        
+        // Get the available scroll space
+        final viewportHeight = scrollController.position.viewportDimension;
+        final contentOffset = position.dy;
+        
+        // Calculate target scroll with viewport consideration
+        final targetScroll = scrollController.offset + (contentOffset - (viewportHeight * 0.2));
+        
+        if (!scrollController.hasClients) return;
+        final maxScroll = scrollController.position.maxScrollExtent;
+        
+        scrollController.animateTo(
+          targetScroll.clamp(0.0, maxScroll),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+        ).catchError((error) {
+          print('Error during scroll animation: $error');
+        });
+      } catch (e) {
+        print('Error scrolling to content: $e');
       }
     });
   }
@@ -166,8 +173,14 @@ class ProfileViewController {
   }
 
   void dispose() {
-    if (scrollController.hasClients) {
+    try {
+      if (scrollController.hasClients) {
+        // Stop any ongoing scroll animations
+        scrollController.jumpTo(scrollController.offset);
+      }
       scrollController.dispose();
+    } catch (e) {
+      print('Error disposing scroll controller: $e');
     }
   }
 }

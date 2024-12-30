@@ -21,18 +21,21 @@ class ProfileView extends StatefulWidget {
 
 class _ProfileViewState extends State<ProfileView> {
   late final ProfileViewController _controller;
+  late final ProfileScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ProfileScrollController();
     _controller = ProfileViewController(
-      scrollController: ProfileScrollController().scrollController,
+      scrollController: _scrollController.scrollController,
     );
     _controller.loadSettings();
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _controller.dispose();
     super.dispose();
   }

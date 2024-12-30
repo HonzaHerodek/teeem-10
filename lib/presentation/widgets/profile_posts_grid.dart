@@ -38,7 +38,7 @@ class PostRowHeader extends StatelessWidget {
           if (backgroundIcon != null)
             Positioned(
               left: 24 + title.length * 20 + 8,
-              top: 24, // Aligned with text top padding
+              top: 24,
               child: SizedBox(
                 width: 72,
                 height: 72,
@@ -55,7 +55,7 @@ class PostRowHeader extends StatelessWidget {
   }
 }
 
-class ProfilePostsGrid extends StatelessWidget {
+class ProfilePostsGrid extends StatefulWidget {
   final List<PostModel> posts;
   final String currentUserId;
   final Function(PostModel) onLike;
@@ -73,10 +73,37 @@ class ProfilePostsGrid extends StatelessWidget {
     required this.onRate,
   });
 
+  @override
+  State<ProfilePostsGrid> createState() => _ProfilePostsGridState();
+}
+
+class _ProfilePostsGridState extends State<ProfilePostsGrid> {
+  final List<ScrollController> _scrollControllers = [];
+  static const int _numberOfRows = 4; // Saved, Unfinished, Created, Completed
+
+  @override
+  void initState() {
+    super.initState();
+    // Create a controller for each horizontal list
+    for (int i = 0; i < _numberOfRows; i++) {
+      _scrollControllers.add(ScrollController());
+    }
+  }
+
+  @override
+  void dispose() {
+    // Dispose all controllers
+    for (var controller in _scrollControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
   Widget _buildPostRow(
     BuildContext context, {
     required String title,
     required List<PostModel> posts,
+    required int index,
     IconData? backgroundIcon,
     bool showHeartButton = false,
   }) {
@@ -95,7 +122,8 @@ class ProfilePostsGrid extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            physics: const BouncingScrollPhysics(),
+            controller: _scrollControllers[index],
+            physics: const ClampingScrollPhysics(),
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
@@ -125,10 +153,10 @@ class ProfilePostsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final savedPosts = posts.take(3).toList();
-    final unfinishedPosts = posts.skip(3).take(3).toList();
-    final createdPosts = posts.skip(1).take(3).toList();
-    final completedPosts = posts.skip(2).take(3).toList();
+    final savedPosts = widget.posts.take(3).toList();
+    final unfinishedPosts = widget.posts.skip(3).take(3).toList();
+    final createdPosts = widget.posts.skip(1).take(3).toList();
+    final completedPosts = widget.posts.skip(2).take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,6 +165,7 @@ class ProfilePostsGrid extends StatelessWidget {
           context,
           title: 'Saved',
           posts: savedPosts,
+          index: 0,
           backgroundIcon: Icons.favorite_rounded,
           showHeartButton: true,
         ),
@@ -145,6 +174,7 @@ class ProfilePostsGrid extends StatelessWidget {
           context,
           title: 'Unfinished',
           posts: unfinishedPosts,
+          index: 1,
           backgroundIcon: Icons.pending_rounded,
         ),
         const SizedBox(height: 24),
@@ -152,6 +182,7 @@ class ProfilePostsGrid extends StatelessWidget {
           context,
           title: 'Created',
           posts: createdPosts,
+          index: 2,
           backgroundIcon: Icons.add_circle_rounded,
         ),
         const SizedBox(height: 24),
@@ -159,6 +190,7 @@ class ProfilePostsGrid extends StatelessWidget {
           context,
           title: 'Completed',
           posts: completedPosts,
+          index: 3,
           backgroundIcon: Icons.check_circle_rounded,
         ),
       ],
