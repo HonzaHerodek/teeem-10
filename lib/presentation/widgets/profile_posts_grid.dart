@@ -107,9 +107,13 @@ class ProfilePostsGrid extends StatelessWidget {
                   height: postSize,
                   circular: true,
                   showHeartButton: showHeartButton,
-                  onUnsave: showHeartButton ? () {
-                    context.read<ProfileBloc>().add(ProfilePostUnsaved(post.id));
-                  } : null,
+                  onUnsave: showHeartButton
+                      ? () {
+                          context
+                              .read<ProfileBloc>()
+                              .add(ProfilePostUnsaved(post.id));
+                        }
+                      : null,
                 ),
               );
             },

@@ -27,28 +27,21 @@ class ProfilePostsSection extends StatelessWidget {
       );
     }
 
-    return SliverToBoxAdapter(
-      child: Column(
-        children: [
-          ProfilePostsGrid(
-            posts: state.userPosts,
-            currentUserId: state.user!.id,
-            onLike: (post) {},
-            onComment: (post) {},
-            onShare: (post) {},
-            onRate: (rating, post) {
-              context.read<ProfileBloc>().add(
-                    ProfileRatingReceived(
-                      rating,
-                      state.user!.id,
-                      userId: state.user!.id,
-                    ),
-                  );
-            },
-          ),
-          const SizedBox(height: 32),
-        ],
-      ),
+    return ProfilePostsGrid(
+      posts: state.userPosts,
+      currentUserId: state.user!.id,
+      onLike: (post) {},
+      onComment: (post) {},
+      onShare: (post) {},
+      onRate: (rating, post) {
+        context.read<ProfileBloc>().add(
+              ProfileRatingReceived(
+                rating,
+                state.user!.id,
+                userId: state.user!.id,
+              ),
+            );
+      },
     );
   }
 }
