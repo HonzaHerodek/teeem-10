@@ -16,32 +16,32 @@ class ProfilePostsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.user == null || state.userPosts.isEmpty) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child: Text(
-            'No posts yet',
-            style: TextStyle(color: Colors.white70),
-          ),
+      return const Center(
+        child: Text(
+          'No posts yet',
+          style: TextStyle(color: Colors.white70),
         ),
       );
     }
 
-    return ProfilePostsGrid(
-      posts: state.userPosts,
-      currentUserId: state.user!.id,
-      onLike: (post) {},
-      onComment: (post) {},
-      onShare: (post) {},
-      onRate: (rating, post) {
-        context.read<ProfileBloc>().add(
-              ProfileRatingReceived(
-                rating,
-                state.user!.id,
-                userId: state.user!.id,
-              ),
-            );
-      },
+    return SizedBox(
+      width: double.infinity,
+      child: ProfilePostsGrid(
+        posts: state.userPosts,
+        currentUserId: state.user!.id,
+        onLike: (post) {},
+        onComment: (post) {},
+        onShare: (post) {},
+        onRate: (rating, post) {
+          context.read<ProfileBloc>().add(
+                ProfileRatingReceived(
+                  rating,
+                  state.user!.id,
+                  userId: state.user!.id,
+                ),
+              );
+        },
+      ),
     );
   }
 }

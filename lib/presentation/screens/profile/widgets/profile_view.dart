@@ -68,70 +68,66 @@ class _ProfileViewState extends State<ProfileView> {
           );
         }
 
-        return CustomScrollView(
+        return SingleChildScrollView(
           controller: _controller.scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  ProfileHeaderSection(
-                    state: state,
-                    onTraitsPressed: () => setState(() => _controller.handleTraitsPressed()),
-                    onNetworkPressed: () => setState(() => _controller.handleNetworkPressed()),
-                    showTraits: _controller.showTraits,
-                    showNetwork: _controller.showNetwork,
-                  ),
-                  ProfileTraitsNetworkSection(
-                    state: state,
-                    showTraits: _controller.showTraits,
-                    showNetwork: _controller.showNetwork,
-                    isAddingTrait: _controller.isAddingTrait,
-                  ),
-                  if (_controller.showTraits || _controller.showNetwork) 
-                    const SizedBox(height: 16),
-                  if (!_controller.showTraits && !_controller.showNetwork) ...[
-                    Text(
-                      state.user?.username ?? '',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  const Divider(color: Colors.white24),
-                  ProfilePostsSection(state: state),
-                  const SizedBox(height: 32),
-                  ProfileActionButtons(
-                    showSettings: _controller.showSettings,
-                    showAddIns: _controller.showAddIns,
-                    showAccounts: _controller.showAccounts,
-                    onSettingsPressed: () => setState(() => _controller.handleSettingsPressed()),
-                    onAddInsPressed: () => setState(() => _controller.handleAddInsPressed()),
-                    onAccountsPressed: () => setState(() => _controller.handleAccountsPressed()),
-                  ),
-                  const SizedBox(height: 16),
-                  ProfileBottomSections(
-                    showSettings: _controller.showSettings,
-                    showAddIns: _controller.showAddIns,
-                    showAccounts: _controller.showAccounts,
-                    settings: _controller.settings,
-                    addIns: _controller.addIns,
-                    accounts: _controller.accounts,
-                    settingsKey: _controller.settingsKey,
-                    addInsKey: _controller.addInsKey,
-                    accountsKey: _controller.accountsKey,
-                    onSettingsChanged: (settings) => setState(() => _controller.saveSettings(settings)),
-                    onAddInsChanged: (addIns) => setState(() => _controller.addIns = addIns),
-                    onAccountSwitch: (accountId) => setState(() => _controller.handleAccountSwitch(accountId)),
-                    onAddAccount: () {},
-                    onLogout: () {},
-                  ),
-                ],
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            children: [
+              ProfileHeaderSection(
+                state: state,
+                onTraitsPressed: () => setState(() => _controller.handleTraitsPressed()),
+                onNetworkPressed: () => setState(() => _controller.handleNetworkPressed()),
+                showTraits: _controller.showTraits,
+                showNetwork: _controller.showNetwork,
               ),
-            ),
-          ],
+              ProfileTraitsNetworkSection(
+                state: state,
+                showTraits: _controller.showTraits,
+                showNetwork: _controller.showNetwork,
+                isAddingTrait: _controller.isAddingTrait,
+              ),
+              if (_controller.showTraits || _controller.showNetwork) 
+                const SizedBox(height: 16),
+              if (!_controller.showTraits && !_controller.showNetwork) ...[
+                Text(
+                  state.user?.username ?? '',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              const Divider(color: Colors.white24),
+              ProfilePostsSection(state: state),
+              const SizedBox(height: 32),
+              ProfileActionButtons(
+                showSettings: _controller.showSettings,
+                showAddIns: _controller.showAddIns,
+                showAccounts: _controller.showAccounts,
+                onSettingsPressed: () => setState(() => _controller.handleSettingsPressed()),
+                onAddInsPressed: () => setState(() => _controller.handleAddInsPressed()),
+                onAccountsPressed: () => setState(() => _controller.handleAccountsPressed()),
+              ),
+              const SizedBox(height: 16),
+              ProfileBottomSections(
+                showSettings: _controller.showSettings,
+                showAddIns: _controller.showAddIns,
+                showAccounts: _controller.showAccounts,
+                settings: _controller.settings,
+                addIns: _controller.addIns,
+                accounts: _controller.accounts,
+                settingsKey: _controller.settingsKey,
+                addInsKey: _controller.addInsKey,
+                accountsKey: _controller.accountsKey,
+                onSettingsChanged: (settings) => setState(() => _controller.saveSettings(settings)),
+                onAddInsChanged: (addIns) => setState(() => _controller.addIns = addIns),
+                onAccountSwitch: (accountId) => setState(() => _controller.handleAccountSwitch(accountId)),
+                onAddAccount: () {},
+                onLogout: () {},
+              ),
+            ],
+          ),
         );
       },
     );

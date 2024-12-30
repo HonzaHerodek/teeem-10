@@ -159,10 +159,18 @@ class _SlidingPanelState extends State<SlidingPanel>
                     topRight: Radius.circular(cornerRadius),
                     bottomRight: Radius.circular(cornerRadius),
                   ),
-                  child: Container(
+                  child: SizedBox(
                     width: panelWidth,
-                    height: double.infinity,
-                    child: widget.child,
+                    height: MediaQuery.of(context).size.height,
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: MediaQuery.of(context).size.height,
+                        ),
+                        child: widget.child,
+                      ),
+                    ),
                   ),
                 ),
               ),
