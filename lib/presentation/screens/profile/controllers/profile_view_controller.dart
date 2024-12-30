@@ -4,9 +4,10 @@ import '../../../../data/models/profile_addins_model.dart';
 import '../../../../data/models/profile_accounts_model.dart';
 import '../../../../domain/repositories/settings_repository.dart';
 import '../../../../core/di/injection.dart';
+import 'profile_scroll_controller.dart';
 
 class ProfileViewController {
-  final ScrollController scrollController;
+  final ProfileScrollController scrollController;
   final GlobalKey settingsKey = GlobalKey();
   final GlobalKey addInsKey = GlobalKey();
   final GlobalKey accountsKey = GlobalKey();
@@ -59,39 +60,7 @@ class ProfileViewController {
   }
 
   void scrollToContent(GlobalKey key) {
-    if (!scrollController.hasClients) return;
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (key.currentContext == null) return;
-      
-      try {
-        final RenderBox renderBox = key.currentContext!.findRenderObject() as RenderBox;
-        if (renderBox == null) return;
-        
-        final position = renderBox.localToGlobal(Offset.zero);
-        if (!scrollController.hasClients) return;
-        
-        // Get the available scroll space
-        final viewportHeight = scrollController.position.viewportDimension;
-        final contentOffset = position.dy;
-        
-        // Calculate target scroll with viewport consideration
-        final targetScroll = scrollController.offset + (contentOffset - (viewportHeight * 0.2));
-        
-        if (!scrollController.hasClients) return;
-        final maxScroll = scrollController.position.maxScrollExtent;
-        
-        scrollController.animateTo(
-          targetScroll.clamp(0.0, maxScroll),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOutCubic,
-        ).catchError((error) {
-          print('Error during scroll animation: $error');
-        });
-      } catch (e) {
-        print('Error scrolling to content: $e');
-      }
-    });
+    scrollController.scrollToWidget(key);
   }
 
   Future<void> loadSettings() async {
@@ -173,14 +142,6 @@ class ProfileViewController {
   }
 
   void dispose() {
-    try {
-      if (scrollController.hasClients) {
-        // Stop any ongoing scroll animations
-        scrollController.jumpTo(scrollController.offset);
-      }
-      scrollController.dispose();
-    } catch (e) {
-      print('Error disposing scroll controller: $e');
-    }
+    // No need to dispose the scroll controller here as it's managed by ProfileView
   }
 }

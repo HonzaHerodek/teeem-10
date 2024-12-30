@@ -1,38 +1,35 @@
 import 'package:flutter/material.dart';
 
-class ProfileScrollController {
-  final ScrollController _scrollController;
+class ProfileScrollController extends ScrollController {
   bool _isDisposed = false;
 
-  ProfileScrollController() : _scrollController = ScrollController();
-
-  ScrollController get controller => _scrollController;
+  ProfileScrollController() : super();
 
   void scrollToWidget(GlobalKey key, {Duration? duration}) {
-    if (_isDisposed || !_scrollController.hasClients) return;
+    if (_isDisposed || !hasClients) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isDisposed || key.currentContext == null) return;
       
       try {
         final RenderBox? renderBox = key.currentContext!.findRenderObject() as RenderBox?;
-        if (renderBox == null || !_scrollController.hasClients) return;
+        if (renderBox == null || !hasClients) return;
         
         final position = renderBox.localToGlobal(Offset.zero);
         
         // Safely get scroll metrics
-        if (!_scrollController.hasClients) return;
-        final viewportHeight = _scrollController.position.viewportDimension;
+        if (!hasClients) return;
+        final viewportHeight = this.position.viewportDimension;
         final widgetHeight = renderBox.size.height;
-        final currentOffset = _scrollController.offset;
-        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentOffset = offset;
+        final maxScroll = this.position.maxScrollExtent;
         
         // Calculate target scroll position
         final targetScroll = currentOffset + position.dy - (viewportHeight * 0.2);
         
         // Only scroll if needed and controller is still valid
-        if (position.dy + widgetHeight > viewportHeight && !_isDisposed && _scrollController.hasClients) {
-          _scrollController.animateTo(
+        if (position.dy + widgetHeight > viewportHeight && !_isDisposed && hasClients) {
+          animateTo(
             targetScroll.clamp(0.0, maxScroll),
             duration: duration ?? const Duration(milliseconds: 500),
             curve: Curves.easeOutCubic,
@@ -47,18 +44,18 @@ class ProfileScrollController {
   }
 
   void jumpToTop() {
-    if (_isDisposed || !_scrollController.hasClients) return;
+    if (_isDisposed || !hasClients) return;
     try {
-      _scrollController.jumpTo(0);
+      jumpTo(0);
     } catch (e) {
       print('Error jumping to top: $e');
     }
   }
 
   void animateToTop({Duration? duration}) {
-    if (_isDisposed || !_scrollController.hasClients) return;
+    if (_isDisposed || !hasClients) return;
     try {
-      _scrollController.animateTo(
+      animateTo(
         0,
         duration: duration ?? const Duration(milliseconds: 500),
         curve: Curves.easeOutCubic,
@@ -70,20 +67,17 @@ class ProfileScrollController {
     }
   }
 
-  ScrollPhysics get physics => const ClampingScrollPhysics();
-
-  bool get hasClients => _scrollController.hasClients;
-
+  @override
   void dispose() {
     if (_isDisposed) return;
     _isDisposed = true;
     
     try {
-      if (_scrollController.hasClients) {
+      if (hasClients) {
         // Stop any ongoing animations
-        _scrollController.jumpTo(_scrollController.offset);
+        jumpTo(offset);
       }
-      _scrollController.dispose();
+      super.dispose();
     } catch (e) {
       print('Error disposing scroll controller: $e');
     }

@@ -28,7 +28,7 @@ class _ProfileViewState extends State<ProfileView> {
     super.initState();
     _scrollController = ProfileScrollController();
     _controller = ProfileViewController(
-      scrollController: _scrollController.scrollController,
+      scrollController: _scrollController,
     );
     _controller.loadSettings();
   }
@@ -72,14 +72,16 @@ class _ProfileViewState extends State<ProfileView> {
         }
 
         return SingleChildScrollView(
-          controller: _controller.scrollController,
+          controller: _scrollController,
           physics: const ClampingScrollPhysics(),
           child: Column(
             children: [
               ProfileHeaderSection(
                 state: state,
-                onTraitsPressed: () => setState(() => _controller.handleTraitsPressed()),
-                onNetworkPressed: () => setState(() => _controller.handleNetworkPressed()),
+                onTraitsPressed: () =>
+                    setState(() => _controller.handleTraitsPressed()),
+                onNetworkPressed: () =>
+                    setState(() => _controller.handleNetworkPressed()),
                 showTraits: _controller.showTraits,
                 showNetwork: _controller.showNetwork,
               ),
@@ -89,7 +91,7 @@ class _ProfileViewState extends State<ProfileView> {
                 showNetwork: _controller.showNetwork,
                 isAddingTrait: _controller.isAddingTrait,
               ),
-              if (_controller.showTraits || _controller.showNetwork) 
+              if (_controller.showTraits || _controller.showNetwork)
                 const SizedBox(height: 16),
               if (!_controller.showTraits && !_controller.showNetwork) ...[
                 Text(
@@ -108,9 +110,12 @@ class _ProfileViewState extends State<ProfileView> {
                 showSettings: _controller.showSettings,
                 showAddIns: _controller.showAddIns,
                 showAccounts: _controller.showAccounts,
-                onSettingsPressed: () => setState(() => _controller.handleSettingsPressed()),
-                onAddInsPressed: () => setState(() => _controller.handleAddInsPressed()),
-                onAccountsPressed: () => setState(() => _controller.handleAccountsPressed()),
+                onSettingsPressed: () =>
+                    setState(() => _controller.handleSettingsPressed()),
+                onAddInsPressed: () =>
+                    setState(() => _controller.handleAddInsPressed()),
+                onAccountsPressed: () =>
+                    setState(() => _controller.handleAccountsPressed()),
               ),
               const SizedBox(height: 16),
               ProfileBottomSections(
@@ -123,9 +128,12 @@ class _ProfileViewState extends State<ProfileView> {
                 settingsKey: _controller.settingsKey,
                 addInsKey: _controller.addInsKey,
                 accountsKey: _controller.accountsKey,
-                onSettingsChanged: (settings) => setState(() => _controller.saveSettings(settings)),
-                onAddInsChanged: (addIns) => setState(() => _controller.addIns = addIns),
-                onAccountSwitch: (accountId) => setState(() => _controller.handleAccountSwitch(accountId)),
+                onSettingsChanged: (settings) =>
+                    setState(() => _controller.saveSettings(settings)),
+                onAddInsChanged: (addIns) =>
+                    setState(() => _controller.addIns = addIns),
+                onAccountSwitch: (accountId) =>
+                    setState(() => _controller.handleAccountSwitch(accountId)),
                 onAddAccount: () {},
                 onLogout: () {},
               ),
