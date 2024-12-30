@@ -11,4 +11,8 @@ abstract class ProjectRepository {
   Future<void> removePostFromProject(String projectId, String postId);
   Future<void> batchAddPostsToProject(String projectId, List<String> postIds);
   Future<void> batchRemovePostsFromProject(String projectId, List<String> postIds);
+  Future<List<ProjectModel>> getSubProjects(String projectId);
+  Future<ProjectModel> addSubProject(String parentId, ProjectModel project);
+  Future<void> removeSubProject(String parentId, String childId);
+  Future<ProjectModel?> getParentProject(String projectId);
 }

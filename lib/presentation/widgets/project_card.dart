@@ -5,6 +5,7 @@ import '../../core/di/injection.dart';
 import '../../data/models/post_model.dart';
 import '../../data/models/project_model.dart';
 import '../../domain/repositories/post_repository.dart';
+import '../../domain/repositories/project_repository.dart';
 import '../../presentation/screens/feed/feed_bloc/feed_bloc.dart';
 import '../../presentation/screens/feed/feed_bloc/feed_event.dart';
 import '../../presentation/screens/feed/feed_bloc/feed_state.dart';
@@ -36,7 +37,13 @@ class ProjectCard extends StatelessWidget {
   Widget _buildPostList(List<PostModel> posts, bool isSelectable,
       ProjectPostSelectionService service,
       {bool isProjectPosts = false}) {
-    if (posts.isEmpty) return const SizedBox.shrink();
+    // For empty project posts, return empty widget
+    if (isProjectPosts && posts.isEmpty) return const SizedBox.shrink();
+    
+    // For available posts section, show even if posts are empty (to show sub-projects)
+    if (!isProjectPosts && posts.isEmpty && service.subProjects.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return AnimatedOpacity(
       duration: _animationDuration,
@@ -46,45 +53,66 @@ class ProjectCard extends StatelessWidget {
         height: _postSize,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          // Add +1 to itemCount for the compact project card
-          itemCount: posts.length + (isProjectPosts ? 1 : 0),
+          itemCount: isProjectPosts 
+              ? posts.length + 1  // +1 for project card
+              : posts.length + service.subProjects.length,  // Add sub-projects count
           padding: EdgeInsets.zero,
           physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
-            // Show compact project card as first item in project posts
-            if (isProjectPosts && index == 0) {
+            // For project posts section
+            if (isProjectPosts) {
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: CompactProjectCard(
+                    project: project,
+                    postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                    width: _postSize,
+                    height: _postSize,
+                  ),
+                );
+              }
+              final post = posts[index - 1];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: SelectableCompactPostCard(
+                  post: post,
+                  width: _postSize,
+                  height: _postSize,
+                  isSelected: service.selectedPostIds.contains(post.id),
+                  onToggle: () => service.togglePostSelection(post.id),
+                  isProjectPost: true,
+                ),
+              );
+            }
+            
+            // For available posts section
+            if (index < service.subProjects.length) {
+              // Show sub-projects first
+              final subProject = service.subProjects[index];
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: CompactProjectCard(
-                  project: project,
-                  postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                  project: subProject,
+                  postThumbnails: const [], // Sub-projects might not have posts yet
                   width: _postSize,
                   height: _postSize,
                 ),
               );
             }
             
-            // Adjust index for posts to account for the project card
-            final postIndex = isProjectPosts ? index - 1 : index;
-            final post = posts[postIndex];
-            
+            // Then show available posts
+            final post = posts[index - service.subProjects.length];
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: isSelectable
-                  ? SelectableCompactPostCard(
-                      post: post,
-                      width: _postSize,
-                      height: _postSize,
-                      isSelected: service.selectedPostIds.contains(post.id),
-                      onToggle: () => service.togglePostSelection(post.id),
-                      isProjectPost: isProjectPosts,
-                    )
-                  : CompactPostCard(
-                      post: post,
-                      width: _postSize,
-                      height: _postSize,
-                      circular: true,
-                    ),
+              child: SelectableCompactPostCard(
+                post: post,
+                width: _postSize,
+                height: _postSize,
+                isSelected: service.selectedPostIds.contains(post.id),
+                onToggle: () => service.togglePostSelection(post.id),
+                isProjectPost: false,
+              ),
             );
           },
         ),
@@ -107,8 +135,32 @@ class ProjectCard extends StatelessWidget {
           const SizedBox(width: 40), // Increased from 32 to 40
           SquareActionButton(
             icon: Icons.add_box_outlined,
-            onPressed: () {
-              // TODO: Implement add sub-project action
+            onPressed: () async {
+              final newProject = ProjectModel(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: 'New Sub-Project',
+                description: 'Add a description',
+                creatorId: currentUserId ?? '',
+                postIds: const [],
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              );
+
+              try {
+                context.read<FeedBloc>().add(FeedSubProjectCreated(
+                  parentId: project.id,
+                  project: newProject,
+                ));
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to create sub-project: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             size: 40,
           ),
@@ -225,8 +277,10 @@ class ProjectCard extends StatelessWidget {
                                         if (service.isSelectionMode) {
                                           service.handlePostsAdded(context);
                                         } else if (state is FeedSuccess) {
-                                          service
-                                              .enterSelectionMode(state.posts);
+                                          service.enterSelectionMode(
+                                            state.posts,
+                                            state.projects,
+                                          );
                                         } else {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(

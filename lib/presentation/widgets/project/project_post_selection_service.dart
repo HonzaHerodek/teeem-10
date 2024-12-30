@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/models/post_model.dart';
+import '../../../data/models/project_model.dart';
 import '../../../domain/repositories/post_repository.dart';
 import '../../screens/feed/feed_bloc/feed_bloc.dart';
 import '../../screens/feed/feed_bloc/feed_event.dart';
@@ -13,6 +14,7 @@ class ProjectPostSelectionService extends ChangeNotifier {
 
   List<PostModel> _projectPosts = [];
   List<PostModel> _availablePosts = [];
+  List<ProjectModel> _subProjects = [];
   final Set<String> _selectedPostIds = {};
   bool _isLoading = true;
   bool _isSelectionMode = false;
@@ -31,6 +33,7 @@ class ProjectPostSelectionService extends ChangeNotifier {
   // Getters
   List<PostModel> get projectPosts => List.unmodifiable(_projectPosts);
   List<PostModel> get availablePosts => List.unmodifiable(_availablePosts);
+  List<ProjectModel> get subProjects => List.unmodifiable(_subProjects);
   Set<String> get selectedPostIds => Set.unmodifiable(_selectedPostIds);
   bool get isLoading => _isLoading;
   bool get isSelectionMode => _isSelectionMode;
@@ -78,10 +81,13 @@ class ProjectPostSelectionService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void enterSelectionMode(List<PostModel> feedPosts) {
+  void enterSelectionMode(List<PostModel> feedPosts, List<ProjectModel> projects) {
     _isSelectionMode = true;
     _availablePosts = feedPosts.where(
       (post) => !_currentPostIds.contains(post.id)
+    ).toList();
+    _subProjects = projects.where(
+      (p) => p.parentId != null && p.parentId == projectId
     ).toList();
     _selectedPostIds.clear();
     notifyListeners();
@@ -91,6 +97,7 @@ class ProjectPostSelectionService extends ChangeNotifier {
     _isSelectionMode = false;
     _selectedPostIds.clear();
     _availablePosts = [];
+    _subProjects = [];
     notifyListeners();
   }
 

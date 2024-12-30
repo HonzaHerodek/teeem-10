@@ -1,3 +1,5 @@
+import 'package:myapp/data/models/project_model.dart';
+
 abstract class FeedEvent {
   const FeedEvent();
 }
@@ -103,6 +105,15 @@ class FeedBatchOperations extends FeedEvent {
     required this.projectId,
     required this.postsToRemove,
     required this.postsToAdd,
+  });
+}
+
+class FeedSubProjectCreated extends FeedEvent {
+  final String parentId;
+  final ProjectModel project;
+  const FeedSubProjectCreated({
+    required this.parentId,
+    required this.project,
   });
 }
 

@@ -9,6 +9,7 @@ class CompactProjectCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool showRoute;
   final String? route;
+  final bool showParentIndicator;
 
   const CompactProjectCard({
     super.key,
@@ -19,6 +20,7 @@ class CompactProjectCard extends StatelessWidget {
     this.onTap,
     this.showRoute = false,
     this.route,
+    this.showParentIndicator = true,
   });
 
   Widget _buildPostMiniatures() {
@@ -99,6 +101,60 @@ class CompactProjectCard extends StatelessWidget {
           ),
           child: Stack(
             children: [
+              // Parent/Child indicators
+              if (showParentIndicator)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (project.parentId != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.subdirectory_arrow_right,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      if (project.childrenIds.isNotEmpty) ...[
+                        if (project.parentId != null)
+                          const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.account_tree,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${project.childrenIds.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               if (showRoute && route != null)
                 Positioned(
                   top: 8,

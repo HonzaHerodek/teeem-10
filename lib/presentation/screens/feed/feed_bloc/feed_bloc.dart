@@ -104,6 +104,15 @@ class FeedBloc extends Bloc<FeedEvent, FeedState>
         emit,
       ));
     
+    // Sub-project operations
+    on<FeedSubProjectCreated>((event, emit) =>
+      handleSubProjectCreation(
+        event.parentId,
+        event.project,
+        _projectRepository,
+        emit,
+      ));
+    
     // Filtering
     on<FeedFilterChanged>(_onFilterChanged);
     on<FeedSearchChanged>(_onSearchChanged);

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/post_model.dart';
 import '../../../domain/repositories/post_repository.dart';
+import '../../screens/feed/feed_bloc/feed_bloc.dart';
+import '../../screens/feed/feed_bloc/feed_state.dart';
 import 'selectable_compact_post_card.dart';
 import 'project_post_selection_service.dart';
 
@@ -104,7 +106,14 @@ class _ProjectContentBody extends StatelessWidget {
                       } else {
                         return IconButton(
                           icon: const Icon(Icons.edit, color: Colors.white),
-                          onPressed: () => service.enterSelectionMode(availablePosts),
+                          onPressed: () {
+                            if (context.mounted) {
+                              final state = context.read<FeedBloc>().state;
+                              if (state is FeedSuccess) {
+                                service.enterSelectionMode(availablePosts, state.projects);
+                              }
+                            }
+                          },
                         );
                       }
                     },

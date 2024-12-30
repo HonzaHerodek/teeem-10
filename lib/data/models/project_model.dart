@@ -10,6 +10,8 @@ class ProjectModel {
   final String creatorId;
   final List<String> postIds;
   final List<String> likes;
+  final String? parentId;
+  final List<String> childrenIds;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -20,6 +22,8 @@ class ProjectModel {
     required this.creatorId,
     required this.postIds,
     this.likes = const [],
+    this.parentId,
+    this.childrenIds = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -38,6 +42,8 @@ class ProjectModel {
     List<String>? likes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? parentId,
+    List<String>? childrenIds,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -46,6 +52,8 @@ class ProjectModel {
       creatorId: creatorId ?? this.creatorId,
       postIds: postIds ?? this.postIds,
       likes: likes ?? this.likes,
+      parentId: parentId ?? this.parentId,
+      childrenIds: childrenIds ?? this.childrenIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
