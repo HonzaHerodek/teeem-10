@@ -2,49 +2,74 @@ import 'package:flutter/material.dart';
 
 class ProfileScrollController extends ScrollController {
   bool _isDisposed = false;
+  bool _isScrolling = false;
+  DateTime _lastScrollTime = DateTime.now();
 
-  ProfileScrollController() : super();
+  ProfileScrollController() : super(keepScrollOffset: true);
 
-  void scrollToWidget(GlobalKey key, {Duration? duration}) {
+  Future<void> scrollToWidget(GlobalKey key, {Duration? duration}) async {
     if (_isDisposed || !hasClients) return;
+    
+    // Prevent rapid consecutive scrolls
+    final now = DateTime.now();
+    if (_isScrolling || now.difference(_lastScrollTime).inMilliseconds < 200) {
+      return;
+    }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isDisposed || key.currentContext == null) return;
+    try {
+      _isScrolling = true;
+      _lastScrollTime = now;
 
-      try {
-        final RenderBox? renderBox =
-            key.currentContext!.findRenderObject() as RenderBox?;
-        if (renderBox == null || !hasClients) return;
+      // Wait for layout to complete
+      await Future.delayed(const Duration(milliseconds: 50));
+      
+      if (_isDisposed || key.currentContext == null || !hasClients) return;
 
-        final position = renderBox.localToGlobal(Offset.zero);
+      final RenderBox? renderBox =
+          key.currentContext!.findRenderObject() as RenderBox?;
+      if (renderBox == null || !hasClients) return;
 
-        // Safely get scroll metrics
-        if (!hasClients) return;
-        final viewportHeight = this.position.viewportDimension;
-        final widgetHeight = renderBox.size.height;
-        final currentOffset = offset;
-        final maxScroll = this.position.maxScrollExtent;
+      final position = renderBox.localToGlobal(Offset.zero);
+      
+      // Get latest metrics after layout
+      if (!hasClients) return;
+      final viewportHeight = this.position.viewportDimension;
+      final widgetHeight = renderBox.size.height;
+      final currentOffset = offset;
+      final maxScroll = this.position.maxScrollExtent;
 
-        // Calculate target scroll position
-        final targetScroll =
-            currentOffset + position.dy - (viewportHeight * 0.2);
+      // Calculate target scroll position with padding
+      final targetScroll =
+          (currentOffset + position.dy - (viewportHeight * 0.2))
+              .clamp(0.0, maxScroll);
 
-        // Only scroll if needed and controller is still valid
-        if (position.dy + widgetHeight > viewportHeight &&
-            !_isDisposed &&
-            hasClients) {
-          animateTo(
-            targetScroll.clamp(0.0, maxScroll),
-            duration: duration ?? const Duration(milliseconds: 500),
-            curve: Curves.easeOutCubic,
-          ).catchError((error) {
-            print('Error during scroll animation: $error');
-          });
-        }
-      } catch (e) {
-        print('Error scrolling to widget: $e');
+      // Only scroll if needed and controller is still valid
+      if (position.dy + widgetHeight > viewportHeight &&
+          !_isDisposed &&
+          hasClients) {
+        await animateTo(
+          targetScroll,
+          duration: duration ?? const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
       }
-    });
+    } catch (e) {
+      print('Error scrolling to widget: $e');
+    } finally {
+      _isScrolling = false;
+      _lastScrollTime = DateTime.now();
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      try {
+        super.notifyListeners();
+      } catch (e) {
+        print('Error notifying scroll listeners: $e');
+      }
+    }
   }
 
   void jumpToTop() {

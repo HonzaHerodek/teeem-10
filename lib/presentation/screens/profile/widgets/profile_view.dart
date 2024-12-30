@@ -73,15 +73,19 @@ class _ProfileViewState extends State<ProfileView> {
 
         return SingleChildScrollView(
           controller: _scrollController,
-          physics: const ClampingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
               ProfileHeaderSection(
                 state: state,
-                onTraitsPressed: () =>
-                    setState(() => _controller.handleTraitsPressed()),
-                onNetworkPressed: () =>
-                    setState(() => _controller.handleNetworkPressed()),
+                onTraitsPressed: () async {
+                  await _controller.handleTraitsPressed();
+                  if (mounted) setState(() {});
+                },
+                onNetworkPressed: () async {
+                  await _controller.handleNetworkPressed();
+                  if (mounted) setState(() {});
+                },
                 showTraits: _controller.showTraits,
                 showNetwork: _controller.showNetwork,
               ),
@@ -110,12 +114,18 @@ class _ProfileViewState extends State<ProfileView> {
                 showSettings: _controller.showSettings,
                 showAddIns: _controller.showAddIns,
                 showAccounts: _controller.showAccounts,
-                onSettingsPressed: () =>
-                    setState(() => _controller.handleSettingsPressed()),
-                onAddInsPressed: () =>
-                    setState(() => _controller.handleAddInsPressed()),
-                onAccountsPressed: () =>
-                    setState(() => _controller.handleAccountsPressed()),
+                onSettingsPressed: () async {
+                  await _controller.handleSettingsPressed();
+                  if (mounted) setState(() {});
+                },
+                onAddInsPressed: () async {
+                  await _controller.handleAddInsPressed();
+                  if (mounted) setState(() {});
+                },
+                onAccountsPressed: () async {
+                  await _controller.handleAccountsPressed();
+                  if (mounted) setState(() {});
+                },
               ),
               const SizedBox(height: 16),
               ProfileBottomSections(
@@ -128,12 +138,18 @@ class _ProfileViewState extends State<ProfileView> {
                 settingsKey: _controller.settingsKey,
                 addInsKey: _controller.addInsKey,
                 accountsKey: _controller.accountsKey,
-                onSettingsChanged: (settings) =>
-                    setState(() => _controller.saveSettings(settings)),
-                onAddInsChanged: (addIns) =>
-                    setState(() => _controller.addIns = addIns),
-                onAccountSwitch: (accountId) =>
-                    setState(() => _controller.handleAccountSwitch(accountId)),
+                onSettingsChanged: (settings) async {
+                  await _controller.saveSettings(settings);
+                  if (mounted) setState(() {});
+                },
+                onAddInsChanged: (addIns) async {
+                  await _controller.handleAddInsChanged(addIns);
+                  if (mounted) setState(() {});
+                },
+                onAccountSwitch: (accountId) async {
+                  await _controller.handleAccountSwitch(accountId);
+                  if (mounted) setState(() {});
+                },
                 onAddAccount: () {},
                 onLogout: () {},
               ),

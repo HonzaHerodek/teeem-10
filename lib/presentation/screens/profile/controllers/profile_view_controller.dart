@@ -83,62 +83,111 @@ class ProfileViewController {
     }
   }
 
-  void handleSettingsPressed() {
-    showSettings = !showSettings;
-    if (showSettings) {
-      showAddIns = false;
-      showAccounts = false;
-      showTraits = false;
-      showNetwork = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToContent(settingsKey);
-      });
+  bool _isTransitioning = false;
+
+  Future<void> _handleSectionTransition(VoidCallback stateUpdates, {GlobalKey? scrollTarget}) async {
+    if (_isTransitioning) return;
+    
+    try {
+      _isTransitioning = true;
+      
+      // Update state
+      stateUpdates();
+
+      // Wait for state to propagate
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      // If we need to scroll, wait for layout to stabilize then scroll
+      if (scrollTarget != null) {
+        // Wait for animations to complete
+        await Future.delayed(const Duration(milliseconds: 300));
+        
+        if (scrollTarget.currentContext != null) {
+          await scrollController.scrollToWidget(
+            scrollTarget,
+            duration: const Duration(milliseconds: 500),
+          );
+        }
+      }
+    } finally {
+      _isTransitioning = false;
     }
   }
 
-  void handleAddInsPressed() {
-    showAddIns = !showAddIns;
-    if (showAddIns) {
-      showSettings = false;
-      showAccounts = false;
-      showTraits = false;
+  Future<void> handleSettingsPressed() async {
+    await _handleSectionTransition(
+      () {
+        showSettings = !showSettings;
+        if (showSettings) {
+          showAddIns = false;
+          showAccounts = false;
+          showTraits = false;
+          showNetwork = false;
+        }
+      },
+      scrollTarget: showSettings ? settingsKey : null,
+    );
+  }
+
+  Future<void> handleAddInsPressed() async {
+    await _handleSectionTransition(
+      () {
+        showAddIns = !showAddIns;
+        if (showAddIns) {
+          showSettings = false;
+          showAccounts = false;
+          showTraits = false;
+          showNetwork = false;
+        }
+      },
+      scrollTarget: showAddIns ? addInsKey : null,
+    );
+  }
+
+  Future<void> handleAccountsPressed() async {
+    await _handleSectionTransition(
+      () {
+        showAccounts = !showAccounts;
+        if (showAccounts) {
+          showSettings = false;
+          showAddIns = false;
+          showTraits = false;
+          showNetwork = false;
+        }
+      },
+      scrollTarget: showAccounts ? accountsKey : null,
+    );
+  }
+
+  Future<void> handleAccountSwitch(String accountId) async {
+    await _handleSectionTransition(() {
+      final updatedAccounts = accounts.accounts.map((account) {
+        return account.copyWith(isActive: account.id == accountId);
+      }).toList();
+      accounts = accounts.copyWith(accounts: updatedAccounts);
+    });
+  }
+
+  Future<void> handleTraitsPressed() async {
+    await _handleSectionTransition(() {
+      showTraits = !showTraits;
       showNetwork = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToContent(addInsKey);
-      });
-    }
+      if (showSettings) showSettings = false;
+    });
   }
 
-  void handleAccountsPressed() {
-    showAccounts = !showAccounts;
-    if (showAccounts) {
-      showSettings = false;
-      showAddIns = false;
+  Future<void> handleNetworkPressed() async {
+    await _handleSectionTransition(() {
+      showNetwork = !showNetwork;
       showTraits = false;
-      showNetwork = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToContent(accountsKey);
-      });
-    }
+      if (showSettings) showSettings = false;
+    });
   }
 
-  void handleAccountSwitch(String accountId) {
-    final updatedAccounts = accounts.accounts.map((account) {
-      return account.copyWith(isActive: account.id == accountId);
-    }).toList();
-    accounts = accounts.copyWith(accounts: updatedAccounts);
-  }
-
-  void handleTraitsPressed() {
-    showTraits = !showTraits;
-    showNetwork = false;
-    if (showSettings) showSettings = false;
-  }
-
-  void handleNetworkPressed() {
-    showNetwork = !showNetwork;
-    showTraits = false;
-    if (showSettings) showSettings = false;
+  Future<void> handleAddInsChanged(ProfileAddInsModel newAddIns) async {
+    await _handleSectionTransition(() {
+      addIns = newAddIns;
+    });
   }
 
   void dispose() {
