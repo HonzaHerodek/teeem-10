@@ -46,6 +46,7 @@ class RatingStars extends StatefulWidget {
 class _RatingStarsState extends State<RatingStars> {
   bool _expanded = false;
   double? _dragRating;
+  bool _isHandlingTap = false;
 
   void _handleDragStart(DragStartDetails details) {
     if (!widget.isInteractive) return;
@@ -78,10 +79,7 @@ class _RatingStarsState extends State<RatingStars> {
     final RenderBox box = context.findRenderObject() as RenderBox;
     final double dx = localPosition.dx.clamp(0, box.size.width);
     
-    // Calculate rating based on position
     final rating = ((dx / box.size.width) * widget.numberOfStars).clamp(0, widget.numberOfStars.toDouble());
-    
-    // Support half-star ratings
     final halfRating = (rating * 2).round() / 2;
     
     if (_dragRating != halfRating) {
@@ -89,6 +87,22 @@ class _RatingStarsState extends State<RatingStars> {
         _dragRating = halfRating;
       });
     }
+  }
+
+  void _handleExpansionTap() {
+    if (_isHandlingTap) return;
+    _isHandlingTap = true;
+
+    setState(() {
+      _expanded = !_expanded;
+    });
+    widget.onExpanded?.call(_expanded);
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _isHandlingTap = false;
+      }
+    });
   }
 
   Widget _buildRatingStats() {
@@ -164,13 +178,8 @@ class _RatingStarsState extends State<RatingStars> {
             onHorizontalDragStart: _handleDragStart,
             onHorizontalDragUpdate: _handleDragUpdate,
             onHorizontalDragEnd: _handleDragEnd,
-            onTap: widget.distribution != null && widget.onExpanded != null
-                ? () {
-                    setState(() {
-                      _expanded = !_expanded;
-                      widget.onExpanded?.call(_expanded);
-                    });
-                  }
+            onTap: widget.distribution != null && widget.onExpanded != null && !_isHandlingTap
+                ? _handleExpansionTap
                 : null,
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -178,11 +187,9 @@ class _RatingStarsState extends State<RatingStars> {
                                      widget.maxWidth ?? 
                                      constraints.maxWidth;
                 
-                // Use either provided curveHeight or calculate from curvature
                 final effectiveCurveHeight = widget.curveHeight ?? 
                                            (widget.size * widget.curvature);
                 
-                // Use either provided sizeModifier or starSizeIncrease
                 final effectiveStarSizeIncrease = widget.sizeModifier != null ? 
                                                 1 + widget.sizeModifier! : 
                                                 1.2;
@@ -210,16 +217,17 @@ class _RatingStarsState extends State<RatingStars> {
             ),
           ),
         ),
-        if (widget.distribution != null)
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: _buildRatingStats(),
+        if (_expanded && widget.distribution != null)
+          IgnorePointer(
+            ignoring: !_expanded,
+            child: Visibility(
+              visible: _expanded,
+              maintainState: true,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _buildRatingStats(),
+              ),
             ),
-            crossFadeState:
-                _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 300),
           ),
       ],
     );
@@ -261,12 +269,10 @@ class StarsPainter extends CustomPainter {
       final progress = i / (numberOfStars - 1);
       final x = startX + (starSize * starSizeIncrease + baseSpacing) * i;
       
-      // Calculate y position based on quadratic curve
       final normalizedX = progress * 2 - 1;
       final curveOffset = size.height * curvature * (1 - normalizedX * normalizedX);
       final y = (size.height - starSize) / 2 - curveOffset;
 
-      // Calculate current star's size based on position
       final currentSize = starSize * (1 + (starSizeIncrease - 1) * (1 - normalizedX * normalizedX));
       
       final center = Offset(x + currentSize / 2, y + currentSize / 2);
@@ -290,10 +296,8 @@ class StarsPainter extends CustomPainter {
   void _drawHalfStar(Canvas canvas, Offset center, double size, Paint paint) {
     final path = _createStarPath(center, size);
     
-    // Draw outline
     canvas.drawPath(path, paint..style = PaintingStyle.stroke);
     
-    // Create and draw half-filled star
     final halfPath = Path();
     final rect = Rect.fromCenter(center: center, width: size, height: size);
     halfPath.addRect(Rect.fromLTRB(rect.left, rect.top, center.dx, rect.bottom));
