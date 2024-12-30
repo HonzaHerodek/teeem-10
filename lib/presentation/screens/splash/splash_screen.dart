@@ -5,6 +5,7 @@ import '../../../core/di/injection.dart';
 import '../../../core/navigation/navigation_service.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../widgets/animated_dots_background.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -68,16 +69,21 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Center(
-        child: Lottie.asset(
-          'assets/videos/teeem-logo-in.mp4.lottie.json',
-          controller: _controller,
-          onLoaded: (composition) {
-            _controller
-              ..duration = composition.duration
-              ..forward();
-          },
-        ),
+      body: Stack(
+        children: [
+          const AnimatedDotsBackground(numberOfDots: 30),
+          Center(
+            child: Lottie.asset(
+              'assets/videos/teeem-logo-in.mp4.lottie.json',
+              controller: _controller,
+              onLoaded: (composition) {
+                _controller
+                  ..duration = composition.duration
+                  ..forward();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -9,8 +9,15 @@ const bool kIsDebug = kDebugMode;
 
 void main() async {
   try {
-    // Ensure Flutter bindings and platform channels are initialized
+    // Initialize Flutter binding
     WidgetsFlutterBinding.ensureInitialized();
+    
+    // Remove the Flutter splash screen immediately
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    SystemChannels.platform.invokeMethod('SystemChrome.setApplicationSwitcherDescription', {
+      'label': '',
+      'primaryColor': 0xFF000000,
+    });
 
     // Hide system UI completely
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
