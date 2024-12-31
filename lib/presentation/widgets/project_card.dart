@@ -452,7 +452,7 @@ class ProjectCard extends StatelessWidget {
                                             : Icons.settings,
                                         onPressed: () {
                                           if (service.isSelectionMode) {
-                                            service.handlePostsAdded(context);
+                                            service.handleSelectionConfirmed(context);
                                           } else if (state is FeedSuccess) {
                                             service.enterSelectionMode(
                                               state.posts,

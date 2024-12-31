@@ -11,11 +11,11 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
     Emitter<FeedState> emit,
   ) async {
     if (state is! FeedSuccess) return;
-    
+
     final currentState = state as FeedSuccess;
     try {
       final project = await projectRepository.getProject(projectId);
-      
+
       emit(FeedSuccess(
         posts: currentState.posts,
         projects: currentState.projects,
@@ -87,10 +87,10 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
     try {
       // Get current project state
       final project = await projectRepository.getProject(projectId);
-      
+
       // Add the new posts
       await projectRepository.batchAddPostsToProject(projectId, postIds);
-      
+
       // Get updated projects
       final updatedProjects = await projectRepository.getProjects();
 
@@ -117,10 +117,10 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
     try {
       // Get current project state
       final project = await projectRepository.getProject(projectId);
-      
+
       // Remove the posts
       await projectRepository.batchRemovePostsFromProject(projectId, postIds);
-      
+
       // Get updated projects
       final updatedProjects = await projectRepository.getProjects();
 
@@ -147,7 +147,7 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
     try {
       // Create the sub-project
       await projectRepository.addSubProject(parentId, newProject);
-      
+
       // Get updated projects list
       final updatedProjects = await projectRepository.getProjects();
 
@@ -173,16 +173,34 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
 
     final currentState = state as FeedSuccess;
     try {
+      // Get the current project to update its childrenIds
+      final currentProject = await projectRepository.getProject(fromProjectId);
+      
       // First remove projects from their current parent
       if (projectsToRemove.isNotEmpty) {
-        await projectRepository.batchRemoveSubProjects(fromProjectId, projectsToRemove);
+        await projectRepository.batchRemoveSubProjects(
+            fromProjectId, projectsToRemove);
       }
-      
+
       // Then add projects to the new parent
       if (projectsToAdd.isNotEmpty) {
-        await projectRepository.batchAddSubProjects(fromProjectId, projectsToAdd);
+        await projectRepository.batchAddSubProjects(
+            fromProjectId, projectsToAdd);
       }
+
+      // Update the current project's childrenIds
+      final updatedChildrenIds = currentProject.childrenIds
+          .where((id) => !projectsToRemove.contains(id))
+          .toList()
+        ..addAll(projectsToAdd);
       
+      await projectRepository.updateProject(
+        currentProject.copyWith(
+          childrenIds: updatedChildrenIds,
+          updatedAt: DateTime.now(),
+        ),
+      );
+
       // Get final updated state
       final updatedProjects = await projectRepository.getProjects();
 
@@ -210,17 +228,41 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
     try {
       // Get current project state
       final project = await projectRepository.getProject(projectId);
-      
+
       // First remove posts
       if (postsToRemove.isNotEmpty) {
-        await projectRepository.batchRemovePostsFromProject(projectId, postsToRemove);
+        await projectRepository.batchRemovePostsFromProject(
+            projectId, postsToRemove);
       }
-      
+
       // Then add posts
       if (postsToAdd.isNotEmpty) {
         await projectRepository.batchAddPostsToProject(projectId, postsToAdd);
       }
-      
+
+      // Update the project's childrenIds if any of the added/removed posts are actually projects
+      final currentProjects = currentState.projects;
+      final postsToRemoveAreProjects = postsToRemove
+          .where((id) => currentProjects.any((p) => p.id == id))
+          .toList();
+      final postsToAddAreProjects = postsToAdd
+          .where((id) => currentProjects.any((p) => p.id == id))
+          .toList();
+
+      if (postsToRemoveAreProjects.isNotEmpty || postsToAddAreProjects.isNotEmpty) {
+        final updatedChildrenIds = project.childrenIds
+            .where((id) => !postsToRemoveAreProjects.contains(id))
+            .toList()
+          ..addAll(postsToAddAreProjects);
+
+        await projectRepository.updateProject(
+          project.copyWith(
+            childrenIds: updatedChildrenIds,
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+
       // Get final updated state
       final updatedProjects = await projectRepository.getProjects();
 
