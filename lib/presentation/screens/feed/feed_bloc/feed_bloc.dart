@@ -112,6 +112,14 @@ class FeedBloc extends Bloc<FeedEvent, FeedState>
         _projectRepository,
         emit,
       ));
+    on<FeedProjectTransfer>((event, emit) =>
+      handleProjectTransfer(
+        event.fromProjectId,
+        event.projectsToRemove,
+        event.projectsToAdd,
+        _projectRepository,
+        emit,
+      ));
     
     // Filtering
     on<FeedFilterChanged>(_onFilterChanged);

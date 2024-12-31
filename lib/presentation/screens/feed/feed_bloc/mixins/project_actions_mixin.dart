@@ -162,6 +162,41 @@ mixin ProjectActionsMixin on Bloc<FeedEvent, FeedState> {
     }
   }
 
+  Future<void> handleProjectTransfer(
+    String fromProjectId,
+    List<String> projectsToRemove,
+    List<String> projectsToAdd,
+    ProjectRepository projectRepository,
+    Emitter<FeedState> emit,
+  ) async {
+    if (state is! FeedSuccess) return;
+
+    final currentState = state as FeedSuccess;
+    try {
+      // First remove projects from their current parent
+      if (projectsToRemove.isNotEmpty) {
+        await projectRepository.batchRemoveSubProjects(fromProjectId, projectsToRemove);
+      }
+      
+      // Then add projects to the new parent
+      if (projectsToAdd.isNotEmpty) {
+        await projectRepository.batchAddSubProjects(fromProjectId, projectsToAdd);
+      }
+      
+      // Get final updated state
+      final updatedProjects = await projectRepository.getProjects();
+
+      emit(FeedSuccess(
+        posts: currentState.posts,
+        projects: updatedProjects,
+        currentUserId: currentState.currentUserId,
+        selectedProjectId: currentState.selectedProjectId,
+      ));
+    } catch (e) {
+      emit(FeedFailure(error: e.toString()));
+    }
+  }
+
   Future<void> handleBatchOperations(
     String projectId,
     List<String> postsToRemove,

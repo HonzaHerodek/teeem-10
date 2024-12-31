@@ -214,6 +214,77 @@ class MockProjectRepository implements ProjectRepository {
   }
 
   @override
+  Future<void> batchAddSubProjects(String parentId, List<String> projectIds) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Get parent project
+    final parentProject = await getProject(parentId);
+    
+    // Get all projects to add
+    final projectsToAdd = await Future.wait(
+      projectIds.map((id) => getProject(id))
+    );
+    
+    // Update parent's children list
+    final updatedParent = parentProject.copyWith(
+      childrenIds: {...parentProject.childrenIds, ...projectIds}.toList(),
+      updatedAt: DateTime.now(),
+    );
+    
+    // Update each child project's parent reference
+    final updatedChildren = projectsToAdd.map((project) => project.copyWith(
+      parentId: parentId,
+      updatedAt: DateTime.now(),
+    ));
+    
+    // Save all changes
+    await updateProject(updatedParent);
+    for (final child in updatedChildren) {
+      await updateProject(child);
+    }
+  }
+
+  @override
+  Future<void> batchRemoveSubProjects(String parentId, List<String> projectIds) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Get parent project
+    final parentProject = await getProject(parentId);
+    
+    // Get all projects to remove
+    final projectsToRemove = await Future.wait(
+      projectIds.map((id) => getProject(id))
+    );
+    
+    // Verify all projects are children of the parent
+    for (final project in projectsToRemove) {
+      if (project.parentId != parentId) {
+        throw Exception('Invalid parent-child relationship');
+      }
+    }
+    
+    // Update parent's children list
+    final updatedParent = parentProject.copyWith(
+      childrenIds: parentProject.childrenIds
+          .where((id) => !projectIds.contains(id))
+          .toList(),
+      updatedAt: DateTime.now(),
+    );
+    
+    // Remove parent reference from each child project
+    final updatedChildren = projectsToRemove.map((project) => project.copyWith(
+      parentId: null,
+      updatedAt: DateTime.now(),
+    ));
+    
+    // Save all changes
+    await updateProject(updatedParent);
+    for (final child in updatedChildren) {
+      await updateProject(child);
+    }
+  }
+
+  @override
   Future<ProjectModel?> getParentProject(String projectId) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final project = await getProject(projectId);

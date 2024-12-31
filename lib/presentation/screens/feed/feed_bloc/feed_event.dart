@@ -127,3 +127,14 @@ class FeedSearchChanged extends FeedEvent {
   final String query;
   const FeedSearchChanged(this.query);
 }
+
+class FeedProjectTransfer extends FeedEvent {
+  final String fromProjectId;
+  final List<String> projectsToRemove;
+  final List<String> projectsToAdd;
+  const FeedProjectTransfer({
+    required this.fromProjectId,
+    required this.projectsToRemove,
+    required this.projectsToAdd,
+  });
+}

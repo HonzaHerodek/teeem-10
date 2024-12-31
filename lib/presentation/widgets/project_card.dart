@@ -40,7 +40,7 @@ class ProjectCard extends StatelessWidget {
       {bool isProjectPosts = false}) {
     // For empty project posts, return empty widget
     if (isProjectPosts && posts.isEmpty) return const SizedBox.shrink();
-    
+
     // For available posts section, show even if posts are empty (to show sub-projects)
     if (!isProjectPosts && posts.isEmpty && service.subProjects.isEmpty) {
       return const SizedBox.shrink();
@@ -54,9 +54,10 @@ class ProjectCard extends StatelessWidget {
         height: _postSize,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: isProjectPosts 
-              ? posts.length + 1  // +1 for project card
-              : posts.length + service.subProjects.length,  // Add sub-projects count
+          itemCount: isProjectPosts
+              ? posts.length + 1 // +1 for project card
+              : posts.length +
+                  service.subProjects.length, // Add sub-projects count
           padding: EdgeInsets.zero,
           physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
@@ -68,16 +69,22 @@ class ProjectCard extends StatelessWidget {
                   child: service.isSelectionMode
                       ? SelectableCompactProjectCard(
                           project: project,
-                          postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                          postThumbnails: posts
+                              .map((post) => post.userProfileImage)
+                              .toList(),
                           width: _postSize,
                           height: _postSize,
-                          isSelected: service.selectedProjectIds.contains(project.id),
-                          onToggle: () => service.toggleProjectSelection(project.id),
+                          isSelected:
+                              service.selectedProjectIds.contains(project.id),
+                          onToggle: () =>
+                              service.toggleProjectSelection(project.id),
                           isProjectPost: true,
                         )
                       : CompactProjectCard(
                           project: project,
-                          postThumbnails: posts.map((post) => post.userProfileImage).toList(),
+                          postThumbnails: posts
+                              .map((post) => post.userProfileImage)
+                              .toList(),
                           width: _postSize,
                           height: _postSize,
                         ),
@@ -102,7 +109,7 @@ class ProjectCard extends StatelessWidget {
                       ),
               );
             }
-            
+
             // For available posts section
             if (index < service.subProjects.length) {
               // Show sub-projects first
@@ -114,13 +121,14 @@ class ProjectCard extends StatelessWidget {
                   postThumbnails: const [], // Sub-projects might not have posts yet
                   width: _postSize,
                   height: _postSize,
-                  isSelected: service.selectedProjectIds.contains(subProject.id),
+                  isSelected:
+                      service.selectedProjectIds.contains(subProject.id),
                   onToggle: () => service.toggleProjectSelection(subProject.id),
                   isProjectPost: false,
                 ),
               );
             }
-            
+
             // Then show available posts
             final post = posts[index - service.subProjects.length];
             return Padding(
@@ -146,7 +154,8 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ProjectPostSelectionService service) {
+  Widget _buildActionButtons(
+      BuildContext context, ProjectPostSelectionService service) {
     if (service.isSelectionMode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -174,10 +183,10 @@ class ProjectCard extends StatelessWidget {
 
               try {
                 context.read<FeedBloc>().add(FeedSubProjectCreated(
-                  parentId: project.id,
-                  project: newProject,
-                ));
-                
+                      parentId: project.id,
+                      project: newProject,
+                    ));
+
                 // Re-enter selection mode after a short delay to allow the state to update
                 Future.delayed(const Duration(milliseconds: 100), () {
                   if (context.mounted) {
@@ -191,7 +200,8 @@ class ProjectCard extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to create sub-project: ${e.toString()}'),
+                      content:
+                          Text('Failed to create sub-project: ${e.toString()}'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -249,11 +259,17 @@ class ProjectCard extends StatelessWidget {
               (p) => p.id == project.id,
               orElse: () => project,
             );
-            
-            // Listen for changes in postIds or any changes in the projects list
+
+            // Listen for changes in postIds, children, or any changes in the projects list
             return prevProject.postIds != currentProject.postIds ||
-                   previous.projects.length != current.projects.length ||
-                   current.projects.any((p) => p.parentId == project.id);
+                prevProject.childrenIds != currentProject.childrenIds ||
+                previous.projects.length != current.projects.length ||
+                previous.projects
+                        .where((p) => p.parentId == project.id)
+                        .length !=
+                    current.projects
+                        .where((p) => p.parentId == project.id)
+                        .length;
           }
           return false;
         },
@@ -263,18 +279,16 @@ class ProjectCard extends StatelessWidget {
               (p) => p.id == project.id,
               orElse: () => project,
             );
-            
+
             final service = context.read<ProjectPostSelectionService>();
-            
+
             // Update postIds if they changed
             if (updatedProject.postIds != project.postIds) {
               service.updatePostIds(updatedProject.postIds);
             }
             
-            // Re-enter selection mode if we're already in it to refresh the available posts/projects
-            if (service.isSelectionMode) {
-              service.enterSelectionMode(state.posts, state.projects);
-            }
+            // Update sub-projects list
+            service.updateSubProjects(state.projects);
           }
         },
         builder: (context, state) {
@@ -403,7 +417,7 @@ class ProjectCard extends StatelessWidget {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 24.0),
                                           child: SectionHeader(
-                                              title: 'Available Posts'),
+                                              title: 'Available Items'),
                                         ),
                                         _buildPostList(
                                           service.availablePosts,
@@ -420,15 +434,18 @@ class ProjectCard extends StatelessWidget {
                                 padding: const EdgeInsets.only(
                                     top: 16.0, bottom: 8.0),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Center(
-                                        child: _buildActionButtons(context, service),
+                                        child: _buildActionButtons(
+                                            context, service),
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.only(right: 24.0),
+                                      padding:
+                                          const EdgeInsets.only(right: 24.0),
                                       child: SquareActionButton(
                                         icon: service.isSelectionMode
                                             ? Icons.check

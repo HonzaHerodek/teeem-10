@@ -85,12 +85,19 @@ class ProjectPostSelectionService extends ChangeNotifier {
 
   void enterSelectionMode(List<PostModel> feedPosts, List<ProjectModel> projects) {
     _isSelectionMode = true;
+    // Get available posts (posts not in current project)
     _availablePosts = feedPosts.where(
       (post) => !_currentPostIds.contains(post.id)
     ).toList();
-    _subProjects = projects.where(
-      (p) => p.parentId != null && p.parentId == projectId
+    
+    // Get current sub-projects and available projects
+    _subProjects = projects.where((p) => 
+      // Include projects that are either:
+      // 1. Current sub-projects (parentId matches this project)
+      // 2. Available to be added (has no parent)
+      p.parentId == projectId || p.parentId == null
     ).toList();
+    
     _selectedPostIds.clear();
     _selectedProjectIds.clear();
     notifyListeners();
@@ -115,7 +122,7 @@ class ProjectPostSelectionService extends ChangeNotifier {
   }
 
   void handlePostsAdded(BuildContext context) {
-    if (_selectedPostIds.isEmpty) {
+    if (_selectedPostIds.isEmpty && _selectedProjectIds.isEmpty) {
       exitSelectionMode();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -126,47 +133,79 @@ class ProjectPostSelectionService extends ChangeNotifier {
       return;
     }
 
-    // Get the IDs of all project posts
-    final projectPostIds = _projectPosts.map((p) => p.id).toSet();
+    // Handle post transfers
+    if (_selectedPostIds.isNotEmpty) {
+      // Get the IDs of all project posts
+      final projectPostIds = _projectPosts.map((p) => p.id).toSet();
 
-    // Handle removing selected project posts
-    final selectedProjectPosts = _selectedPostIds
-        .where((id) => projectPostIds.contains(id))
-        .toList();
+      // Handle removing selected project posts
+      final selectedProjectPosts = _selectedPostIds
+          .where((id) => projectPostIds.contains(id))
+          .toList();
 
-    // Handle adding selected available posts
-    final selectedAvailablePosts = _selectedPostIds
-        .where((id) => !projectPostIds.contains(id))
-        .toList();
+      // Handle adding selected available posts
+      final selectedAvailablePosts = _selectedPostIds
+          .where((id) => !projectPostIds.contains(id))
+          .toList();
 
-    // Send a single batch operation event
-    if (selectedProjectPosts.isNotEmpty || selectedAvailablePosts.isNotEmpty) {
-      context.read<FeedBloc>().add(
-        FeedBatchOperations(
-          projectId: projectId,
-          postsToRemove: selectedProjectPosts,
-          postsToAdd: selectedAvailablePosts,
-        ),
-      );
+      // Send a single batch operation event for posts
+      if (selectedProjectPosts.isNotEmpty || selectedAvailablePosts.isNotEmpty) {
+        context.read<FeedBloc>().add(
+          FeedBatchOperations(
+            projectId: projectId,
+            postsToRemove: selectedProjectPosts,
+            postsToAdd: selectedAvailablePosts,
+          ),
+        );
 
-      // Update local state
-      _currentPostIds = _currentPostIds
-          .where((id) => !selectedProjectPosts.contains(id))
-          .toList()
-        ..addAll(selectedAvailablePosts);
+        // Update local state
+        _currentPostIds = _currentPostIds
+            .where((id) => !selectedProjectPosts.contains(id))
+            .toList()
+          ..addAll(selectedAvailablePosts);
+      }
     }
 
-    final addedCount = selectedAvailablePosts.length;
-    final removedCount = selectedProjectPosts.length;
+    // Handle project transfers
+    if (_selectedProjectIds.isNotEmpty) {
+      // Get current project's sub-projects
+      final currentSubProjects = _subProjects.map((p) => p.id).toSet();
+
+      // Handle removing selected sub-projects
+      final selectedCurrentProjects = _selectedProjectIds
+          .where((id) => currentSubProjects.contains(id))
+          .toList();
+
+      // Handle adding selected available projects
+      final selectedAvailableProjects = _selectedProjectIds
+          .where((id) => !currentSubProjects.contains(id))
+          .toList();
+
+      // Send project transfer events
+      if (selectedCurrentProjects.isNotEmpty || selectedAvailableProjects.isNotEmpty) {
+        context.read<FeedBloc>().add(
+          FeedProjectTransfer(
+            fromProjectId: projectId,
+            projectsToRemove: selectedCurrentProjects,
+            projectsToAdd: selectedAvailableProjects,
+          ),
+        );
+      }
+    }
+
+    // Build success message
+    final addedPostsCount = _selectedPostIds.where((id) => !_projectPosts.any((p) => p.id == id)).length;
+    final removedPostsCount = _selectedPostIds.where((id) => _projectPosts.any((p) => p.id == id)).length;
+    final addedProjectsCount = _selectedProjectIds.where((id) => !_subProjects.any((p) => p.id == id)).length;
+    final removedProjectsCount = _selectedProjectIds.where((id) => _subProjects.any((p) => p.id == id)).length;
     
-    String message = '';
-    if (addedCount > 0 && removedCount > 0) {
-      message = '$removedCount posts removed and $addedCount posts added to $projectName';
-    } else if (addedCount > 0) {
-      message = '$addedCount posts added to $projectName';
-    } else {
-      message = '$removedCount posts removed from $projectName';
-    }
+    List<String> messageParts = [];
+    if (addedPostsCount > 0) messageParts.add('$addedPostsCount posts added');
+    if (removedPostsCount > 0) messageParts.add('$removedPostsCount posts removed');
+    if (addedProjectsCount > 0) messageParts.add('$addedProjectsCount projects added');
+    if (removedProjectsCount > 0) messageParts.add('$removedProjectsCount projects removed');
+    
+    final message = messageParts.join(', ') + ' in $projectName';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -190,5 +229,23 @@ class ProjectPostSelectionService extends ChangeNotifier {
   void updatePostIds(List<String> newPostIds) {
     _currentPostIds = List.from(newPostIds);
     _fetchProjectPosts();
+  }
+
+  void updateSubProjects(List<ProjectModel> projects) {
+    // Update sub-projects list while maintaining selection mode if active
+    if (_isSelectionMode) {
+      // Keep only valid selections (projects that are still available or sub-projects)
+      _selectedProjectIds.removeWhere((id) => !projects.any((p) => 
+        p.id == id && (p.parentId == projectId || p.parentId == null)
+      ));
+      
+      // Update available projects list
+      _subProjects = projects.where((p) => 
+        p.parentId == projectId || p.parentId == null
+      ).toList();
+    } else {
+      _subProjects = [];
+    }
+    notifyListeners();
   }
 }
