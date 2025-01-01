@@ -1,28 +1,66 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class ProfileScrollController extends ScrollController {
   bool _isDisposed = false;
   bool _isScrolling = false;
-  DateTime _lastScrollTime = DateTime.now();
+  bool _isExpanded = false;
+  Timer? _scrollDebouncer;
+  Timer? _expansionDebouncer;
 
-  ProfileScrollController() : super(keepScrollOffset: true);
+  ProfileScrollController() : super(keepScrollOffset: true) {
+    addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    if (_isDisposed || _isExpanded) return;
+    
+    _scrollDebouncer?.cancel();
+    _scrollDebouncer = Timer(const Duration(milliseconds: 150), () {
+      if (!_isDisposed && hasClients) {
+        _isScrolling = false;
+      }
+    });
+  }
+
+  void handleScrollEnd() {
+    if (_isDisposed || _isExpanded) return;
+    _isScrolling = false;
+  }
+
+  void handleExpansion(bool isExpanded) {
+    if (_isDisposed) return;
+
+    _expansionDebouncer?.cancel();
+    _isExpanded = isExpanded;
+    
+    if (isExpanded) {
+      // Lock scrolling immediately when expanding
+      _isScrolling = true;
+      
+      // Ensure we're at a valid scroll position
+      if (hasClients && position.pixels > 0) {
+        jumpTo(position.pixels);
+      }
+    } else {
+      // Add a small delay before unlocking scroll
+      _expansionDebouncer = Timer(const Duration(milliseconds: 350), () {
+        if (!_isDisposed && hasClients) {
+          _isScrolling = false;
+        }
+      });
+    }
+  }
 
   Future<void> scrollToWidget(GlobalKey key, {Duration? duration}) async {
-    if (_isDisposed || !hasClients) return;
-    
-    // Prevent rapid consecutive scrolls
-    final now = DateTime.now();
-    if (_isScrolling || now.difference(_lastScrollTime).inMilliseconds < 200) {
-      return;
-    }
+    if (_isDisposed || !hasClients || _isExpanded || _isScrolling) return;
 
     try {
       _isScrolling = true;
-      _lastScrollTime = now;
 
       // Wait for layout to complete
       await Future.delayed(const Duration(milliseconds: 50));
-      
+
       if (_isDisposed || key.currentContext == null || !hasClients) return;
 
       final RenderBox? renderBox =
@@ -30,9 +68,6 @@ class ProfileScrollController extends ScrollController {
       if (renderBox == null || !hasClients) return;
 
       final position = renderBox.localToGlobal(Offset.zero);
-      
-      // Get latest metrics after layout
-      if (!hasClients) return;
       final viewportHeight = this.position.viewportDimension;
       final widgetHeight = renderBox.size.height;
       final currentOffset = offset;
@@ -56,59 +91,18 @@ class ProfileScrollController extends ScrollController {
     } catch (e) {
       print('Error scrolling to widget: $e');
     } finally {
-      _isScrolling = false;
-      _lastScrollTime = DateTime.now();
-    }
-  }
-
-  @override
-  void notifyListeners() {
-    if (!_isDisposed) {
-      try {
-        super.notifyListeners();
-      } catch (e) {
-        print('Error notifying scroll listeners: $e');
+      if (!_isDisposed && hasClients) {
+        _isScrolling = false;
       }
-    }
-  }
-
-  void jumpToTop() {
-    if (_isDisposed || !hasClients) return;
-    try {
-      jumpTo(0);
-    } catch (e) {
-      print('Error jumping to top: $e');
-    }
-  }
-
-  void animateToTop({Duration? duration}) {
-    if (_isDisposed || !hasClients) return;
-    try {
-      animateTo(
-        0,
-        duration: duration ?? const Duration(milliseconds: 500),
-        curve: Curves.easeOutCubic,
-      ).catchError((error) {
-        print('Error animating to top: $error');
-      });
-    } catch (e) {
-      print('Error animating to top: $e');
     }
   }
 
   @override
   void dispose() {
-    if (_isDisposed) return;
     _isDisposed = true;
-
-    try {
-      if (hasClients) {
-        // Stop any ongoing animations
-        jumpTo(offset);
-      }
-      super.dispose();
-    } catch (e) {
-      print('Error disposing scroll controller: $e');
-    }
+    _scrollDebouncer?.cancel();
+    _expansionDebouncer?.cancel();
+    removeListener(_handleScroll);
+    super.dispose();
   }
 }

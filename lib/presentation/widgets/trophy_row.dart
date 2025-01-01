@@ -15,8 +15,38 @@ class TrophyRow extends StatefulWidget {
   State<TrophyRow> createState() => _TrophyRowState();
 }
 
-class _TrophyRowState extends State<TrophyRow> {
+class _TrophyRowState extends State<TrophyRow>
+    with SingleTickerProviderStateMixin {
   bool _expanded = false;
+  bool _isHandlingTap = false;
+  late AnimationController _controller;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    // Add listener to debug state changes
+    _controller.addStatusListener((status) {
+      print('Animation status: $status');
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    if (_expanded) {
+      widget.onExpanded?.call(false);
+    }
+    super.dispose();
+  }
 
   Widget _buildTrophyIcon(Trophy trophy, {double size = 24.0}) {
     return Container(
@@ -67,15 +97,28 @@ class _TrophyRowState extends State<TrophyRow> {
   }
 
   Widget _buildTrophyRow() {
-    // Sort trophies to show exactly 3 achieved ones in the middle
-    final achievedTrophies = widget.trophies.where((t) => t.isAchieved).take(3).toList();
-    final unachievedTrophies = widget.trophies.where((t) => !t.isAchieved).toList();
-    
-    // Calculate remaining count after showing max 9 trophies (3 + 3 + 3)
-    final visibleCount = 9;
-    final remainingCount = widget.trophies.length > visibleCount 
-        ? widget.trophies.length - visibleCount 
-        : 0;
+    if (widget.trophies.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Get achieved and unachieved trophies
+    final allAchieved = widget.trophies.where((t) => t.isAchieved).toList();
+    final allUnachieved = widget.trophies.where((t) => !t.isAchieved).toList();
+
+    // Take up to 3 achieved trophies for the middle
+    final achievedTrophies = allAchieved.take(3).toList();
+    final achievedCount = achievedTrophies.length;
+
+    // Calculate how many unachieved trophies we can show on each side
+    final sideSpaces = (9 - achievedCount) ~/ 2;
+    final leftUnachieved = allUnachieved.take(sideSpaces).toList();
+    final rightUnachieved =
+        allUnachieved.skip(sideSpaces).take(sideSpaces).toList();
+
+    // Calculate remaining count
+    final shownCount =
+        achievedCount + leftUnachieved.length + rightUnachieved.length;
+    final remainingCount = widget.trophies.length - shownCount;
 
     return Center(
       child: SizedBox(
@@ -87,35 +130,39 @@ class _TrophyRowState extends State<TrophyRow> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Left grey trophies (3)
-                    ...unachievedTrophies.take(3).map((trophy) => 
-                      Padding(
+                    // Left grey trophies
+                    ...leftUnachieved.map(
+                      (trophy) => Padding(
                         padding: const EdgeInsets.only(right: 3),
                         child: _buildTrophyIcon(trophy, size: 20),
                       ),
                     ),
-                    const SizedBox(width: 6), // Spacing before colored trophies
-                    // Center colored trophies (3)
-                    ...achievedTrophies.map((trophy) =>
-                      Padding(
+                    if (achievedCount > 0)
+                      const SizedBox(
+                          width: 6), // Spacing before colored trophies
+                    // Center colored trophies
+                    ...achievedTrophies.map(
+                      (trophy) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 3),
                         child: _buildTrophyIcon(trophy, size: 28),
                       ),
                     ),
-                    const SizedBox(width: 6), // Spacing after colored trophies
-                    // Right grey trophies (3)
-                    ...unachievedTrophies.skip(3).take(3).map((trophy) =>
-                      Padding(
+                    if (achievedCount > 0)
+                      const SizedBox(
+                          width: 6), // Spacing after colored trophies
+                    // Right grey trophies
+                    ...rightUnachieved.map(
+                      (trophy) => Padding(
                         padding: const EdgeInsets.only(right: 3),
                         child: _buildTrophyIcon(trophy, size: 20),
                       ),
                     ),
                     // Space for the counter
-                    if (remainingCount > 0)
-                      const SizedBox(width: 28),
+                    if (remainingCount > 0) const SizedBox(width: 28),
                   ],
                 ),
               ),
@@ -143,12 +190,23 @@ class _TrophyRowState extends State<TrophyRow> {
   }
 
   Widget _buildExpandedTrophies() {
+    if (widget.trophies.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     final Map<String, List<Trophy>> categorizedTrophies = {};
     for (var trophy in widget.trophies) {
       if (!categorizedTrophies.containsKey(trophy.category)) {
         categorizedTrophies[trophy.category] = [];
       }
       categorizedTrophies[trophy.category]!.add(trophy);
+    }
+
+    // Remove empty categories
+    categorizedTrophies.removeWhere((_, trophies) => trophies.isEmpty);
+
+    if (categorizedTrophies.isEmpty) {
+      return const SizedBox.shrink();
     }
 
     return LayoutBuilder(
@@ -159,30 +217,29 @@ class _TrophyRowState extends State<TrophyRow> {
         return Container(
           constraints: const BoxConstraints(maxHeight: 400),
           child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (var category in categorizedTrophies.keys) ...[
                   _buildCategoryHeader(category),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const ClampingScrollPhysics(),
-                    child: Padding(
+                  SizedBox(
+                    height: 140, // Fixed height for horizontal scroll container
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          ...categorizedTrophies[category]!.map((trophy) => 
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: SizedBox(
-                                width: cardWidth,
-                                child: _buildTrophyCard(trophy),
-                              ),
+                      children: [
+                        ...categorizedTrophies[category]!.map(
+                          (trophy) => Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: SizedBox(
+                              width: cardWidth,
+                              child: _buildTrophyCard(trophy),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -254,29 +311,63 @@ class _TrophyRowState extends State<TrophyRow> {
     );
   }
 
+  void _handleTap() async {
+    if (_isHandlingTap || !mounted) return;
+    _isHandlingTap = true;
+
+    final willExpand = !_expanded;
+    
+    try {
+      // Update local state first
+      setState(() {
+        _expanded = willExpand;
+      });
+      
+      // Start animation
+      if (willExpand) {
+        await _controller.forward();
+      } else {
+        await _controller.reverse();
+      }
+      
+      // Notify parent after animation completes
+      if (mounted) {
+        widget.onExpanded?.call(willExpand);
+      }
+    } catch (e) {
+      print('Error handling trophy tap: $e');
+      // Revert state on error
+      if (mounted) {
+        setState(() {
+          _expanded = !willExpand;
+        });
+      }
+    } finally {
+      if (mounted) {
+        _isHandlingTap = false;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _expanded = !_expanded;
-                widget.onExpanded?.call(_expanded);
-              });
-            },
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: _handleTap,
             child: _buildTrophyRow(),
           ),
-        ),
-        if (_expanded)
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: _buildExpandedTrophies(),
+          ClipRect(
+            child: SizeTransition(
+              sizeFactor: _expandAnimation,
+              child: _expanded ? _buildExpandedTrophies() : const SizedBox(),
+            ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

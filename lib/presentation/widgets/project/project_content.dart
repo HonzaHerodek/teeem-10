@@ -95,7 +95,7 @@ class ProjectContent extends StatelessWidget {
             // Update service state when projects change
             final service = context.read<ProjectPostSelectionService>();
             service.updateSubProjects(state.projects);
-            
+
             // Get current project to update posts
             final currentProject = state.projects.firstWhere(
               (p) => p.id == projectId,
@@ -136,12 +136,12 @@ class ProjectContent extends StatelessWidget {
           );
 
           // Get available posts (posts not in current project)
-          final currentPosts = state.posts.where(
-            (post) => currentProject.postIds.contains(post.id)
-          ).toList();
-          final availablePosts = state.posts.where(
-            (post) => !currentProject.postIds.contains(post.id)
-          ).toList();
+          final currentPosts = state.posts
+              .where((post) => currentProject.postIds.contains(post.id))
+              .toList();
+          final availablePosts = state.posts
+              .where((post) => !currentProject.postIds.contains(post.id))
+              .toList();
 
           return _ProjectContentBody(
             name: name,
@@ -206,11 +206,14 @@ class _ProjectContentBody extends StatelessWidget {
                         return Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.check, color: Colors.white),
-                              onPressed: () => service.handleSelectionConfirmed(context),
+                              icon:
+                                  const Icon(Icons.check, color: Colors.white),
+                              onPressed: () =>
+                                  service.handleSelectionConfirmed(context),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close, color: Colors.white),
+                              icon:
+                                  const Icon(Icons.close, color: Colors.white),
                               onPressed: () => service.exitSelectionMode(),
                             ),
                           ],
@@ -222,7 +225,8 @@ class _ProjectContentBody extends StatelessWidget {
                             if (context.mounted) {
                               final state = context.read<FeedBloc>().state;
                               if (state is FeedSuccess) {
-                                service.enterSelectionMode(availablePosts, state.projects);
+                                service.enterSelectionMode(
+                                    availablePosts, state.projects);
                               }
                             }
                           },
@@ -340,8 +344,10 @@ class _ProjectContentBody extends StatelessWidget {
                     child: item.post != null
                         ? SelectableCompactPostCard(
                             post: item.post!,
-                            isSelected: service.selectedPostIds.contains(item.post!.id),
-                            onToggle: () => service.togglePostSelection(item.post!.id),
+                            isSelected:
+                                service.selectedPostIds.contains(item.post!.id),
+                            onToggle: () =>
+                                service.togglePostSelection(item.post!.id),
                             isProjectPost: true,
                             width: itemSize,
                             height: itemSize,
@@ -349,8 +355,10 @@ class _ProjectContentBody extends StatelessWidget {
                         : SelectableCompactProjectCard(
                             project: item.project!,
                             postThumbnails: const [], // TODO: Add thumbnails
-                            isSelected: service.selectedProjectIds.contains(item.project!.id),
-                            onToggle: () => service.toggleProjectSelection(item.project!.id),
+                            isSelected: service.selectedProjectIds
+                                .contains(item.project!.id),
+                            onToggle: () => service
+                                .toggleProjectSelection(item.project!.id),
                             isProjectPost: true,
                             width: itemSize,
                             height: itemSize,
@@ -390,8 +398,10 @@ class _ProjectContentBody extends StatelessWidget {
                       child: item.post != null
                           ? SelectableCompactPostCard(
                               post: item.post!,
-                              isSelected: service.selectedPostIds.contains(item.post!.id),
-                              onToggle: () => service.togglePostSelection(item.post!.id),
+                              isSelected: service.selectedPostIds
+                                  .contains(item.post!.id),
+                              onToggle: () =>
+                                  service.togglePostSelection(item.post!.id),
                               isProjectPost: false,
                               width: itemSize,
                               height: itemSize,
@@ -399,8 +409,10 @@ class _ProjectContentBody extends StatelessWidget {
                           : SelectableCompactProjectCard(
                               project: item.project!,
                               postThumbnails: const [], // TODO: Add thumbnails
-                              isSelected: service.selectedProjectIds.contains(item.project!.id),
-                              onToggle: () => service.toggleProjectSelection(item.project!.id),
+                              isSelected: service.selectedProjectIds
+                                  .contains(item.project!.id),
+                              onToggle: () => service
+                                  .toggleProjectSelection(item.project!.id),
                               isProjectPost: false,
                               width: itemSize,
                               height: itemSize,
@@ -422,5 +434,6 @@ class _ProjectItem {
   final PostModel? post;
   final ProjectModel? project;
 
-  _ProjectItem({this.post, this.project}) : assert(post != null || project != null);
+  _ProjectItem({this.post, this.project})
+      : assert(post != null || project != null);
 }

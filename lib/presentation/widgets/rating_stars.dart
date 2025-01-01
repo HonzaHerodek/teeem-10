@@ -47,6 +47,7 @@ class _RatingStarsState extends State<RatingStars> {
   bool _expanded = false;
   double? _dragRating;
   bool _isHandlingTap = false;
+  bool _disposed = false;
 
   void _handleDragStart(DragStartDetails details) {
     if (!widget.isInteractive) return;
@@ -60,7 +61,6 @@ class _RatingStarsState extends State<RatingStars> {
 
   void _handleDragEnd(DragEndDetails details) {
     if (!widget.isInteractive) return;
-    widget.onRatingChanged?.call(_dragRating ?? widget.rating);
     setState(() {
       _dragRating = null;
     });

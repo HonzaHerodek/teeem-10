@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../../widgets/circular_action_button.dart';
 import '../../../widgets/user_avatar.dart';
 import '../../../widgets/rating_stars.dart';
@@ -29,6 +30,51 @@ class ProfileHeaderSection extends StatefulWidget {
 class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
   bool _statsExpanded = false;
   bool _trophiesExpanded = false;
+  bool _isHandlingExpansion = false;
+  Timer? _expansionDebouncer;
+
+  void _handleExpansion(bool expanded, bool isTrophies) async {
+    if (_isHandlingExpansion || !mounted) return;
+    _isHandlingExpansion = true;
+
+    // Cancel any pending debounce
+    _expansionDebouncer?.cancel();
+
+    try {
+      // First collapse any expanded section
+      if (_statsExpanded && isTrophies) {
+        setState(() => _statsExpanded = false);
+        await Future.delayed(const Duration(milliseconds: 150));
+      } else if (_trophiesExpanded && !isTrophies) {
+        setState(() => _trophiesExpanded = false);
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
+
+      // Then handle the new expansion state
+      if (mounted) {
+        setState(() {
+          if (isTrophies) {
+            _trophiesExpanded = expanded;
+          } else {
+            _statsExpanded = expanded;
+          }
+        });
+      }
+
+      // Wait for animation to complete
+      await Future.delayed(const Duration(milliseconds: 300));
+    } finally {
+      if (mounted) {
+        _isHandlingExpansion = false;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _expansionDebouncer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +94,15 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
         const SizedBox(height: 20),
         if (widget.state.ratingStats != null) ...[
           TrophyRow(
-            trophies: defaultTrophies,
-            onExpanded: (expanded) =>
-                setState(() => _trophiesExpanded = expanded),
+            key: const ValueKey('trophy_row'),
+            trophies: defaultTrophies.map((t) => Trophy(
+              title: t.title,
+              description: t.description,
+              color: t.color,
+              category: t.category,
+              isAchieved: t.isAchieved && widget.state.user != null,
+            )).toList(),
+            onExpanded: (expanded) => _handleExpansion(expanded, true),
           ),
           if (_trophiesExpanded) const SizedBox(height: 16),
           if (!_trophiesExpanded)
@@ -59,6 +111,7 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
             child: SizedBox(
               width: starsWidth,
               child: RatingStars(
+                key: const ValueKey('rating_stars'),
                 rating: widget.state.ratingStats!.averageRating,
                 size: 36,
                 color: Colors.amber,
@@ -69,7 +122,7 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
                 distribution: widget.state.ratingStats!.ratingDistribution,
                 totalRatings: widget.state.ratingStats!.totalRatings,
                 showRatingText: true,
-                onExpanded: (expanded) => setState(() => _statsExpanded = expanded),
+                onExpanded: (expanded) => _handleExpansion(expanded, false),
               ),
             ),
           ),
@@ -87,7 +140,16 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
               children: [
                 CircularActionButton(
                   icon: Icons.psychology,
-                  onPressed: widget.onTraitsPressed,
+                  onPressed: () {
+                    // Collapse any expanded sections before traits
+                    if (_statsExpanded || _trophiesExpanded) {
+                      setState(() {
+                        _statsExpanded = false;
+                        _trophiesExpanded = false;
+                      });
+                    }
+                    widget.onTraitsPressed();
+                  },
                   isSelected: widget.showTraits,
                 ),
                 const SizedBox(width: 20),
@@ -99,7 +161,16 @@ class _ProfileHeaderSectionState extends State<ProfileHeaderSection> {
                 const SizedBox(width: 20),
                 CircularActionButton(
                   icon: Icons.people,
-                  onPressed: widget.onNetworkPressed,
+                  onPressed: () {
+                    // Collapse any expanded sections before network
+                    if (_statsExpanded || _trophiesExpanded) {
+                      setState(() {
+                        _statsExpanded = false;
+                        _trophiesExpanded = false;
+                      });
+                    }
+                    widget.onNetworkPressed();
+                  },
                   isSelected: widget.showNetwork,
                 ),
               ],
