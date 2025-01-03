@@ -46,7 +46,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
     widget.descriptionController.addListener(_updateDescriptionState);
 
     _settingsAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
@@ -55,7 +55,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
       end: 1.5,
     ).animate(CurvedAnimation(
       parent: _settingsAnimationController,
-      curve: Curves.easeInOut,
+      curve: Curves.elasticOut,
     ));
 
     _settingsHeightAnimation = Tween<double>(
@@ -63,7 +63,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _settingsAnimationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutBack,
     ));
   }
 
@@ -523,10 +523,13 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                               animation: _settingsScaleAnimation,
                               builder: (context, child) => Transform.scale(
                                 scale: _settingsScaleAnimation.value,
-                                child: ShadowedShape(
+                                child: Transform.rotate(
+                                  angle: _settingsAnimationController.value * 1.0,
+                                  child: ShadowedShape(
                                   icon: Icons.settings,
                                   size: 24,
                                   shadowOpacity: 0.2,
+                                  ),
                                 ),
                               ),
                             ),
@@ -552,8 +555,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                               ),
                               onPressed: () {
                                 widget.pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeOutBack,
                                 );
                               },
                               label: 'AI',
@@ -602,10 +605,13 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                         animation: _settingsScaleAnimation,
                         builder: (context, child) => Transform.scale(
                           scale: _settingsScaleAnimation.value,
-                          child: ShadowedShape(
-                            icon: Icons.settings,
-                            size: 24,
-                            shadowOpacity: 0.2,
+                          child: Transform.rotate(
+                            angle: _settingsAnimationController.value * 1.0,
+                            child: ShadowedShape(
+                              icon: Icons.settings,
+                              size: 24,
+                              shadowOpacity: 0.2,
+                            ),
                           ),
                         ),
                       ),

@@ -306,7 +306,7 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                 key: _formKey,
                 child: PageView(
                   controller: _pageController,
-                  scrollDirection: Axis.vertical,
+                  scrollDirection: Axis.horizontal,
                   physics: const ClampingScrollPhysics(),
                   onPageChanged: (index) {
                     setState(() {
