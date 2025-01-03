@@ -4,7 +4,6 @@ import 'package:myapp/presentation/widgets/common/shadowed_shape.dart';
 import 'package:myapp/presentation/widgets/common/add_hexagon_icon.dart';
 import 'package:myapp/presentation/widgets/post_creation/components/ai_button_shape.dart';
 
-
 //TODO: collapsing the settings section should lead to fields (title, description) returning to vertical center
 
 class PostCreationFirstPage extends StatefulWidget {
@@ -123,56 +122,18 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
   }
 
   Widget _buildFormFields() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: TextFormField(
-            controller: widget.titleController,
-            enabled: !widget.isLoading,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  blurRadius: 3,
-                  color: Colors.black,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            decoration: InputDecoration(
-              label: _titleHasText
-                  ? null
-                  : const Center(
-                      child: ShadowedText(
-                        text: 'Title',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-              floatingLabelBehavior: FloatingLabelBehavior.auto,
-              floatingLabelAlignment: FloatingLabelAlignment.center,
-              border: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _titleHasText
-                          ? Colors.transparent
-                          : Colors.white30)),
-              enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _titleHasText
-                          ? Colors.transparent
-                          : Colors.white30)),
-              focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _titleHasText
-                          ? Colors.transparent
-                          : Colors.white)),
-              hintText: 'Title of Task',
-              hintStyle: const TextStyle(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: TextFormField(
+              controller: widget.titleController,
+              enabled: !widget.isLoading,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
@@ -184,67 +145,66 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                   ),
                 ],
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a title';
-              }
-              return null;
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: TextFormField(
-            controller: widget.descriptionController,
-            enabled: !widget.isLoading,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  blurRadius: 3,
-                  color: Colors.black,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            decoration: InputDecoration(
-              label: _descriptionHasText
-                  ? null
-                  : const Center(
-                      child: ShadowedText(
-                        text: 'Description',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+              decoration: InputDecoration(
+                label: _titleHasText
+                    ? null
+                    : const Center(
+                        child: ShadowedText(
+                          text: 'Title',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                floatingLabelAlignment: FloatingLabelAlignment.center,
+                border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _titleHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _titleHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
+                focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color:
+                            _titleHasText ? Colors.transparent : Colors.white)),
+                hintText: 'Title of Task',
+                hintStyle: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 3,
+                      color: Colors.black,
+                      offset: Offset(0, 1),
                     ),
-              floatingLabelBehavior: FloatingLabelBehavior.auto,
-              floatingLabelAlignment: FloatingLabelAlignment.center,
-              border: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _descriptionHasText
-                          ? Colors.transparent
-                          : Colors.white30)),
-              enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _descriptionHasText
-                          ? Colors.transparent
-                          : Colors.white30)),
-              focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _descriptionHasText
-                          ? Colors.transparent
-                          : Colors.white)),
-              hintText: 'short summary of the goal',
-              hintStyle: const TextStyle(
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a title';
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: TextFormField(
+              controller: widget.descriptionController,
+              enabled: !widget.isLoading,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
@@ -256,21 +216,62 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                   ),
                 ],
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
+              decoration: InputDecoration(
+                label: _descriptionHasText
+                    ? null
+                    : const Center(
+                        child: ShadowedText(
+                          text: 'Description',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                floatingLabelAlignment: FloatingLabelAlignment.center,
+                border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _descriptionHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _descriptionHasText
+                            ? Colors.transparent
+                            : Colors.white30)),
+                focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: _descriptionHasText
+                            ? Colors.transparent
+                            : Colors.white)),
+                hintText: 'short summary of the goal',
+                hintStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 3,
+                      color: Colors.black,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
+              maxLines: 2,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a description';
+                }
+                return null;
+              },
             ),
-            maxLines: 2,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a description';
-              }
-              return null;
-            },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -284,186 +285,194 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
             // Prevent scroll events from propagating to parent
             return true;
           },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 180),
-              child: Container(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height - 180,
-                ),
-                child: Column(
-                  mainAxisAlignment: _isSettingsEnlarged ? MainAxisAlignment.start : MainAxisAlignment.center,
-                  children: [
-                    if (_isSettingsEnlarged) const SizedBox(height: 70),
-                    _buildFormFields(),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      child: SizeTransition(
-                        sizeFactor: _settingsHeightAnimation,
-                        child: FadeTransition(
-                          opacity: _settingsHeightAnimation,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                ShadowedText(
-                                  text: 'Post Settings',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                  textColor: Colors.grey[700]!,
-                                ),
-                                const SizedBox(height: 16),
-                                // Due Date/Time
-                                Column(
+          child: _isSettingsEnlarged
+              ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 180),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 70),
+                        _buildFormFields(),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          child: SizeTransition(
+                            sizeFactor: _settingsHeightAnimation,
+                            child: FadeTransition(
+                              opacity: _settingsHeightAnimation,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.calendar_today,
-                                        color: Colors.white, size: 28),
-                                    const SizedBox(height: 8),
-                                    const ShadowedText(
-                                      text: 'Due Date/Time',
-                                      fontSize: 16,
+                                    ShadowedText(
+                                      text: 'Post Settings',
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      textColor: Colors.grey[700]!,
                                     ),
-                                    const SizedBox(height: 12),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        final date = await showDatePicker(
-                                          context: context,
-                                          initialDate:
-                                              _dueDateTime ?? DateTime.now(),
-                                          firstDate: DateTime.now(),
-                                          lastDate: DateTime.now()
-                                              .add(const Duration(days: 365)),
-                                        );
-                                        if (date != null) {
-                                          final time = await showTimePicker(
-                                            context: context,
-                                            initialTime: TimeOfDay.fromDateTime(
-                                                _dueDateTime ?? DateTime.now()),
-                                          );
-                                          if (time != null) {
-                                            setState(() {
-                                              _dueDateTime = DateTime(
-                                                date.year,
-                                                date.month,
-                                                date.day,
-                                                time.hour,
-                                                time.minute,
+                                    const SizedBox(height: 16),
+                                    // Due Date/Time
+                                    Column(
+                                      children: [
+                                        const Icon(Icons.calendar_today,
+                                            color: Colors.white, size: 28),
+                                        const SizedBox(height: 8),
+                                        const ShadowedText(
+                                          text: 'Due Date/Time',
+                                          fontSize: 16,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        GestureDetector(
+                                          onTap: () async {
+                                            final date = await showDatePicker(
+                                              context: context,
+                                              initialDate: _dueDateTime ??
+                                                  DateTime.now(),
+                                              firstDate: DateTime.now(),
+                                              lastDate: DateTime.now().add(
+                                                  const Duration(days: 365)),
+                                            );
+                                            if (date != null) {
+                                              final time = await showTimePicker(
+                                                context: context,
+                                                initialTime:
+                                                    TimeOfDay.fromDateTime(
+                                                        _dueDateTime ??
+                                                            DateTime.now()),
                                               );
-                                            });
-                                          }
-                                        }
-                                      },
-                                      child: ShadowedText(
-                                        text: _dueDateTime?.toString() ??
-                                            'Not set',
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Divider(color: Colors.white30),
-                                // Background Customization
-                                Column(
-                                  children: [
-                                    const Icon(Icons.palette,
-                                        color: Colors.white, size: 28),
-                                    const SizedBox(height: 8),
-                                    const ShadowedText(
-                                      text: 'Background Type',
-                                      fontSize: 16,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    DropdownButton<String>(
-                                      value: _backgroundType,
-                                      dropdownColor: Colors.black87,
-                                      underline: Container(
-                                        height: 1,
-                                        color: Colors.white30,
-                                      ),
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null) {
-                                          setState(() {
-                                            _backgroundType = newValue;
-                                          });
-                                        }
-                                      },
-                                      items: <String>['color', 'image', 'video']
-                                          .map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
+                                              if (time != null) {
+                                                setState(() {
+                                                  _dueDateTime = DateTime(
+                                                    date.year,
+                                                    date.month,
+                                                    date.day,
+                                                    time.hour,
+                                                    time.minute,
+                                                  );
+                                                });
+                                              }
+                                            }
+                                          },
                                           child: ShadowedText(
-                                            text: value
-                                                    .substring(0, 1)
-                                                    .toUpperCase() +
-                                                value.substring(1),
+                                            text: _dueDateTime?.toString() ??
+                                                'Not set',
                                             fontSize: 14,
                                           ),
-                                        );
-                                      }).toList(),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(color: Colors.white30),
+                                    // Background Customization
+                                    Column(
+                                      children: [
+                                        const Icon(Icons.palette,
+                                            color: Colors.white, size: 28),
+                                        const SizedBox(height: 8),
+                                        const ShadowedText(
+                                          text: 'Background Type',
+                                          fontSize: 16,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        DropdownButton<String>(
+                                          value: _backgroundType,
+                                          dropdownColor: Colors.black87,
+                                          underline: Container(
+                                            height: 1,
+                                            color: Colors.white30,
+                                          ),
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              setState(() {
+                                                _backgroundType = newValue;
+                                              });
+                                            }
+                                          },
+                                          items: <String>[
+                                            'color',
+                                            'image',
+                                            'video'
+                                          ].map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: ShadowedText(
+                                                text: value
+                                                        .substring(0, 1)
+                                                        .toUpperCase() +
+                                                    value.substring(1),
+                                                fontSize: 14,
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(color: Colors.white30),
+                                    // Response Visibility Toggle
+                                    Column(
+                                      children: [
+                                        const Icon(Icons.visibility,
+                                            color: Colors.white, size: 28),
+                                        const SizedBox(height: 8),
+                                        const ShadowedText(
+                                          text:
+                                              'Respondents see other responses',
+                                          fontSize: 16,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Switch(
+                                          value: _responseVisibility,
+                                          onChanged: (bool value) {
+                                            setState(() {
+                                              _responseVisibility = value;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(color: Colors.white30),
+                                    // Completion Limit Toggle
+                                    Column(
+                                      children: [
+                                        const Icon(Icons.lock_clock,
+                                            color: Colors.white, size: 28),
+                                        const SizedBox(height: 8),
+                                        const ShadowedText(
+                                          text: 'Complete only once',
+                                          fontSize: 16,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Switch(
+                                          value: _completionLimit,
+                                          onChanged: (bool value) {
+                                            setState(() {
+                                              _completionLimit = value;
+                                            });
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                const Divider(color: Colors.white30),
-                                // Response Visibility Toggle
-                                Column(
-                                  children: [
-                                    const Icon(Icons.visibility,
-                                        color: Colors.white, size: 28),
-                                    const SizedBox(height: 8),
-                                    const ShadowedText(
-                                      text: 'Respondents see other responses',
-                                      fontSize: 16,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Switch(
-                                      value: _responseVisibility,
-                                      onChanged: (bool value) {
-                                        setState(() {
-                                          _responseVisibility = value;
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                const Divider(color: Colors.white30),
-                                // Completion Limit Toggle
-                                Column(
-                                  children: [
-                                    const Icon(Icons.lock_clock,
-                                        color: Colors.white, size: 28),
-                                    const SizedBox(height: 8),
-                                    const ShadowedText(
-                                      text: 'Complete only once',
-                                      fontSize: 16,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Switch(
-                                      value: _completionLimit,
-                                      onChanged: (bool value) {
-                                        setState(() {
-                                          _completionLimit = value;
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 24),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
+                )
+              : Container(
+                  height: MediaQuery.of(context).size.height,
+                  padding: const EdgeInsets.only(bottom: 180),
+                  child: Center(child: _buildFormFields()),
                 ),
-              ),
-            ),
-          ),
         ),
         // Bottom container with IgnorePointer
         Positioned(
