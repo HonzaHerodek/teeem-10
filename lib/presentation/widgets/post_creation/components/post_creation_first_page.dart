@@ -4,8 +4,6 @@ import 'package:myapp/presentation/widgets/common/shadowed_shape.dart';
 import 'package:myapp/presentation/widgets/common/add_hexagon_icon.dart';
 import 'package:myapp/presentation/widgets/post_creation/components/ai_button_shape.dart';
 
-//TODO: collapsing the settings section should lead to fields (title, description) returning to vertical center
-
 class PostCreationFirstPage extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
@@ -123,7 +121,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
 
   Widget _buildFormFields() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: EdgeInsets.only(
+        top: _isSettingsEnlarged ? 24 : 0,
+        bottom: _isSettingsEnlarged ? 24 : 0,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -293,8 +294,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 70),
-                        _buildFormFields(),
+                        Transform.translate(
+                          offset: const Offset(0, -12),
+                          child: _buildFormFields(),
+                        ),
                         AnimatedSize(
                           duration: const Duration(milliseconds: 300),
                           child: SizeTransition(
@@ -469,9 +472,11 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                   ),
                 )
               : Container(
-                  height: MediaQuery.of(context).size.height,
-                  padding: const EdgeInsets.only(bottom: 180),
-                  child: Center(child: _buildFormFields()),
+                  height: MediaQuery.of(context).size.height - 180,
+                  child: Transform.translate(
+                    offset: const Offset(0, -35),
+                    child: Center(child: _buildFormFields()),
+                  ),
                 ),
         ),
         // Bottom container with IgnorePointer
