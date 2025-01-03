@@ -310,11 +310,14 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    ShadowedText(
-                                      text: 'Post Settings',
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      textColor: Colors.grey[700]!,
+                                    Opacity(
+                                      opacity: 0.45,
+                                      child: ShadowedText(
+                                        text: 'TASK SETTINGS',
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w500,
+                                        textColor: Colors.white,
+                                      ),
                                     ),
                                     const SizedBox(height: 16),
                                     // Due Date/Time
