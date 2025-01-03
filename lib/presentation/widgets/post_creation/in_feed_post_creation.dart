@@ -304,7 +304,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                 key: _formKey,
                 child: PageView(
                   controller: _pageController,
-                  physics: const ClampingScrollPhysics(), // Allow sliding back
+                  scrollDirection: Axis.vertical,
+                  physics: const ClampingScrollPhysics(),
                   onPageChanged: (index) {
                     setState(() {
                       _state = _state.copyWith(currentPage: index);
@@ -362,9 +363,14 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size.width - 32;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        // When post creation is active, prevent scroll events from reaching the feed
+        return true;
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
         _buildContent(size),
         if (_state.isFirstPage)
           PostCreationCancelButton(
@@ -383,7 +389,8 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
             onPressed: _handleCancelButtonPress,
             hasSelectedStepType: _state.hasSelectedStepType,
           ),
-      ],
+        ],
+      ),
     );
   }
 }

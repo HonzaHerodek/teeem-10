@@ -7,7 +7,7 @@ import '../services/feed_item_service.dart';
 import '../controllers/feed_controller.dart';
 import 'feed_item.dart';
 
-class FeedContent extends StatelessWidget {
+class FeedContent extends StatefulWidget {
   final ScrollController scrollController;
   final List<PostModel> posts;
   final List<ProjectModel> projects;
@@ -40,87 +40,131 @@ class FeedContent extends StatelessWidget {
   });
 
   @override
+  State<FeedContent> createState() => _FeedContentState();
+}
+
+class _FeedContentState extends State<FeedContent> {
+  bool _isScrollingPostCreation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.scrollController.addListener(_handleScroll);
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_handleScroll);
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    if (_isScrollingPostCreation) {
+      // Prevent scroll if it originated from post creation
+      widget.scrollController.position.hold(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currentService = feedController.itemService;
-    if (currentService.posts != posts ||
-        currentService.projects != projects ||
-        currentService.isCreatingPost != isCreatingPost) {
-      feedController.updateItemService(FeedItemService(
-        posts: posts,
-        projects: projects,
-        isCreatingPost: isCreatingPost,
+    final currentService = widget.feedController.itemService;
+    if (currentService.posts != widget.posts ||
+        currentService.projects != widget.projects ||
+        currentService.isCreatingPost != widget.isCreatingPost) {
+      widget.feedController.updateItemService(FeedItemService(
+        posts: widget.posts,
+        projects: widget.projects,
+        isCreatingPost: widget.isCreatingPost,
       ));
     }
 
-    final itemService = feedController.itemService;
+    final itemService = widget.feedController.itemService;
 
-    if (posts.isEmpty && projects.isEmpty && !isCreatingPost) {
+    if (widget.posts.isEmpty && widget.projects.isEmpty && !widget.isCreatingPost) {
       return _buildEmptyState(context);
     }
 
-    return CustomScrollView(
-      controller: scrollController,
-      slivers: [
-        SliverPadding(
-          padding: EdgeInsets.only(top: topPadding),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (index == 0) {
-                  return InFeedPostCreationWrapper(
-                    key: ValueKey(isCreatingPost),
-                    postCreationKey: postCreationKey,
-                    onCancel: onCancel,
-                    onComplete: onComplete,
-                    isVisible: isCreatingPost,
-                  );
-                }
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        // When post creation is active, prevent scroll events from reaching the feed
+        if (widget.isCreatingPost) {
+          // Check if the scroll started from within the post creation widget
+          final postCreationContext = widget.postCreationKey.currentContext;
+          if (postCreationContext != null && notification.context != null) {
+            final isChildOfPostCreation = notification.context!.findAncestorStateOfType<InFeedPostCreationState>() != null;
+            _isScrollingPostCreation = isChildOfPostCreation;
+            return isChildOfPostCreation;
+          }
+        }
+        return false;
+      },
+      child: CustomScrollView(
+        controller: widget.scrollController,
+        physics: widget.isCreatingPost 
+          ? const NeverScrollableScrollPhysics() 
+          : const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.only(top: widget.topPadding),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  if (index == 0) {
+                    return InFeedPostCreationWrapper(
+                      key: ValueKey(widget.isCreatingPost),
+                      postCreationKey: widget.postCreationKey,
+                      onCancel: widget.onCancel,
+                      onComplete: widget.onComplete,
+                      isVisible: widget.isCreatingPost,
+                    );
+                  }
 
-                final adjustedIndex = index - 1;
+                  final adjustedIndex = index - 1;
 
-                final project = itemService.getProjectAtPosition(adjustedIndex);
-                if (project != null) {
-                  final isSelected = project.id == selectedProjectId;
-                  final key = isSelected && selectedItemKey != null
-                      ? selectedItemKey
-                      : ValueKey(project.id);
-                  return FeedItem(
-                    key: key,
-                    project: project,
-                    feedController: feedController,
-                    isSelected: isSelected,
-                  );
-                }
+                  final project = itemService.getProjectAtPosition(adjustedIndex);
+                  if (project != null) {
+                    final isSelected = project.id == widget.selectedProjectId;
+                    final key = isSelected && widget.selectedItemKey != null
+                        ? widget.selectedItemKey
+                        : ValueKey(project.id);
+                    return FeedItem(
+                      key: key,
+                      project: project,
+                      feedController: widget.feedController,
+                      isSelected: isSelected,
+                    );
+                  }
 
-                final post = itemService.getPostAtPosition(adjustedIndex);
-                if (post != null) {
-                  final isSelected = post.id == selectedPostId;
-                  final key = isSelected && selectedItemKey != null
-                      ? selectedItemKey
-                      : ValueKey(post.id);
-                  return FeedItem(
-                    key: key,
-                    post: post,
-                    currentUserId: currentUserId,
-                    feedController: feedController,
-                    isSelected: isSelected,
-                  );
-                }
+                  final post = itemService.getPostAtPosition(adjustedIndex);
+                  if (post != null) {
+                    final isSelected = post.id == widget.selectedPostId;
+                    final key = isSelected && widget.selectedItemKey != null
+                        ? widget.selectedItemKey
+                        : ValueKey(post.id);
+                    return FeedItem(
+                      key: key,
+                      post: post,
+                      currentUserId: widget.currentUserId,
+                      feedController: widget.feedController,
+                      isSelected: isSelected,
+                    );
+                  }
 
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
                     ),
-                  ),
-                );
-              },
-              childCount: itemService.totalItemCount,
+                  );
+                },
+                childCount: itemService.totalItemCount,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

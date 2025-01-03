@@ -26,10 +26,11 @@ class InFeedPostCreationWrapper extends StatefulWidget {
   });
 
   @override
-  State<InFeedPostCreationWrapper> createState() => _InFeedPostCreationWrapperState();
+  State<InFeedPostCreationWrapper> createState() =>
+      _InFeedPostCreationWrapperState();
 }
 
-class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper> 
+class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
     with SingleTickerProviderStateMixin {
   ProjectModel? _selectedProject;
   bool _isNewlyCreatedProject = false;
@@ -91,10 +92,11 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
           }
 
           final manager = PostCreationManager();
-          final userProjects = await manager.loadUserProjects(authState.userId!);
-          
+          final userProjects =
+              await manager.loadUserProjects(authState.userId!);
+
           if (!context.mounted) return;
-          
+
           final result = await showDialog<ProjectModel?>(
             context: context,
             builder: (context) => ProjectSelectionDialog(
@@ -111,7 +113,7 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
               },
             ),
           );
-          
+
           if (result != null && result != _selectedProject) {
             setState(() {
               _selectedProject = result;
@@ -119,10 +121,12 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
             });
           }
         },
-        onRemoveProject: _selectedProject != null ? () => setState(() {
-          _selectedProject = null;
-          _isNewlyCreatedProject = false;
-        }) : null,
+        onRemoveProject: _selectedProject != null
+            ? () => setState(() {
+                  _selectedProject = null;
+                  _isNewlyCreatedProject = false;
+                })
+            : null,
         isNewlyCreated: _isNewlyCreatedProject,
       ),
     );
@@ -148,7 +152,8 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
                   postCreation: InFeedPostCreation(
                     key: widget.postCreationKey,
                     onCancel: handleCancel,
-                    onComplete: (success) => widget.onComplete(success, _selectedProject),
+                    onComplete: (success) =>
+                        widget.onComplete(success, _selectedProject),
                   ),
                   project: _selectedProject!,
                   onRemoveProject: () => setState(() {
@@ -162,7 +167,8 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
                     InFeedPostCreation(
                       key: widget.postCreationKey,
                       onCancel: handleCancel,
-                      onComplete: (success) => widget.onComplete(success, _selectedProject),
+                      onComplete: (success) =>
+                          widget.onComplete(success, _selectedProject),
                     ),
                     const SizedBox(height: 16),
                     _buildProjectButton(),
