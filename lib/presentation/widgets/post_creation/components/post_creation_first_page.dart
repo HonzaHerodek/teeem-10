@@ -263,124 +263,127 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> with Sing
             ),
             if (_isSettingsEnlarged) ...[
               const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const ShadowedText(
-                      text: 'Post Settings',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    const SizedBox(height: 16),
-                    // Due Date/Time
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.calendar_today, color: Colors.white),
-                      title: const ShadowedText(
-                        text: 'Due Date/Time',
-                        fontSize: 16,
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ShadowedText(
+                        text: 'Post Settings',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        textColor: Colors.grey[700],
                       ),
-                      subtitle: ShadowedText(
-                        text: _dueDateTime?.toString() ?? 'Not set',
-                        fontSize: 14,
-                      ),
-                      onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: _dueDateTime ?? DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
-                        );
-                        if (date != null) {
-                          final time = await showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.fromDateTime(_dueDateTime ?? DateTime.now()),
-                          );
-                          if (time != null) {
-                            setState(() {
-                              _dueDateTime = DateTime(
-                                date.year,
-                                date.month,
-                                date.day,
-                                time.hour,
-                                time.minute,
-                              );
-                            });
-                          }
-                        }
-                      },
-                    ),
-                    const Divider(color: Colors.white30),
-                    // Background Customization
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.palette, color: Colors.white),
-                      title: const ShadowedText(
-                        text: 'Background Type',
-                        fontSize: 16,
-                      ),
-                      subtitle: DropdownButton<String>(
-                        value: _backgroundType,
-                        dropdownColor: Colors.black87,
-                        underline: Container(
-                          height: 1,
-                          color: Colors.white30,
+                      const SizedBox(height: 16),
+                      // Due Date/Time
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        leading: const Icon(Icons.calendar_today, color: Colors.white),
+                        title: const ShadowedText(
+                          text: 'Due Date/Time',
+                          fontSize: 16,
                         ),
-                        style: const TextStyle(color: Colors.white),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _backgroundType = newValue;
-                            });
+                        subtitle: ShadowedText(
+                          text: _dueDateTime?.toString() ?? 'Not set',
+                          fontSize: 14,
+                        ),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _dueDateTime ?? DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (date != null) {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(_dueDateTime ?? DateTime.now()),
+                            );
+                            if (time != null) {
+                              setState(() {
+                                _dueDateTime = DateTime(
+                                  date.year,
+                                  date.month,
+                                  date.day,
+                                  time.hour,
+                                  time.minute,
+                                );
+                              });
+                            }
                           }
                         },
-                        items: <String>['color', 'image', 'video']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: ShadowedText(
-                              text: value.substring(0, 1).toUpperCase() + value.substring(1),
-                              fontSize: 14,
-                            ),
-                          );
-                        }).toList(),
                       ),
-                    ),
-                    const Divider(color: Colors.white30),
-                    // Response Visibility Toggle
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const ShadowedText(
-                        text: 'Respondents see other responses',
-                        fontSize: 16,
+                      const Divider(color: Colors.white30),
+                      // Background Customization
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        leading: const Icon(Icons.palette, color: Colors.white),
+                        title: const ShadowedText(
+                          text: 'Background Type',
+                          fontSize: 16,
+                        ),
+                        subtitle: DropdownButton<String>(
+                          value: _backgroundType,
+                          dropdownColor: Colors.black87,
+                          underline: Container(
+                            height: 1,
+                            color: Colors.white30,
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _backgroundType = newValue;
+                              });
+                            }
+                          },
+                          items: <String>['color', 'image', 'video']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: ShadowedText(
+                                text: value.substring(0, 1).toUpperCase() + value.substring(1),
+                                fontSize: 14,
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                      value: _responseVisibility,
-                      onChanged: (bool value) {
-                        setState(() {
-                          _responseVisibility = value;
-                        });
-                      },
-                      secondary: const Icon(Icons.visibility, color: Colors.white),
-                    ),
-                    const Divider(color: Colors.white30),
-                    // Completion Limit Toggle
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const ShadowedText(
-                        text: 'Complete only once',
-                        fontSize: 16,
+                      const Divider(color: Colors.white30),
+                      // Response Visibility Toggle
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        title: const ShadowedText(
+                          text: 'Respondents see other responses',
+                          fontSize: 16,
+                        ),
+                        value: _responseVisibility,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _responseVisibility = value;
+                          });
+                        },
+                        secondary: const Icon(Icons.visibility, color: Colors.white),
                       ),
-                      value: _completionLimit,
-                      onChanged: (bool value) {
-                        setState(() {
-                          _completionLimit = value;
-                        });
-                      },
-                      secondary: const Icon(Icons.lock_clock, color: Colors.white),
-                    ),
-                  ],
+                      const Divider(color: Colors.white30),
+                      // Completion Limit Toggle
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        title: const ShadowedText(
+                          text: 'Complete only once',
+                          fontSize: 16,
+                        ),
+                        value: _completionLimit,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _completionLimit = value;
+                          });
+                        },
+                        secondary: const Icon(Icons.lock_clock, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 140),
@@ -403,72 +406,79 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage> with Sing
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: _isSettingsEnlarged 
+                ? MainAxisAlignment.start 
+                : MainAxisAlignment.spaceEvenly,
               children: [
-                _buildActionButton(
-                  iconBuilder: () => AnimatedBuilder(
-                    animation: _settingsScaleAnimation,
-                    builder: (context, child) => Transform.scale(
-                      scale: _settingsScaleAnimation.value,
-                      child: ShadowedShape(
-                        icon: Icons.settings,
-                        size: 24,
-                        shadowOpacity: 0.2,
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isSettingsEnlarged = !_isSettingsEnlarged;
-                      if (_isSettingsEnlarged) {
-                        _settingsAnimationController.forward();
-                      } else {
-                        _settingsAnimationController.reverse();
-                      }
-                    });
-                  },
-                  label: 'Settings',
-                ),
-                Transform.translate(
-                  offset: const Offset(0, 30),
+                Padding(
+                  padding: EdgeInsets.only(left: _isSettingsEnlarged ? 24.0 : 0),
                   child: _buildActionButton(
-                    iconBuilder: () => AIButtonShape(
-                      icon: Icons.auto_awesome,
-                      size: 48,
-                    ),
-                    onPressed: () {
-                      widget.pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    label: 'AI',
-                    isLarger: true,
-                  ),
-                ),
-                _buildActionButton(
-                  iconBuilder: () => widget.steps.isEmpty
-                      ? AddHexagonIcon(
-                          size: 24,
-                          shadowOpacity: 0.2,
-                        )
-                      : ShadowedShape(
-                          icon: Icons.format_list_numbered,
+                    iconBuilder: () => AnimatedBuilder(
+                      animation: _settingsScaleAnimation,
+                      builder: (context, child) => Transform.scale(
+                        scale: _settingsScaleAnimation.value,
+                        child: ShadowedShape(
+                          icon: Icons.settings,
                           size: 24,
                           shadowOpacity: 0.2,
                         ),
-                  onPressed: widget.steps.isEmpty
-                      ? widget.onAddStep
-                      : () {
-                          if (widget.steps.isNotEmpty) {
-                            widget.pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        },
-                  label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isSettingsEnlarged = !_isSettingsEnlarged;
+                        if (_isSettingsEnlarged) {
+                          _settingsAnimationController.forward();
+                        } else {
+                          _settingsAnimationController.reverse();
+                        }
+                      });
+                    },
+                    label: _isSettingsEnlarged ? null : 'Settings',
+                  ),
                 ),
+                if (!_isSettingsEnlarged) ...[
+                  Transform.translate(
+                    offset: const Offset(0, 30),
+                    child: _buildActionButton(
+                      iconBuilder: () => AIButtonShape(
+                        icon: Icons.auto_awesome,
+                        size: 48,
+                      ),
+                      onPressed: () {
+                        widget.pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      label: 'AI',
+                      isLarger: true,
+                    ),
+                  ),
+                  _buildActionButton(
+                    iconBuilder: () => widget.steps.isEmpty
+                        ? AddHexagonIcon(
+                            size: 24,
+                            shadowOpacity: 0.2,
+                          )
+                        : ShadowedShape(
+                            icon: Icons.format_list_numbered,
+                            size: 24,
+                            shadowOpacity: 0.2,
+                          ),
+                    onPressed: widget.steps.isEmpty
+                        ? widget.onAddStep
+                        : () {
+                            if (widget.steps.isNotEmpty) {
+                              widget.pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                    label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
+                  ),
+                ],
               ],
             ),
           ),

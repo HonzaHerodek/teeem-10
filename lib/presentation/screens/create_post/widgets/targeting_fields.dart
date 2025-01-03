@@ -108,7 +108,8 @@ class TargetingFields extends StatelessWidget {
                 ),
                 items: const [
                   DropdownMenuItem(value: 'beginner', child: Text('Beginner')),
-                  DropdownMenuItem(value: 'intermediate', child: Text('Intermediate')),
+                  DropdownMenuItem(
+                      value: 'intermediate', child: Text('Intermediate')),
                   DropdownMenuItem(value: 'advanced', child: Text('Advanced')),
                   DropdownMenuItem(value: 'expert', child: Text('Expert')),
                 ],

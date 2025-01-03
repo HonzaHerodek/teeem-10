@@ -10,6 +10,7 @@ class ShadowedText extends StatelessWidget {
   final double strokeWidth;
   final double shadowOpacity;
   final Color shadowColor;
+  final Color? textColor;
 
   const ShadowedText({
     super.key,
@@ -22,6 +23,7 @@ class ShadowedText extends StatelessWidget {
     this.strokeWidth = 3,
     this.shadowOpacity = 0.5,
     this.shadowColor = Colors.black,
+    this.textColor,
   });
 
   @override
@@ -47,7 +49,7 @@ class ShadowedText extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            color: Colors.white,
+            color: textColor ?? Colors.white,
             fontSize: fontSize,
             fontWeight: fontWeight,
             letterSpacing: letterSpacing,
