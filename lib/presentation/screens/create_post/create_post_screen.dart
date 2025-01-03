@@ -34,7 +34,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _skillsController = TextEditingController();
   final _industriesController = TextEditingController();
   String? _selectedExperienceLevel;
-  
+
   final List<PostStepWidget> _steps = [];
   final _manager = PostCreationManager();
   final _stepTypeRepository = getIt<StepTypeRepository>();
@@ -51,7 +51,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _loadInitialData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final authState = context.read<AuthBloc>().state;
       if (authState.isAuthenticated && authState.userId != null) {
@@ -270,7 +270,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     selectedProject: _selectedProject,
                     isLoading: _isLoading,
                     onShowDialog: _showProjectDialog,
-                    onRemoveProject: () => setState(() => _selectedProject = null),
+                    onRemoveProject: () =>
+                        setState(() => _selectedProject = null),
                   ),
                   const SizedBox(height: 24),
                   // Steps section
@@ -293,7 +294,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     skillsController: _skillsController,
                     industriesController: _industriesController,
                     selectedExperienceLevel: _selectedExperienceLevel,
-                    onExperienceLevelChanged: (value) => 
+                    onExperienceLevelChanged: (value) =>
                         setState(() => _selectedExperienceLevel = value),
                     enabled: !_isLoading,
                   ),

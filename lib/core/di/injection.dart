@@ -47,6 +47,19 @@ Future<T> retry<T>(Future<T> Function() operation, {
 }
 
 Future<void> initializeDependencies() async {
+  // Register repositories first since TestDataService depends on TraitRepository
+  getIt.registerLazySingleton<TraitRepository>(() => MockTraitRepository());
+  getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
+  getIt.registerLazySingleton<PostRepository>(() => MockPostRepository());
+  getIt.registerLazySingleton<StepTypeRepository>(() => MockStepTypeRepository());
+  getIt.registerLazySingleton<UserRepository>(() => MockUserRepository());
+  getIt.registerLazySingleton<ProjectRepository>(() => MockProjectRepository());
+  getIt.registerLazySingleton<SettingsRepository>(
+    () => SharedPreferencesSettingsRepository(),
+  );
+
+  // Initialize TestDataService before registering other services
+  await TestDataService.initialize();
   
   // Services
   getIt.registerLazySingleton<NavigationService>(() => NavigationService());
@@ -56,16 +69,6 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<TestDataService>(() => TestDataService());
   getIt.registerLazySingleton<RatingService>(() => MockRatingService());
 
-  // Repositories
-  getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
-  getIt.registerLazySingleton<PostRepository>(() => MockPostRepository());
-  getIt.registerLazySingleton<StepTypeRepository>(() => MockStepTypeRepository());
-  getIt.registerLazySingleton<UserRepository>(() => MockUserRepository());
-  getIt.registerLazySingleton<ProjectRepository>(() => MockProjectRepository());
-  getIt.registerLazySingleton<TraitRepository>(() => MockTraitRepository());
-  getIt.registerLazySingleton<SettingsRepository>(
-    () => SharedPreferencesSettingsRepository(),
-  );
   
   // Providers
   getIt.registerLazySingleton(() => BackgroundColorProvider());
