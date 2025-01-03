@@ -428,37 +428,120 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
             ),
           ),
         ),
+        // Bottom container with IgnorePointer
         Positioned(
           bottom: 0,
           left: 0,
           right: 0,
-          child: GestureDetector(
-            onVerticalDragUpdate: (details) {
-              // Forward vertical drag to the SingleChildScrollView
-              final scrollable = PrimaryScrollController.of(context);
-              if (scrollable != null) {
-                scrollable.position.jumpTo(
-                  scrollable.position.pixels - details.delta.dy,
-                );
-              }
-            },
-            child: Container(
-              height: 180,
-              decoration: const BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(200),
-                  bottomRight: Radius.circular(200),
+          child: Stack(
+            children: [
+              IgnorePointer(
+                ignoring: _isSettingsEnlarged,
+                child: GestureDetector(
+                  onVerticalDragUpdate: (details) {
+                    // Forward vertical drag to the SingleChildScrollView
+                    final scrollable = PrimaryScrollController.of(context);
+                    if (scrollable != null) {
+                      scrollable.position.jumpTo(
+                        scrollable.position.pixels - details.delta.dy,
+                      );
+                    }
+                  },
+                  child: Container(
+                    height: 180,
+                    decoration: const BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(200),
+                        bottomRight: Radius.circular(200),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: _isSettingsEnlarged
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.spaceEvenly,
+                      children: [
+                        if (_isSettingsEnlarged)
+                          const SizedBox(width: 72)
+                        else
+                          _buildActionButton(
+                            iconBuilder: () => AnimatedBuilder(
+                              animation: _settingsScaleAnimation,
+                              builder: (context, child) => Transform.scale(
+                                scale: _settingsScaleAnimation.value,
+                                child: ShadowedShape(
+                                  icon: Icons.settings,
+                                  size: 24,
+                                  shadowOpacity: 0.2,
+                                ),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isSettingsEnlarged = !_isSettingsEnlarged;
+                                if (_isSettingsEnlarged) {
+                                  _settingsAnimationController.forward();
+                                } else {
+                                  _settingsAnimationController.reverse();
+                                }
+                              });
+                            },
+                            label: _isSettingsEnlarged ? null : 'Settings',
+                          ),
+                        if (!_isSettingsEnlarged) ...[
+                          Transform.translate(
+                            offset: const Offset(0, 30),
+                            child: _buildActionButton(
+                              iconBuilder: () => AIButtonShape(
+                                icon: Icons.auto_awesome,
+                                size: 48,
+                              ),
+                              onPressed: () {
+                                widget.pageController.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              label: 'AI',
+                              isLarger: true,
+                            ),
+                          ),
+                          _buildActionButton(
+                            iconBuilder: () => widget.steps.isEmpty
+                                ? AddHexagonIcon(
+                                    size: 24,
+                                    shadowOpacity: 0.2,
+                                  )
+                                : ShadowedShape(
+                                    icon: Icons.format_list_numbered,
+                                    size: 24,
+                                    shadowOpacity: 0.2,
+                                  ),
+                            onPressed: widget.steps.isEmpty
+                                ? widget.onAddStep
+                                : () {
+                                    if (widget.steps.isNotEmpty) {
+                                      widget.pageController.nextPage(
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    }
+                                  },
+                            label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: _isSettingsEnlarged
-                    ? MainAxisAlignment.start
-                    : MainAxisAlignment.spaceEvenly,
-                children: [
-                  Padding(
-                    padding:
-                        EdgeInsets.only(left: _isSettingsEnlarged ? 24.0 : 0),
+              // Settings button when expanded
+              if (_isSettingsEnlarged)
+                Positioned(
+                  left: 24,
+                  child: Container(
+                    height: 180,
+                    alignment: Alignment.centerLeft,
                     child: _buildActionButton(
                       iconBuilder: () => AnimatedBuilder(
                         animation: _settingsScaleAnimation,
@@ -481,54 +564,11 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                           }
                         });
                       },
-                      label: _isSettingsEnlarged ? null : 'Settings',
+                      label: null,
                     ),
                   ),
-                  if (!_isSettingsEnlarged) ...[
-                    Transform.translate(
-                      offset: const Offset(0, 30),
-                      child: _buildActionButton(
-                        iconBuilder: () => AIButtonShape(
-                          icon: Icons.auto_awesome,
-                          size: 48,
-                        ),
-                        onPressed: () {
-                          widget.pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        },
-                        label: 'AI',
-                        isLarger: true,
-                      ),
-                    ),
-                    _buildActionButton(
-                      iconBuilder: () => widget.steps.isEmpty
-                          ? AddHexagonIcon(
-                              size: 24,
-                              shadowOpacity: 0.2,
-                            )
-                          : ShadowedShape(
-                              icon: Icons.format_list_numbered,
-                              size: 24,
-                              shadowOpacity: 0.2,
-                            ),
-                      onPressed: widget.steps.isEmpty
-                          ? widget.onAddStep
-                          : () {
-                              if (widget.steps.isNotEmpty) {
-                                widget.pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            },
-                      label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
-                    ),
-                  ],
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
         ),
       ],
