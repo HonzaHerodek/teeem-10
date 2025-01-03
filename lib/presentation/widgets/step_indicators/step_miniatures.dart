@@ -4,6 +4,8 @@ import '../../../core/utils/step_type_utils.dart';
 import '../../../core/utils/step_indicators_utils.dart';
 import '../common/honeycomb_grid.dart';
 
+// TODO: repair the bug with miniatures being usable only once in post_header as content then disappears (first and last steps)
+
 class StepMiniatures extends StatefulWidget {
   final List<PostStep> steps;
   final int currentStep;

@@ -12,6 +12,8 @@ import './components/post_creation_cancel_button.dart';
 import './models/post_creation_state.dart';
 import './controllers/in_feed_post_creation_controller.dart';
 
+//TODO: the step type forms need to fit nicely within the post creation frame
+
 class InFeedPostCreation extends StatefulWidget {
   final VoidCallback onCancel;
   final Function(bool success) onComplete;
