@@ -298,20 +298,17 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                             ),
                             const SizedBox(height: 16),
                             // Due Date/Time
-                            ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0),
-                              leading: const Icon(Icons.calendar_today,
-                                  color: Colors.white),
-                              title: const ShadowedText(
-                                text: 'Due Date/Time',
-                                fontSize: 16,
-                              ),
-                              subtitle: ShadowedText(
-                                text: _dueDateTime?.toString() ?? 'Not set',
-                                fontSize: 14,
-                              ),
-                              onTap: () async {
+                            Column(
+                              children: [
+                                const Icon(Icons.calendar_today, color: Colors.white, size: 28),
+                                const SizedBox(height: 8),
+                                const ShadowedText(
+                                  text: 'Due Date/Time',
+                                  fontSize: 16,
+                                ),
+                                const SizedBox(height: 12),
+                                GestureDetector(
+                                  onTap: () async {
                                 final date = await showDatePicker(
                                   context: context,
                                   initialDate: _dueDateTime ?? DateTime.now(),
@@ -336,86 +333,99 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                       );
                                     });
                                   }
-                                }
-                              },
+                                  }
+                                  },
+                                  child: ShadowedText(
+                                    text: _dueDateTime?.toString() ?? 'Not set',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                             const Divider(color: Colors.white30),
                             // Background Customization
-                            ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0),
-                              leading: const Icon(Icons.palette,
-                                  color: Colors.white),
-                              title: const ShadowedText(
-                                text: 'Background Type',
-                                fontSize: 16,
-                              ),
-                              subtitle: DropdownButton<String>(
-                                value: _backgroundType,
-                                dropdownColor: Colors.black87,
-                                underline: Container(
-                                  height: 1,
-                                  color: Colors.white30,
+                            Column(
+                              children: [
+                                const Icon(Icons.palette, color: Colors.white, size: 28),
+                                const SizedBox(height: 8),
+                                const ShadowedText(
+                                  text: 'Background Type',
+                                  fontSize: 16,
                                 ),
-                                style: const TextStyle(color: Colors.white),
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setState(() {
-                                      _backgroundType = newValue;
-                                    });
-                                  }
-                                },
-                                items: <String>['color', 'image', 'video']
-                                    .map<DropdownMenuItem<String>>(
-                                        (String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: ShadowedText(
-                                      text: value
-                                              .substring(0, 1)
-                                              .toUpperCase() +
-                                          value.substring(1),
-                                      fontSize: 14,
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                                const SizedBox(height: 12),
+                                DropdownButton<String>(
+                                  value: _backgroundType,
+                                  dropdownColor: Colors.black87,
+                                  underline: Container(
+                                    height: 1,
+                                    color: Colors.white30,
+                                  ),
+                                  style: const TextStyle(color: Colors.white),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _backgroundType = newValue;
+                                      });
+                                    }
+                                  },
+                                  items: <String>['color', 'image', 'video']
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: ShadowedText(
+                                        text: value
+                                                .substring(0, 1)
+                                                .toUpperCase() +
+                                            value.substring(1),
+                                        fontSize: 14,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
                             ),
                             const Divider(color: Colors.white30),
                             // Response Visibility Toggle
-                            SwitchListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0),
-                              title: const ShadowedText(
-                                text: 'Respondents see other responses',
-                                fontSize: 16,
-                              ),
-                              value: _responseVisibility,
-                              onChanged: (bool value) {
-                                setState(() {
-                                  _responseVisibility = value;
-                                });
-                              },
-                              secondary: const Icon(Icons.visibility,
-                                  color: Colors.white),
+                            Column(
+                              children: [
+                                const Icon(Icons.visibility, color: Colors.white, size: 28),
+                                const SizedBox(height: 8),
+                                const ShadowedText(
+                                  text: 'Respondents see other responses',
+                                  fontSize: 16,
+                                ),
+                                const SizedBox(height: 12),
+                                Switch(
+                                  value: _responseVisibility,
+                                  onChanged: (bool value) {
+                                    setState(() {
+                                      _responseVisibility = value;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                             const Divider(color: Colors.white30),
                             // Completion Limit Toggle
-                            SwitchListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0),
-                              title: const ShadowedText(
-                                text: 'Complete only once',
-                                fontSize: 16,
-                              ),
-                              value: _completionLimit,
-                              onChanged: (bool value) {
-                                setState(() {
-                                  _completionLimit = value;
-                                });
-                              },
-                              secondary: const Icon(Icons.lock_clock,
-                                  color: Colors.white),
+                            Column(
+                              children: [
+                                const Icon(Icons.lock_clock, color: Colors.white, size: 28),
+                                const SizedBox(height: 8),
+                                const ShadowedText(
+                                  text: 'Complete only once',
+                                  fontSize: 16,
+                                ),
+                                const SizedBox(height: 12),
+                                Switch(
+                                  value: _completionLimit,
+                                  onChanged: (bool value) {
+                                    setState(() {
+                                      _completionLimit = value;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),
