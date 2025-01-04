@@ -18,28 +18,57 @@ class FeedItemService {
     if (projects.isNotEmpty) {
       count += 1; // First project
       count += ((posts.length - 1) / 5).floor(); // Additional projects
+      if (isCreatingPost) {
+        // Show remaining projects in editing mode
+        count += projects.length - (((posts.length - 1) / 5).floor() + 1);
+      }
     }
     return count;
   }
 
   bool isProjectPosition(int adjustedIndex) {
     if (projects.isEmpty) return false;
-    if (adjustedIndex == 0) return true; // First project after post creation
+    
+    // First project always shows after post creation
+    if (adjustedIndex == 0) return true;
+    
+    // In editing mode, show remaining projects after the regular feed
+    if (isCreatingPost && adjustedIndex >= posts.length + 1) {
+      return true;
+    }
+    
+    // In normal mode, show projects every 6th position
     return projects.length > 1 &&
         adjustedIndex > 1 &&
-        ((adjustedIndex - 1) % 6 == 5); // Every 6th position after first project
+        ((adjustedIndex - 1) % 6 == 5);
   }
 
   int getProjectIndex(int adjustedIndex) {
     if (projects.isEmpty) return -1;
+    
+    // First project
     if (adjustedIndex == 0) return 0;
-    if (projects.length == 1) return 0;
-    final calculatedIndex = (((adjustedIndex - 1) - 5) ~/ 6 + 1);
-    return calculatedIndex < projects.length ? calculatedIndex : -1;
+    
+    if (isCreatingPost && adjustedIndex >= posts.length + 1) {
+      // For editing mode, calculate index for remaining projects
+      int regularProjectCount = ((posts.length - 1) / 5).floor() + 1;
+      int extraIndex = (adjustedIndex - posts.length - 1);
+      return regularProjectCount + extraIndex;
+    }
+    
+    // Regular project positions (every 6th)
+    if (adjustedIndex > 1) {
+      return (((adjustedIndex - 1) - 5) ~/ 6) + 1;
+    }
+    
+    return -1;
   }
 
   int getPostIndex(int adjustedIndex) {
+    if (isProjectPosition(adjustedIndex)) return -1;
+    
     if (projects.isEmpty) return adjustedIndex;
+    
     // If there are projects, adjust for project positions
     int projectCount = (adjustedIndex > 0) ? ((adjustedIndex - 1) ~/ 6) + 1 : 0;
     return adjustedIndex - projectCount;

@@ -30,6 +30,7 @@ class ProjectContentList extends StatefulWidget {
 
 class _ProjectContentListState extends State<ProjectContentList> {
   late ScrollController _scrollController;
+  late ScrollController _availableScrollController;
   final double _horizontalPadding = 16.0;
   final double _itemSpacing = 16.0;
 
@@ -37,16 +38,31 @@ class _ProjectContentListState extends State<ProjectContentList> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _availableScrollController = ScrollController();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _availableScrollController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: _horizontalPadding, vertical: 8.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProjectContent() {
     // Filter out any child project IDs that don't exist in available projects
     final validChildProjects = widget.childProjectIds
         .map((id) {
@@ -60,78 +76,138 @@ class _ProjectContentListState extends State<ProjectContentList> {
         .cast<ProjectModel>()
         .toList();
 
-    // Only attempt to scroll if there are sub-projects
-    if (validChildProjects.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final centerPosition = constraints.maxWidth / 2;
+        final itemWidth = widget.itemSize + _itemSpacing;
 
-        try {
-          final itemWidth = widget.itemSize + _itemSpacing;
-          final subProjectsWidth = validChildProjects.length * itemWidth;
-          final viewportWidth =
-              MediaQuery.of(context).size.width - (_horizontalPadding * 2);
+        // Calculate total width of projects and posts
+        final projectsWidth = validChildProjects.length * itemWidth;
+        final postsWidth = widget.projectPosts.length * itemWidth;
 
-          // Only scroll if we have enough content to make it meaningful
-          if (subProjectsWidth > viewportWidth / 2 &&
-              _scrollController.hasClients) {
-            final targetOffset = (subProjectsWidth - viewportWidth / 2)
-                .clamp(0.0, subProjectsWidth);
-            _scrollController.jumpTo(targetOffset);
-          }
-        } catch (_) {
-          // Ignore any scroll errors
-        }
-      });
+        // Calculate starting positions to center both sections
+        final projectsStart = centerPosition - projectsWidth;
+        final postsStart = centerPosition;
+
+        return SizedBox(
+          height: widget.itemSize,
+          child: Stack(
+            children: [
+              // Projects section (left side)
+              if (validChildProjects.isNotEmpty)
+                Positioned(
+                  left: projectsStart,
+                  child: SizedBox(
+                    height: widget.itemSize,
+                    child: Row(
+                      children: validChildProjects.map((childProject) {
+                        return Padding(
+                          padding: EdgeInsets.only(right: _itemSpacing),
+                          child: CompactProjectCard(
+                            project: childProject,
+                            postThumbnails: const [],
+                            width: widget.itemSize,
+                            height: widget.itemSize,
+                            onTap: widget.onTap,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              // Posts section (right side)
+              if (widget.projectPosts.isNotEmpty)
+                Positioned(
+                  left: postsStart,
+                  child: SizedBox(
+                    height: widget.itemSize,
+                    child: Row(
+                      children: widget.projectPosts.map((post) {
+                        return Padding(
+                          padding: EdgeInsets.only(right: _itemSpacing),
+                          child: widget.service.isSelectionMode
+                              ? SelectableCompactPostCard(
+                                  post: post,
+                                  width: widget.itemSize,
+                                  height: widget.itemSize,
+                                  isSelected: widget.service.selectedPostIds.contains(post.id),
+                                  onToggle: () => widget.service.togglePostSelection(post.id),
+                                  isProjectPost: true,
+                                )
+                              : CompactPostCard(
+                                  post: post,
+                                  width: widget.itemSize,
+                                  height: widget.itemSize,
+                                  circular: true,
+                                ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvailablePosts() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final centerPosition = constraints.maxWidth / 2;
+        final itemWidth = widget.itemSize + _itemSpacing;
+        final totalWidth = widget.service.availablePosts.length * itemWidth;
+        final startPosition = centerPosition - (totalWidth / 2);
+
+        return SizedBox(
+          height: widget.itemSize,
+          child: Stack(
+            children: [
+              Positioned(
+                left: startPosition,
+                child: Row(
+                  children: widget.service.availablePosts.map((post) {
+                    return Padding(
+                      padding: EdgeInsets.only(right: _itemSpacing),
+                      child: SelectableCompactPostCard(
+                        post: post,
+                        width: widget.itemSize,
+                        height: widget.itemSize,
+                        isSelected: widget.service.selectedPostIds.contains(post.id),
+                        onToggle: () => widget.service.togglePostSelection(post.id),
+                        isProjectPost: false,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.service.isSelectionMode) {
+      // In selection mode, show current content in original layout plus available posts
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSectionHeader('Project Content'),
+          _buildProjectContent(),
+          if (widget.service.availablePosts.isNotEmpty) ...[
+            _buildSectionHeader('Available Posts'),
+            _buildAvailablePosts(),
+          ],
+        ],
+      );
     }
 
-    return SizedBox(
-      height: widget.itemSize,
-      child: ListView(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: _horizontalPadding),
-        children: [
-          // Sub-projects
-          if (validChildProjects.isNotEmpty)
-            ...validChildProjects.map((childProject) {
-              return Padding(
-                padding: EdgeInsets.only(right: _itemSpacing),
-                child: CompactProjectCard(
-                  project: childProject,
-                  postThumbnails: const [],
-                  width: widget.itemSize,
-                  height: widget.itemSize,
-                  onTap: widget.onTap,
-                ),
-              );
-            }),
-          // Project posts
-          if (widget.projectPosts.isNotEmpty)
-            ...widget.projectPosts.map((post) {
-              return Padding(
-                padding: EdgeInsets.only(right: _itemSpacing),
-                child: widget.service.isSelectionMode
-                    ? SelectableCompactPostCard(
-                        post: post,
-                        width: widget.itemSize,
-                        height: widget.itemSize,
-                        isSelected:
-                            widget.service.selectedPostIds.contains(post.id),
-                        onToggle: () =>
-                            widget.service.togglePostSelection(post.id),
-                        isProjectPost: true,
-                      )
-                    : CompactPostCard(
-                        post: post,
-                        width: widget.itemSize,
-                        height: widget.itemSize,
-                        circular: true,
-                      ),
-              );
-            }),
-        ],
-      ),
-    );
+    // Normal mode - show regular project content
+    return _buildProjectContent();
   }
 }
