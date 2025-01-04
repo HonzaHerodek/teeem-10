@@ -11,9 +11,11 @@ import '../../presentation/screens/feed/feed_bloc/feed_state.dart';
 import 'common/glass_container.dart';
 import 'common/section_header.dart';
 import 'compact_post_card.dart';
+import 'compact_project_card.dart';
 import 'project/selectable_compact_post_card.dart';
 import 'project/project_post_selection_service.dart';
 import 'project/square_action_button.dart';
+import 'project/project_content_list.dart';
 
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;
@@ -74,7 +76,8 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ProjectPostSelectionService service) {
+  Widget _buildActionButtons(
+      BuildContext context, ProjectPostSelectionService service) {
     if (service.isSelectionMode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -265,66 +268,27 @@ class ProjectCard extends StatelessWidget {
                                   ),
                                 )
                               else ...[
-                                if (service.projectPosts.isNotEmpty) ...[
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24.0),
-                                    child: AnimatedSwitcher(
-                                      duration: _animationDuration,
-                                      child: service.isSelectionMode
-                                          ? const SectionHeader(
-                                              title: 'Project Posts')
-                                          : const SizedBox(height: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    ProjectContentList(
+                                      childProjectIds: project.childProjectIds,
+                                      projectPosts: service.projectPosts,
+                                      service: service,
+                                      itemSize: _postSize,
+                                      availableProjects: state is FeedSuccess ? state.projects : const [],
+                                      onTap: onTap,
                                     ),
-                                  ),
-                                  AnimatedSwitcher(
-                                    duration: _animationDuration,
-                                    child: _buildPostList(
-                                      service.projectPosts,
-                                      service.isSelectionMode,
-                                      service,
-                                      isProjectPosts: true,
-                                    ),
-                                  ),
-                                ],
-                                if (service.isSelectionMode) ...[
-                                  AnimatedContainer(
-                                    duration: _animationDuration,
-                                    curve: _animationCurve,
-                                    height:
-                                        service.isSelectionMode ? 16.0 : 0.0,
-                                    child: const SizedBox(),
-                                  ),
-                                  AnimatedOpacity(
-                                    duration: _animationDuration,
-                                    curve: _animationCurve,
-                                    opacity:
-                                        service.isSelectionMode ? 1.0 : 0.0,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 24.0),
-                                          child: SectionHeader(
-                                              title: 'Available Posts'),
-                                        ),
-                                        _buildPostList(
-                                          service.availablePosts,
-                                          true,
-                                          service,
-                                          isProjectPosts: false,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ],
                               Padding(
                                 padding: const EdgeInsets.only(
                                     top: 16.0, bottom: 8.0),
-                                child: Center(child: _buildActionButtons(context, service)),
+                                child: Center(
+                                    child:
+                                        _buildActionButtons(context, service)),
                               ),
                             ],
                           ),

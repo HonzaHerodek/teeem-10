@@ -46,10 +46,23 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   void _onAnimationComplete() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState.isAuthenticated) {
-      getIt<NavigationService>().navigateToAndReplace(AppRoutes.feed);
-    } else {
+    try {
+      print('Animation complete, checking auth state...');
+      final authBloc = context.read<AuthBloc>();
+      final authState = authBloc.state;
+      print('Current auth state: $authState');
+      
+      if (authState.isAuthenticated) {
+        print('User is authenticated, navigating to feed...');
+        getIt<NavigationService>().navigateToAndReplace(AppRoutes.feed);
+      } else {
+        print('User is not authenticated, navigating to login...');
+        getIt<NavigationService>().navigateToAndReplace(AppRoutes.login);
+      }
+    } catch (e, stackTrace) {
+      print('Error in _onAnimationComplete: $e');
+      print('Stack trace: $stackTrace');
+      // Try to navigate to login as fallback
       getIt<NavigationService>().navigateToAndReplace(AppRoutes.login);
     }
   }
@@ -62,20 +75,39 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
+    print('Building SplashScreen...');
     if (_hasError) {
+      print('Has error, skipping animation...');
       return const SizedBox.shrink(); // Error case: immediately proceed to next screen
     }
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Lottie.asset(
-          'assets/videos/teeem-logo-in.mp4.lottie.json',
-          controller: _controller,
-          onLoaded: (composition) {
-            _controller
-              ..duration = composition.duration
-              ..forward();
+        child: Builder(
+          builder: (context) {
+            try {
+              return Lottie.asset(
+                'assets/videos/teeem-logo-in.mp4.lottie.json',
+                controller: _controller,
+                onLoaded: (composition) {
+                  _controller
+                    ..duration = composition.duration
+                    ..forward();
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error loading animation: $error');
+                  // Immediately navigate to next screen on error
+                  Future.microtask(() => _onAnimationComplete());
+                  return const CircularProgressIndicator();
+                },
+              );
+            } catch (e) {
+              print('Error in animation builder: $e');
+              // Immediately navigate to next screen on error
+              Future.microtask(() => _onAnimationComplete());
+              return const CircularProgressIndicator();
+            }
           },
         ),
       ),

@@ -7,13 +7,11 @@ class BackgroundColorProvider extends ChangeNotifier {
   Color _backgroundColor = Colors.blue;
   final SettingsRepository _settingsRepository = getIt<SettingsRepository>();
 
-  BackgroundColorProvider() {
-    _loadColor();
-  }
+  BackgroundColorProvider();
 
   Color get backgroundColor => _backgroundColor;
 
-  Future<void> _loadColor() async {
+  Future<void> initialize() async {
     final settingsData = await _settingsRepository.loadSettings();
     if (settingsData != null) {
       final settings = ProfileSettingsModel.fromJson(settingsData);

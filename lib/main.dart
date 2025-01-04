@@ -21,7 +21,7 @@ void main() async {
 
     // Initialize dependencies
     await initializeDependencies();
-    
+
     // Add a small delay to ensure platform channels are ready
     await Future.delayed(const Duration(milliseconds: 100));
 

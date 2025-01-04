@@ -8,7 +8,8 @@ class MockProjectRepository implements ProjectRepository {
       name: 'Photography Collection',
       description: 'A collection of my best photography work from 2023',
       creatorId: 'user1',
-      postIds: ['post_0', 'post_1', 'post_2'],  // Updated to match TestDataService IDs
+      postIds: ['post_0', 'post_1', 'post_2'],
+      childProjectIds: ['3', '4'],
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       updatedAt: DateTime.now(),
     ),
@@ -17,9 +18,29 @@ class MockProjectRepository implements ProjectRepository {
       name: 'Travel Adventures',
       description: 'Documenting my travels across Europe',
       creatorId: 'user1',
-      postIds: ['post_3', 'post_4'],  // Updated to match TestDataService IDs
+      postIds: ['post_3', 'post_4'],
       createdAt: DateTime.now().subtract(const Duration(days: 15)),
       updatedAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    ProjectModel(
+      id: '3',
+      name: 'sub-project 1',
+      description: 'First sub-project of Photography Collection',
+      creatorId: 'user1',
+      postIds: [],
+      parentProjectIds: ['1'],
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      updatedAt: DateTime.now(),
+    ),
+    ProjectModel(
+      id: '4',
+      name: 'sub-project 2',
+      description: 'Second sub-project of Photography Collection',
+      creatorId: 'user1',
+      postIds: [],
+      parentProjectIds: ['1'],
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      updatedAt: DateTime.now(),
     ),
   ];
 
@@ -127,5 +148,65 @@ class MockProjectRepository implements ProjectRepository {
       updatedAt: DateTime.now(),
     );
     await updateProject(updatedProject);
+  }
+
+  @override
+  Future<void> addChildProject(String parentId, String childId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final parent = await getProject(parentId);
+    final child = await getProject(childId);
+
+    if (!parent.childProjectIds.contains(childId)) {
+      final updatedParent = parent.copyWith(
+        childProjectIds: [...parent.childProjectIds, childId],
+        updatedAt: DateTime.now(),
+      );
+      await updateProject(updatedParent);
+    }
+
+    if (!child.parentProjectIds.contains(parentId)) {
+      final updatedChild = child.copyWith(
+        parentProjectIds: [...child.parentProjectIds, parentId],
+        updatedAt: DateTime.now(),
+      );
+      await updateProject(updatedChild);
+    }
+  }
+
+  @override
+  Future<void> removeChildProject(String parentId, String childId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final parent = await getProject(parentId);
+    final child = await getProject(childId);
+
+    final updatedParent = parent.copyWith(
+      childProjectIds: parent.childProjectIds.where((id) => id != childId).toList(),
+      updatedAt: DateTime.now(),
+    );
+    await updateProject(updatedParent);
+
+    final updatedChild = child.copyWith(
+      parentProjectIds: child.parentProjectIds.where((id) => id != parentId).toList(),
+      updatedAt: DateTime.now(),
+    );
+    await updateProject(updatedChild);
+  }
+
+  @override
+  Future<List<ProjectModel>> getChildProjects(String projectId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final project = await getProject(projectId);
+    return Future.wait(
+      project.childProjectIds.map((id) => getProject(id)),
+    );
+  }
+
+  @override
+  Future<List<ProjectModel>> getParentProjects(String projectId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final project = await getProject(projectId);
+    return Future.wait(
+      project.parentProjectIds.map((id) => getProject(id)),
+    );
   }
 }

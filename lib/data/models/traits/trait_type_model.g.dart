@@ -16,7 +16,7 @@ TraitTypeModel _$TraitTypeModelFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           [],
-      displayOrder: json['displayOrder'] as int? ?? 0,
+      displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$TraitTypeModelToJson(TraitTypeModel instance) =>

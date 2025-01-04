@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import '../core/di/injection.dart';
 import '../core/navigation/navigation_service.dart';
+import '../core/navigation/navigation_service.dart' show AppRoutes, generateRoute;
 import '../domain/repositories/auth_repository.dart';
 import '../domain/repositories/user_repository.dart';
 import 'bloc/auth/auth_bloc.dart';

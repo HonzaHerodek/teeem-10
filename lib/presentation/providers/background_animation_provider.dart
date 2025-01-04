@@ -27,13 +27,11 @@ class BackgroundAnimationProvider extends ChangeNotifier {
   final SettingsRepository _settingsRepository = getIt<SettingsRepository>();
   static const String _settingsKey = 'background_animation_type';
 
-  BackgroundAnimationProvider() {
-    _loadAnimationType();
-  }
+  BackgroundAnimationProvider();
 
   BackgroundAnimationType get animationType => _animationType;
 
-  Future<void> _loadAnimationType() async {
+  Future<void> initialize() async {
     final settingsData = await _settingsRepository.loadSettings();
     if (settingsData != null && settingsData[_settingsKey] != null) {
       _animationType = BackgroundAnimationType.values[settingsData[_settingsKey] as int];

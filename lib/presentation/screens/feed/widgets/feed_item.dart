@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../data/models/post_model.dart';
 import '../../../../data/models/project_model.dart';
 import '../../../widgets/post_card.dart';
 import '../../../widgets/project_card.dart';
 import '../../../widgets/post_creation/in_feed_post_creation.dart';
 import '../../../widgets/post_creation/in_feed_post_creation_wrapper.dart';
+import '../feed_bloc/feed_bloc.dart';
+import '../feed_bloc/feed_state.dart';
 import '../controllers/feed_controller.dart';
 
 class FeedItem extends StatelessWidget {
@@ -54,25 +57,30 @@ class FeedItem extends StatelessWidget {
     }
 
     if (project != null) {
-      return RepaintBoundary(
-        child: Container(
-          key: key,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: isSelected ? Border.all(
-              color: Colors.blue.withOpacity(0.5),
-              width: 2,
-            ) : null,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: ProjectCard(
-              project: project!,
-              onTap: () => feedController.selectProject(project!.id),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RepaintBoundary(
+            child: Container(
+              key: key,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: isSelected ? Border.all(
+                  color: Colors.blue.withOpacity(0.5),
+                  width: 2,
+                ) : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: ProjectCard(
+                  project: project!,
+                  onTap: () => feedController.selectProject(project!.id),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       );
     }
 

@@ -31,16 +31,22 @@ class FeedItemService {
   }
 
   int getProjectIndex(int adjustedIndex) {
+    if (projects.isEmpty) return -1;
     if (adjustedIndex == 0) return 0;
-    return (((adjustedIndex - 1) - 5) ~/ 6 + 1) % projects.length;
+    if (projects.length == 1) return 0;
+    final calculatedIndex = (((adjustedIndex - 1) - 5) ~/ 6 + 1);
+    return calculatedIndex < projects.length ? calculatedIndex : -1;
   }
 
   int getPostIndex(int adjustedIndex) {
-    return adjustedIndex - ((adjustedIndex) ~/ 6);
+    if (projects.isEmpty) return adjustedIndex;
+    // If there are projects, adjust for project positions
+    int projectCount = (adjustedIndex > 0) ? ((adjustedIndex - 1) ~/ 6) + 1 : 0;
+    return adjustedIndex - projectCount;
   }
 
   bool isValidPostIndex(int postIndex) {
-    return postIndex < posts.length;
+    return postIndex >= 0 && postIndex < posts.length;
   }
 
   bool isCreatingPostPosition(int index) {
@@ -48,9 +54,9 @@ class FeedItemService {
   }
 
   ProjectModel? getProjectAtPosition(int adjustedIndex) {
-    if (!isProjectPosition(adjustedIndex)) return null;
+    if (!isProjectPosition(adjustedIndex) || projects.isEmpty) return null;
     final projectIndex = getProjectIndex(adjustedIndex);
-    return projectIndex < projects.length ? projects[projectIndex] : null;
+    return projectIndex >= 0 && projectIndex < projects.length ? projects[projectIndex] : null;
   }
 
   PostModel? getPostAtPosition(int adjustedIndex) {

@@ -23,10 +23,10 @@ Map<String, dynamic> _$RatingModelToJson(RatingModel instance) =>
 
 RatingStats _$RatingStatsFromJson(Map<String, dynamic> json) => RatingStats(
       averageRating: (json['averageRating'] as num).toDouble(),
-      totalRatings: json['totalRatings'] as int,
+      totalRatings: (json['totalRatings'] as num).toInt(),
       ratingDistribution:
           (json['ratingDistribution'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(int.parse(k), e as int),
+        (k, e) => MapEntry(int.parse(k), (e as num).toInt()),
       ),
     );
 

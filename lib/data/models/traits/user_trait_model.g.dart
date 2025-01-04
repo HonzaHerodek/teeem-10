@@ -11,7 +11,7 @@ UserTraitModel _$UserTraitModelFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       traitTypeId: json['trait_type_id'] as String,
       value: json['value'] as String,
-      displayOrder: json['displayOrder'] as int? ?? 0,
+      displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$UserTraitModelToJson(UserTraitModel instance) =>

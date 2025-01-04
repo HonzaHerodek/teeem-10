@@ -10,6 +10,8 @@ class ProjectModel {
   final String creatorId;
   final List<String> postIds;
   final List<String> likes;
+  final List<String> childProjectIds;
+  final List<String> parentProjectIds;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,6 +24,8 @@ class ProjectModel {
     this.likes = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.childProjectIds = const [],
+    this.parentProjectIds = const [],
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) =>
@@ -38,6 +42,8 @@ class ProjectModel {
     List<String>? likes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? childProjectIds,
+    List<String>? parentProjectIds,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -48,6 +54,8 @@ class ProjectModel {
       likes: likes ?? this.likes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      childProjectIds: childProjectIds ?? this.childProjectIds,
+      parentProjectIds: parentProjectIds ?? this.parentProjectIds,
     );
   }
 }

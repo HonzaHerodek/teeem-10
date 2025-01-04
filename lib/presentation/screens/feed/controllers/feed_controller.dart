@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../data/models/project_model.dart';
 import '../feed_bloc/feed_bloc.dart';
 import '../feed_bloc/feed_event.dart';
 import '../feed_bloc/feed_state.dart';
@@ -149,6 +150,18 @@ class FeedController extends ChangeNotifier {
 
   void ratePost(String postId, double rating) {
     feedBloc.add(FeedPostRated(postId, rating));
+  }
+
+  Future<ProjectModel?> getProject(String projectId) async {
+    if (feedBloc.state is FeedSuccess) {
+      final state = feedBloc.state as FeedSuccess;
+      try {
+        return state.projects.firstWhere((p) => p.id == projectId);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   @override

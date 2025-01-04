@@ -3,16 +3,34 @@ import '../../data/models/rating_model.dart';
 import '../../data/models/traits/trait_type_model.dart';
 import '../../data/models/traits/user_trait_model.dart';
 import '../../domain/repositories/trait_repository.dart';
-import 'package:get_it/get_it.dart';
 import 'dart:math';
 
 class TestDataService {
   static final Random _random = Random();
-  static final TraitRepository _traitRepository = GetIt.instance<TraitRepository>();
   static List<TraitTypeModel> _cachedTraitTypes = [];
+  static late TraitRepository _traitRepository;
+
+  TestDataService();
 
   static Future<void> initialize() async {
-    _cachedTraitTypes = await _traitRepository.getTraitTypes();
+    try {
+      // Initialize with empty data first
+      _cachedTraitTypes = [];
+      
+      // Delay trait loading until after dependency injection is complete
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      // Now try to load traits
+      _cachedTraitTypes = await _traitRepository.getTraitTypes();
+    } catch (e) {
+      print('Warning: Failed to initialize test data service: $e');
+      // Continue with empty trait types rather than crashing
+      _cachedTraitTypes = [];
+    }
+  }
+
+  static void setTraitRepository(TraitRepository repository) {
+    _traitRepository = repository;
   }
 
   static const String _longText = '''
@@ -38,7 +56,7 @@ Key Features of Flutter:
         ),
       );
 
-      // Use cached trait types
+      // Use cached trait types safely
       final selectedTraitTypes = _cachedTraitTypes.take(3).toList();
       final userTraits = selectedTraitTypes.map((type) => UserTraitModel(
         id: 'trait_${type.id}',
@@ -77,7 +95,7 @@ Key Features of Flutter:
       ),
     );
 
-    // Use cached trait types
+    // Use cached trait types safely
     final userTraits = _cachedTraitTypes.map((type) => UserTraitModel(
       id: 'trait_${type.id}',
       traitTypeId: type.id,
