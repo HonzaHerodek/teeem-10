@@ -3,13 +3,14 @@ import '../../../data/models/post_model.dart';
 import '../../../data/models/project_model.dart';
 import '../compact_post_card.dart';
 import '../compact_project_card.dart';
-import '../project/selectable_compact_post_card.dart';
-import '../project/project_post_selection_service.dart';
+import 'selectable_compact_post_card.dart';
+import 'selectable_compact_project_card.dart';
+import 'project_content_selection_service.dart';
 
 class ProjectContentList extends StatefulWidget {
   final List<String> childProjectIds;
   final List<PostModel> projectPosts;
-  final ProjectPostSelectionService service;
+  final ProjectContentSelectionService service;
   final VoidCallback? onTap;
   final double itemSize;
   final List<ProjectModel> availableProjects;
@@ -29,22 +30,23 @@ class ProjectContentList extends StatefulWidget {
 }
 
 class _ProjectContentListState extends State<ProjectContentList> {
-  late ScrollController _scrollController;
-  late ScrollController _availableScrollController;
-  final double _horizontalPadding = 16.0;
+  late ScrollController _contentController;
+  late ScrollController _availableController;
+  final double _horizontalPadding = 24.0;
   final double _itemSpacing = 16.0;
+  final double _centerSpacing = 32.0;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _availableScrollController = ScrollController();
+    _contentController = ScrollController();
+    _availableController = ScrollController();
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
-    _availableScrollController.dispose();
+    _contentController.dispose();
+    _availableController.dispose();
     super.dispose();
   }
 
@@ -58,6 +60,59 @@ class _ProjectContentListState extends State<ProjectContentList> {
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
+      ),
+    );
+  }
+
+  Widget _buildContentRow({
+    required List<Widget> leftContent,
+    required List<Widget> rightContent,
+    required ScrollController controller,
+  }) {
+    return SizedBox(
+      height: widget.itemSize,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final hasLeft = leftContent.isNotEmpty;
+          final hasRight = rightContent.isNotEmpty;
+          
+          // Calculate content widths
+          final itemWidth = widget.itemSize + _itemSpacing;
+          final leftWidth = hasLeft ? leftContent.length * itemWidth : 0.0;
+          final rightWidth = hasRight ? rightContent.length * itemWidth : 0.0;
+          
+          // Calculate initial padding to center the split
+          final centerX = constraints.maxWidth / 2;
+          final initialPadding = centerX - leftWidth - (_centerSpacing / 2);
+
+          return ListView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            children: [
+              // Initial padding to center the split
+              SizedBox(width: initialPadding.clamp(24.0, double.infinity)),
+              // Left content (projects)
+              if (hasLeft) ...[
+                ...leftContent.map((widget) => Padding(
+                  padding: EdgeInsets.only(right: _itemSpacing),
+                  child: widget,
+                )),
+              ],
+              // Center spacing
+              if (hasLeft && hasRight) SizedBox(width: _centerSpacing),
+              // Right content (posts)
+              if (hasRight) ...[
+                ...rightContent.map((widget) => Padding(
+                  padding: EdgeInsets.only(right: _itemSpacing),
+                  child: widget,
+                )),
+              ],
+              // End padding
+              SizedBox(width: _horizontalPadding),
+            ],
+          );
+        },
       ),
     );
   }
@@ -76,132 +131,80 @@ class _ProjectContentListState extends State<ProjectContentList> {
         .cast<ProjectModel>()
         .toList();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final centerPosition = constraints.maxWidth / 2;
-        final itemWidth = widget.itemSize + _itemSpacing;
+    final projectWidgets = validChildProjects.map((project) => CompactProjectCard(
+      project: project,
+      postThumbnails: const [],
+      width: widget.itemSize,
+      height: widget.itemSize,
+      onTap: widget.onTap,
+    )).toList();
 
-        // Calculate total width of projects and posts
-        final projectsWidth = validChildProjects.length * itemWidth;
-        final postsWidth = widget.projectPosts.length * itemWidth;
+    final postWidgets = widget.projectPosts.map((post) => widget.service.isSelectionMode
+        ? SelectableCompactPostCard(
+            post: post,
+            width: widget.itemSize,
+            height: widget.itemSize,
+            isSelected: widget.service.selectedPostIds.contains(post.id),
+            onToggle: () => widget.service.togglePostSelection(post.id),
+            isProjectPost: true,
+          )
+        : CompactPostCard(
+            post: post,
+            width: widget.itemSize,
+            height: widget.itemSize,
+            circular: true,
+          )).toList();
 
-        // Calculate starting positions to center both sections
-        final projectsStart = centerPosition - projectsWidth;
-        final postsStart = centerPosition;
-
-        return SizedBox(
-          height: widget.itemSize,
-          child: Stack(
-            children: [
-              // Projects section (left side)
-              if (validChildProjects.isNotEmpty)
-                Positioned(
-                  left: projectsStart,
-                  child: SizedBox(
-                    height: widget.itemSize,
-                    child: Row(
-                      children: validChildProjects.map((childProject) {
-                        return Padding(
-                          padding: EdgeInsets.only(right: _itemSpacing),
-                          child: CompactProjectCard(
-                            project: childProject,
-                            postThumbnails: const [],
-                            width: widget.itemSize,
-                            height: widget.itemSize,
-                            onTap: widget.onTap,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-              // Posts section (right side)
-              if (widget.projectPosts.isNotEmpty)
-                Positioned(
-                  left: postsStart,
-                  child: SizedBox(
-                    height: widget.itemSize,
-                    child: Row(
-                      children: widget.projectPosts.map((post) {
-                        return Padding(
-                          padding: EdgeInsets.only(right: _itemSpacing),
-                          child: widget.service.isSelectionMode
-                              ? SelectableCompactPostCard(
-                                  post: post,
-                                  width: widget.itemSize,
-                                  height: widget.itemSize,
-                                  isSelected: widget.service.selectedPostIds.contains(post.id),
-                                  onToggle: () => widget.service.togglePostSelection(post.id),
-                                  isProjectPost: true,
-                                )
-                              : CompactPostCard(
-                                  post: post,
-                                  width: widget.itemSize,
-                                  height: widget.itemSize,
-                                  circular: true,
-                                ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+    return _buildContentRow(
+      leftContent: projectWidgets,
+      rightContent: postWidgets,
+      controller: _contentController,
     );
   }
 
-  Widget _buildAvailablePosts() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final centerPosition = constraints.maxWidth / 2;
-        final itemWidth = widget.itemSize + _itemSpacing;
-        final totalWidth = widget.service.availablePosts.length * itemWidth;
-        final startPosition = centerPosition - (totalWidth / 2);
+  Widget _buildAvailableContent() {
+    final availableProjects = widget.service.availableProjects;
+    final availablePosts = widget.service.availablePosts;
 
-        return SizedBox(
-          height: widget.itemSize,
-          child: Stack(
-            children: [
-              Positioned(
-                left: startPosition,
-                child: Row(
-                  children: widget.service.availablePosts.map((post) {
-                    return Padding(
-                      padding: EdgeInsets.only(right: _itemSpacing),
-                      child: SelectableCompactPostCard(
-                        post: post,
-                        width: widget.itemSize,
-                        height: widget.itemSize,
-                        isSelected: widget.service.selectedPostIds.contains(post.id),
-                        onToggle: () => widget.service.togglePostSelection(post.id),
-                        isProjectPost: false,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    final projectWidgets = availableProjects.map((project) => SelectableCompactProjectCard(
+      project: project,
+      width: widget.itemSize,
+      height: widget.itemSize,
+      isSelected: widget.service.selectedProjectIds.contains(project.id),
+      onToggle: () => widget.service.toggleProjectSelection(project.id),
+    )).toList();
+
+    final postWidgets = availablePosts.map((post) => SelectableCompactPostCard(
+      post: post,
+      width: widget.itemSize,
+      height: widget.itemSize,
+      isSelected: widget.service.selectedPostIds.contains(post.id),
+      onToggle: () => widget.service.togglePostSelection(post.id),
+      isProjectPost: false,
+    )).toList();
+
+    return _buildContentRow(
+      leftContent: projectWidgets,
+      rightContent: postWidgets,
+      controller: _availableController,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.service.isSelectionMode) {
-      // In selection mode, show current content in original layout plus available posts
+      final hasAvailableContent = widget.service.availableProjects.isNotEmpty || 
+                                widget.service.availablePosts.isNotEmpty;
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildSectionHeader('Project Content'),
           _buildProjectContent(),
-          if (widget.service.availablePosts.isNotEmpty) ...[
-            _buildSectionHeader('Available Posts'),
-            _buildAvailablePosts(),
+          if (hasAvailableContent) ...[
+            _buildSectionHeader('Available Content'),
+            _buildAvailableContent(),
           ],
         ],
       );

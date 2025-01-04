@@ -99,10 +99,12 @@ class FeedBatchOperations extends FeedEvent {
   final String projectId;
   final List<String> postsToRemove;
   final List<String> postsToAdd;
+  final List<String> projectsToAdd;
   const FeedBatchOperations({
     required this.projectId,
     required this.postsToRemove,
     required this.postsToAdd,
+    this.projectsToAdd = const [],
   });
 }
 

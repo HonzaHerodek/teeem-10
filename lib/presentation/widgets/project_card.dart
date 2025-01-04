@@ -13,7 +13,7 @@ import 'common/section_header.dart';
 import 'compact_post_card.dart';
 import 'compact_project_card.dart';
 import 'project/selectable_compact_post_card.dart';
-import 'project/project_post_selection_service.dart';
+import 'project/project_content_selection_service.dart';
 import 'project/square_action_button.dart';
 import 'project/project_content_list.dart';
 
@@ -35,7 +35,7 @@ class ProjectCard extends StatelessWidget {
   });
 
   Widget _buildPostList(List<PostModel> posts, bool isSelectable,
-      ProjectPostSelectionService service,
+      ProjectContentSelectionService service,
       {bool isProjectPosts = false}) {
     if (posts.isEmpty) return const SizedBox.shrink();
 
@@ -77,24 +77,20 @@ class ProjectCard extends StatelessWidget {
   }
 
   Widget _buildActionButtons(
-      BuildContext context, ProjectPostSelectionService service) {
+      BuildContext context, ProjectContentSelectionService service) {
     if (service.isSelectionMode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SquareActionButton(
-            icon: Icons.add_circle_outline,
-            onPressed: () {
-              // TODO: Implement add post action
-            },
+            icon: Icons.check,
+            onPressed: () => service.handleContentAdded(context),
             size: 40,
           ),
-          const SizedBox(width: 40), // Increased from 32 to 40
+          const SizedBox(width: 40),
           SquareActionButton(
-            icon: Icons.add_box_outlined,
-            onPressed: () {
-              // TODO: Implement add sub-project action
-            },
+            icon: Icons.close,
+            onPressed: () => service.exitSelectionMode(),
             size: 40,
           ),
         ],
@@ -129,11 +125,12 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProjectPostSelectionService(
+      create: (_) => ProjectContentSelectionService(
         postRepository: getIt<PostRepository>(),
         projectId: project.id,
         projectName: project.name,
         initialPostIds: project.postIds,
+        initialProjectIds: project.childProjectIds,
       ),
       child: BlocConsumer<FeedBloc, FeedState>(
         listenWhen: (previous, current) {
@@ -146,7 +143,8 @@ class ProjectCard extends StatelessWidget {
               (p) => p.id == project.id,
               orElse: () => project,
             );
-            return prevProject.postIds != currentProject.postIds;
+            return prevProject.postIds != currentProject.postIds ||
+                   prevProject.childProjectIds != currentProject.childProjectIds;
           }
           return false;
         },
@@ -156,15 +154,17 @@ class ProjectCard extends StatelessWidget {
               (p) => p.id == project.id,
               orElse: () => project,
             );
+            final service = context.read<ProjectContentSelectionService>();
             if (updatedProject.postIds != project.postIds) {
-              context
-                  .read<ProjectPostSelectionService>()
-                  .updatePostIds(updatedProject.postIds);
+              service.updatePostIds(updatedProject.postIds);
+            }
+            if (updatedProject.childProjectIds != project.childProjectIds) {
+              service.updateProjectIds(updatedProject.childProjectIds);
             }
           }
         },
         builder: (context, state) {
-          return Consumer<ProjectPostSelectionService>(
+          return Consumer<ProjectContentSelectionService>(
             builder: (context, service, _) {
               return Transform.translate(
                 offset: Offset(0, -elevation),
@@ -208,16 +208,18 @@ class ProjectCard extends StatelessWidget {
                                           : Icons.settings,
                                       onPressed: () {
                                         if (service.isSelectionMode) {
-                                          service.handlePostsAdded(context);
+                                          service.handleContentAdded(context);
                                         } else if (state is FeedSuccess) {
-                                          service
-                                              .enterSelectionMode(state.posts);
+                                          service.enterSelectionMode(
+                                            state.posts,
+                                            state.projects,
+                                          );
                                         } else {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                  'Unable to edit posts at this time'),
+                                                  'Unable to edit content at this time'),
                                               backgroundColor: Colors.red,
                                             ),
                                           );
