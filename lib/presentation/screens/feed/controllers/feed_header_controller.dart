@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../data/models/notification_model.dart';
 import '../../../../data/models/traits/trait_type_model.dart';
 import '../../../../data/repositories/mock_notification_repository.dart';
 import '../../../../data/repositories/mock_trait_repository.dart';
 import '../models/filter_type.dart';
 import '../controllers/feed_controller.dart';
+import '../feed_bloc/feed_bloc.dart';
+import '../feed_bloc/feed_event.dart';
+import '../feed_bloc/feed_state.dart';
 
 class FeedHeaderState {
   final bool isSearchVisible;
@@ -116,6 +120,8 @@ class FeedHeaderController extends ChangeNotifier {
   }
 
   void closeSearch() {
+    if (!_state.isSearchVisible) return;
+    
     _state = _state.copyWith(
       isSearchVisible: false,
       activeFilterType: FilterType.none,
@@ -123,6 +129,17 @@ class FeedHeaderController extends ChangeNotifier {
       clearTraitValue: true,
     );
     notifyListeners();
+    
+    // Ensure we're in a valid build phase before accessing context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Reset filter in bloc
+      final context = targetIconKey.currentContext;
+      if (context != null) {
+        context.read<FeedBloc>().add(
+          const FeedFilterChanged(filterType: 'none', filter: ''),
+        );
+      }
+    });
   }
 
   void toggleNotificationMenu() {
