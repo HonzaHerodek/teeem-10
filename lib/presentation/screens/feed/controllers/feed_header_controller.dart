@@ -100,7 +100,18 @@ class FeedHeaderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _isPostCreationActive = false;
+
+  void setPostCreationActive(bool active) {
+    _isPostCreationActive = active;
+  }
+
   void toggleSearch() {
+    // Don't allow toggling search if post creation is active
+    if (_isPostCreationActive) {
+      return;
+    }
+    
     final newSearchVisible = !_state.isSearchVisible;
     _state = _state.copyWith(
       isSearchVisible: newSearchVisible,
@@ -139,6 +150,9 @@ class FeedHeaderController extends ChangeNotifier {
           const FeedFilterChanged(filterType: 'none', filter: ''),
         );
       }
+      
+      // Force dimming update after search is closed
+      notifyListeners();
     });
   }
 

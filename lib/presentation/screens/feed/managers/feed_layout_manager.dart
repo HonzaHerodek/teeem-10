@@ -5,6 +5,7 @@ import '../../../../data/models/project_model.dart';
 import '../controllers/feed_controller.dart';
 import '../controllers/feed_header_controller.dart';
 import '../managers/dimming_manager.dart';
+import '../models/filter_type.dart';
 
 class FeedLayoutManager {
   final FeedController feedController;
@@ -60,14 +61,22 @@ class FeedLayoutManager {
 
   void updateDimming() {
     final isSearchActive = headerController.state.isSearchVisible;
+    final isFilterActive = headerController.state.activeFilterType != FilterType.none;
     
     final baseConfig = const DimmingConfig(
       dimmingStrength: 0.7,
       glowBlur: 10,
     );
 
-    if (isSearchActive) {
-      // When search is active, use all excluded elements with their specific shapes
+    if (_isCreatingPost) {
+      // Post creation takes precedence - only exclude plus button
+      dimmingManager.updateDimming(
+        isDimmed: true,
+        config: baseConfig,
+        excludedKeys: [dimmingManager.plusActionButtonKey],
+      );
+    } else if (isSearchActive || isFilterActive) {
+      // When search or filter is active, use all excluded elements
       dimmingManager.updateDimming(
         isDimmed: true,
         config: baseConfig,
@@ -83,15 +92,8 @@ class FeedLayoutManager {
           dimmingManager.searchBarKey,
         ],
       );
-    } else if (_isCreatingPost) {
-      // Post creation dimming - only exclude plus button
-      dimmingManager.updateDimming(
-        isDimmed: true,
-        config: baseConfig,
-        excludedKeys: [dimmingManager.plusActionButtonKey],
-      );
     } else {
-      // No dimming
+      // No dimming - explicitly turn off when no active states
       dimmingManager.updateDimming(
         isDimmed: false,
         config: const DimmingConfig(),
