@@ -16,37 +16,63 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late final AnimationController _controller;
   bool _hasError = false;
+  bool _isLoading = true;
+  static const _assetPath = 'assets/videos/teeem-logo-in.mp4.lottie.json';
 
   @override
   void initState() {
     super.initState();
+    print('Initializing SplashScreen...');
     _controller = AnimationController(vsync: this);
-    _loadAnimation();
+    _controller.addStatusListener(_handleAnimationStatus);
+    _preloadAnimation();
   }
 
-  Future<void> _loadAnimation() async {
+  Future<void> _preloadAnimation() async {
     try {
+      print('Starting to preload animation...');
       if (!mounted) return;
-      
-      // The animation will automatically play when loaded
-      _controller.addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _onAnimationComplete();
-        }
+
+      // Pre-load the composition to ensure it's in memory
+      final composition = await AssetLottie(_assetPath).load();
+      print('Animation loaded with duration: ${composition?.duration}');
+
+      if (!mounted) return;
+
+      if (composition != null) {
+        _controller.duration = composition.duration;
+        print('Controller duration set to: ${_controller.duration}');
+      }
+
+      setState(() {
+        _isLoading = false;
       });
+      print('Animation preload complete, ready to display');
+
     } catch (e) {
-      print('Error loading animation: $e');
+      print('Error pre-loading animation: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
+          _isLoading = false;
         });
         _onAnimationComplete();
       }
     }
   }
 
+  void _handleAnimationStatus(AnimationStatus status) {
+    print('Animation status changed to: $status');
+    if (status == AnimationStatus.completed) {
+      print('Animation completed, triggering navigation');
+      _onAnimationComplete();
+    }
+  }
+
   void _onAnimationComplete() {
     try {
+      if (!mounted) return;
+      
       print('Animation complete, checking auth state...');
       final authBloc = context.read<AuthBloc>();
       final authState = authBloc.state;
@@ -69,46 +95,58 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   @override
   void dispose() {
+    print('Disposing SplashScreen...');
+    _controller.removeStatusListener(_handleAnimationStatus);
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    print('Building SplashScreen...');
+    print('Building SplashScreen, isLoading: $_isLoading, hasError: $_hasError');
+    
     if (_hasError) {
       print('Has error, skipping animation...');
-      return const SizedBox.shrink(); // Error case: immediately proceed to next screen
+      return const SizedBox.shrink();
+    }
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Builder(
-          builder: (context) {
-            try {
-              return Lottie.asset(
-                'assets/videos/teeem-logo-in.mp4.lottie.json',
-                controller: _controller,
-                onLoaded: (composition) {
-                  _controller
-                    ..duration = composition.duration
-                    ..forward();
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  print('Error loading animation: $error');
-                  // Immediately navigate to next screen on error
-                  Future.microtask(() => _onAnimationComplete());
-                  return const CircularProgressIndicator();
-                },
-              );
-            } catch (e) {
-              print('Error in animation builder: $e');
-              // Immediately navigate to next screen on error
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 300,
+            maxHeight: 300,
+          ),
+          child: Lottie.asset(
+            _assetPath,
+            controller: _controller,
+            frameRate: FrameRate(30),
+            repeat: false,
+            onLoaded: (composition) {
+              print('Lottie onLoaded called, duration: ${composition.duration}');
+              _controller.duration = composition.duration;
+              _controller.forward().then((_) {
+                print('Animation forward complete');
+              });
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('Error rendering animation: $error');
               Future.microtask(() => _onAnimationComplete());
-              return const CircularProgressIndicator();
-            }
-          },
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
