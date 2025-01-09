@@ -68,32 +68,15 @@ class FeedLayoutManager {
       glowBlur: 10,
     );
 
-    if (_isCreatingPost) {
-      // Post creation takes precedence - only exclude plus button
-      dimmingManager.updateDimming(
-        isDimmed: true,
-        config: baseConfig,
-        excludedKeys: [dimmingManager.plusActionButtonKey],
-      );
-    } else if (isSearchActive || isFilterActive) {
-      // When search or filter is active, use all excluded elements
+    // Dimming is controlled solely by search/filter state
+    if (isSearchActive || isFilterActive) {
       dimmingManager.updateDimming(
         isDimmed: true,
         config: baseConfig,
         excludedKeys: dimmingManager.getExcludedKeys(),
       );
-    } else if (_isProfileOpen) {
-      // Profile panel dimming - exclude plus button and target button
-      dimmingManager.updateDimming(
-        isDimmed: true,
-        config: baseConfig,
-        excludedKeys: [
-          dimmingManager.plusActionButtonKey,
-          dimmingManager.searchBarKey,
-        ],
-      );
     } else {
-      // No dimming - explicitly turn off when no active states
+      // No dimming when search/filter is inactive, regardless of other states
       dimmingManager.updateDimming(
         isDimmed: false,
         config: const DimmingConfig(),

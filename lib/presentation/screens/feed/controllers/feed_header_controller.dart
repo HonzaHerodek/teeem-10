@@ -92,7 +92,8 @@ class FeedHeaderController extends ChangeNotifier {
   NotificationModel? get selectedNotification => _state.selectedNotification;
   List<NotificationModel> get notifications => _state.notifications;
   int get unreadNotificationCount => _notificationRepository.getUnreadCount();
-  Duration? get longestIgnoredDuration => _notificationRepository.getLongestIgnoredDuration();
+  Duration? get longestIgnoredDuration =>
+      _notificationRepository.getLongestIgnoredDuration();
 
   Future<void> _loadNotifications() async {
     final notifications = await _notificationRepository.getNotifications();
@@ -100,18 +101,7 @@ class FeedHeaderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _isPostCreationActive = false;
-
-  void setPostCreationActive(bool active) {
-    _isPostCreationActive = active;
-  }
-
   void toggleSearch() {
-    // Don't allow toggling search if post creation is active
-    if (_isPostCreationActive) {
-      return;
-    }
-    
     final newSearchVisible = !_state.isSearchVisible;
     _state = _state.copyWith(
       isSearchVisible: newSearchVisible,
@@ -132,7 +122,7 @@ class FeedHeaderController extends ChangeNotifier {
 
   void closeSearch() {
     if (!_state.isSearchVisible) return;
-    
+
     _state = _state.copyWith(
       isSearchVisible: false,
       activeFilterType: FilterType.none,
@@ -140,17 +130,17 @@ class FeedHeaderController extends ChangeNotifier {
       clearTraitValue: true,
     );
     notifyListeners();
-    
+
     // Ensure we're in a valid build phase before accessing context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Reset filter in bloc
       final context = targetIconKey.currentContext;
       if (context != null) {
         context.read<FeedBloc>().add(
-          const FeedFilterChanged(filterType: 'none', filter: ''),
-        );
+              const FeedFilterChanged(filterType: 'none', filter: ''),
+            );
       }
-      
+
       // Force dimming update after search is closed
       notifyListeners();
     });
@@ -173,8 +163,9 @@ class FeedHeaderController extends ChangeNotifier {
     await _notificationRepository.recordInteraction(notification.id);
 
     // Check if this is the same notification
-    final isSameNotification = _state.selectedNotification?.id == notification.id;
-    
+    final isSameNotification =
+        _state.selectedNotification?.id == notification.id;
+
     if (!isSameNotification) {
       // Clear existing selection first if different notification
       _state = _state.copyWith(
@@ -186,7 +177,7 @@ class FeedHeaderController extends ChangeNotifier {
       // Wait for clear to be processed
       await Future.delayed(const Duration(milliseconds: 50));
     }
-    
+
     // Set new selection
     _state = _state.copyWith(
       selectedNotification: notification,
@@ -202,10 +193,11 @@ class FeedHeaderController extends ChangeNotifier {
           : notification.projectId!;
 
       final isProject = notification.type == NotificationType.project;
-      
+
       // Find item first
-      final index = await feedController.findItemIndex(itemId, isProject: isProject);
-      
+      final index =
+          await feedController.findItemIndex(itemId, isProject: isProject);
+
       if (index != null) {
         // If item exists and this is a re-selection, just ensure it's visible
         if (isSameNotification) {

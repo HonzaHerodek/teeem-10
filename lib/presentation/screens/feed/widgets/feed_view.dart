@@ -83,6 +83,7 @@ class _FeedViewState extends State<FeedView> {
       context: context,
     );
 
+
     _dimmingManager = DimmingManager(
       headerController: _headerController,
       plusActionButtonKey: _plusActionButtonKey,
@@ -132,7 +133,9 @@ class _FeedViewState extends State<FeedView> {
       onCreatePostChanged: (value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            setState(() => _isCreatingPost = value);
+            setState(() {
+              _isCreatingPost = value;
+            });
           }
         });
       },
@@ -227,14 +230,18 @@ class _FeedViewState extends State<FeedView> {
                     onCancel: () {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
-                          setState(() => _isCreatingPost = false);
+                          setState(() {
+                            _isCreatingPost = false;
+                          });
                         }
                       });
                     },
                     onComplete: (success, project) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
-                          setState(() => _isCreatingPost = false);
+                          setState(() {
+                            _isCreatingPost = false;
+                          });
                           if (success) _feedController.refresh();
                         }
                       });
@@ -301,7 +308,9 @@ class _FeedViewState extends State<FeedView> {
                       _stateManager.handlePostComplete(false);
                     }
                   } else {
-                    setState(() => _isCreatingPost = true);
+                    setState(() {
+                      _isCreatingPost = true;
+                    });
                   }
                 },
               ),
