@@ -120,7 +120,9 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
   }
 
   Widget _buildFormFields() {
-    return Padding(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       padding: EdgeInsets.only(
         top: _isSettingsEnlarged ? 24 : 0,
         bottom: _isSettingsEnlarged ? 24 : 0,
@@ -294,8 +296,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Transform.translate(
-                          offset: const Offset(0, -12),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          transform: Matrix4.translationValues(0, -12, 0),
                           child: _buildFormFields(),
                         ),
                         AnimatedSize(
@@ -476,8 +480,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                 )
               : Container(
                   height: MediaQuery.of(context).size.height - 180,
-                  child: Transform.translate(
-                    offset: const Offset(0, -35),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    transform: Matrix4.translationValues(0, -35, 0),
                     child: Center(child: _buildFormFields()),
                   ),
                 ),
@@ -524,11 +530,12 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                               builder: (context, child) => Transform.scale(
                                 scale: _settingsScaleAnimation.value,
                                 child: Transform.rotate(
-                                  angle: _settingsAnimationController.value * 1.0,
+                                  angle:
+                                      _settingsAnimationController.value * -1.0,
                                   child: ShadowedShape(
-                                  icon: Icons.settings,
-                                  size: 24,
-                                  shadowOpacity: 0.2,
+                                    icon: Icons.settings,
+                                    size: 24,
+                                    shadowOpacity: 0.2,
                                   ),
                                 ),
                               ),
@@ -606,7 +613,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                         builder: (context, child) => Transform.scale(
                           scale: _settingsScaleAnimation.value,
                           child: Transform.rotate(
-                            angle: _settingsAnimationController.value * 1.0,
+                            angle: _settingsAnimationController.value * -1.0,
                             child: ShadowedShape(
                               icon: Icons.settings,
                               size: 24,
