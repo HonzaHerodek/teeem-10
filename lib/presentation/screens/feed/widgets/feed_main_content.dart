@@ -10,6 +10,7 @@ import '../feed_bloc/feed_state.dart';
 import '../services/feed_item_service.dart';
 import '../controllers/feed_controller.dart';
 import 'feed_content.dart';
+import 'feed_skeleton_loading.dart';
 
 class FeedMainContent extends StatelessWidget {
   final ScrollController scrollController;
@@ -40,11 +41,7 @@ class FeedMainContent extends StatelessWidget {
     return BlocBuilder<FeedBloc, FeedState>(
       builder: (context, state) {
         if (state is FeedInitial || state is FeedLoading) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          );
+          return FeedSkeletonLoading(topPadding: topPadding);
         }
 
         if (state is FeedFailure) {
