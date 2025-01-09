@@ -232,6 +232,7 @@ class _FeedViewState extends State<FeedView> {
                         if (mounted) {
                           setState(() {
                             _isCreatingPost = false;
+                            _headerController.setCreatingPost(false);
                           });
                         }
                       });
@@ -241,6 +242,7 @@ class _FeedViewState extends State<FeedView> {
                         if (mounted) {
                           setState(() {
                             _isCreatingPost = false;
+                            _headerController.setCreatingPost(false);
                           });
                           if (success) _feedController.refresh();
                         }
@@ -274,6 +276,7 @@ class _FeedViewState extends State<FeedView> {
                 plusActionButtonKey: _plusActionButtonKey,
                 profileButtonKey: _profileButtonKey,
                 isCreatingPost: _isCreatingPost,
+                headerController: _headerController,
                 onProfileTap: () {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
@@ -310,6 +313,7 @@ class _FeedViewState extends State<FeedView> {
                   } else {
                     setState(() {
                       _isCreatingPost = true;
+                      _headerController.setCreatingPost(true);
                     });
                   }
                 },

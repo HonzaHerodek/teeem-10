@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../data/models/traits/trait_type_model.dart';
 import '../../../../widgets/notifications/notification_bar.dart';
 import '../../../../widgets/notifications/notification_attention_icon.dart';
 import '../../controllers/feed_header_controller.dart';
@@ -9,6 +8,8 @@ import '../../feed_bloc/feed_bloc.dart';
 import '../../feed_bloc/feed_event.dart';
 import '../feed_search_bar.dart';
 import '../target_icon.dart';
+
+//TODO: repair the opening of notifications and target section together (it should be possible to filter notificatios with target and vice versa
 
 class FeedHeaderSearchSection extends StatefulWidget {
   final FeedHeaderController headerController;
@@ -82,21 +83,22 @@ class _FeedHeaderSearchSectionState extends State<FeedHeaderSearchSection> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Left Column: Notifications
-            SizedBox(
-              width: 56,
-              child: Center(
-                child: NotificationAttentionIcon(
-                  notificationCount: widget.headerController.unreadNotificationCount,
-                  onTap: _showTestControls ? () {} : widget.headerController.toggleNotificationMenu,
-                  isActive: widget.headerController.state.isNotificationMenuOpen,
-                  longestIgnoredDuration: widget.headerController.longestIgnoredDuration,
-                  testMode: _testMode,
-                  showTestModeControls: _showTestControls,
-                  onTestModeChanged: _handleTestModeChanged,
+            if (!widget.headerController.state.isCreatingPost)
+              // Left Column: Notifications
+              SizedBox(
+                width: 56,
+                child: Center(
+                  child: NotificationAttentionIcon(
+                    notificationCount: widget.headerController.unreadNotificationCount,
+                    onTap: _showTestControls ? () {} : widget.headerController.toggleNotificationMenu,
+                    isActive: widget.headerController.state.isNotificationMenuOpen,
+                    longestIgnoredDuration: widget.headerController.longestIgnoredDuration,
+                    testMode: _testMode,
+                    showTestModeControls: _showTestControls,
+                    onTestModeChanged: _handleTestModeChanged,
+                  ),
                 ),
               ),
-            ),
 
             // Center Column: Search Bar or Notification Bar
             Expanded(

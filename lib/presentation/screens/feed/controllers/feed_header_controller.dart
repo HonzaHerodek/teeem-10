@@ -13,6 +13,7 @@ import '../feed_bloc/feed_state.dart';
 class FeedHeaderState {
   final bool isSearchVisible;
   final bool isNotificationMenuOpen;
+  final bool isCreatingPost;
   final FilterType activeFilterType;
   final TraitTypeModel? selectedTraitType;
   final String? selectedTraitValue;
@@ -23,6 +24,7 @@ class FeedHeaderState {
   const FeedHeaderState({
     this.isSearchVisible = false,
     this.isNotificationMenuOpen = false,
+    this.isCreatingPost = false,
     this.activeFilterType = FilterType.none,
     this.selectedTraitType,
     this.selectedTraitValue,
@@ -34,6 +36,7 @@ class FeedHeaderState {
   FeedHeaderState copyWith({
     bool? isSearchVisible,
     bool? isNotificationMenuOpen,
+    bool? isCreatingPost,
     FilterType? activeFilterType,
     TraitTypeModel? selectedTraitType,
     String? selectedTraitValue,
@@ -48,6 +51,7 @@ class FeedHeaderState {
       isSearchVisible: isSearchVisible ?? this.isSearchVisible,
       isNotificationMenuOpen:
           isNotificationMenuOpen ?? this.isNotificationMenuOpen,
+      isCreatingPost: isCreatingPost ?? this.isCreatingPost,
       activeFilterType: activeFilterType ?? this.activeFilterType,
       selectedTraitType:
           clearTraitType ? null : (selectedTraitType ?? this.selectedTraitType),
@@ -68,7 +72,6 @@ class FeedHeaderController extends ChangeNotifier {
   final GlobalKey targetIconKey = GlobalKey();
   final GlobalKey notificationBarKey = GlobalKey();
   final MockNotificationRepository _notificationRepository;
-
   final MockTraitRepository _traitRepository;
 
   FeedHeaderController({
@@ -153,6 +156,11 @@ class FeedHeaderController extends ChangeNotifier {
       isSearchVisible: false,
       clearNotification: !newState,
     );
+    notifyListeners();
+  }
+
+  void setCreatingPost(bool value) {
+    _state = _state.copyWith(isCreatingPost: value);
     notifyListeners();
   }
 
