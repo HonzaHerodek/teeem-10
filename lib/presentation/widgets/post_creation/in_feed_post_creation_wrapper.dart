@@ -15,6 +15,8 @@ class InFeedPostCreationWrapper extends StatefulWidget {
   final Duration animationDuration;
   final Function(bool, ProjectModel?) onComplete;
   final bool isVisible;
+  final Function(bool isHighlighted, Animation<double>? animation)? onTargetHighlightChanged;
+  final VoidCallback? onAIRequest;  // New callback for AI functionality
 
   const InFeedPostCreationWrapper({
     super.key,
@@ -22,6 +24,8 @@ class InFeedPostCreationWrapper extends StatefulWidget {
     required this.onCancel,
     required this.onComplete,
     required this.isVisible,
+    this.onTargetHighlightChanged,
+    this.onAIRequest,
     this.animationDuration = const Duration(milliseconds: 1200),
   });
 
@@ -154,6 +158,8 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
                     onCancel: handleCancel,
                     onComplete: (success) =>
                         widget.onComplete(success, _selectedProject),
+                    onTargetHighlightChanged: widget.onTargetHighlightChanged,
+                    onAIRequest: widget.onAIRequest,
                   ),
                   project: _selectedProject!,
                   onRemoveProject: () => setState(() {
@@ -169,6 +175,8 @@ class _InFeedPostCreationWrapperState extends State<InFeedPostCreationWrapper>
                       onCancel: handleCancel,
                       onComplete: (success) =>
                           widget.onComplete(success, _selectedProject),
+                      onTargetHighlightChanged: widget.onTargetHighlightChanged,
+                      onAIRequest: widget.onAIRequest,
                     ),
                     const SizedBox(height: 16),
                     _buildProjectButton(),

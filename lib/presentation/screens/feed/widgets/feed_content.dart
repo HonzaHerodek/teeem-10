@@ -21,6 +21,9 @@ class FeedContent extends StatefulWidget {
   final GlobalKey? selectedItemKey;
   final String? selectedPostId;
   final String? selectedProjectId;
+  final Function(bool isHighlighted, Animation<double>? animation)?
+      onTargetHighlightChanged;
+  final VoidCallback? onAIRequest;  // New callback for AI functionality
 
   const FeedContent({
     super.key,
@@ -37,6 +40,8 @@ class FeedContent extends StatefulWidget {
     this.selectedItemKey,
     this.selectedPostId,
     this.selectedProjectId,
+    this.onTargetHighlightChanged,
+    this.onAIRequest,  // Add to constructor
   });
 
   @override
@@ -60,7 +65,6 @@ class _FeedContentState extends State<FeedContent> {
 
   void _handleScroll() {
     if (_isScrollingPostCreation) {
-      // Prevent scroll if it originated from post creation
       widget.scrollController.position.hold(() {});
     }
   }
@@ -80,18 +84,20 @@ class _FeedContentState extends State<FeedContent> {
 
     final itemService = widget.feedController.itemService;
 
-    if (widget.posts.isEmpty && widget.projects.isEmpty && !widget.isCreatingPost) {
+    if (widget.posts.isEmpty &&
+        widget.projects.isEmpty &&
+        !widget.isCreatingPost) {
       return _buildEmptyState(context);
     }
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        // When post creation is active, prevent scroll events from reaching the feed
         if (widget.isCreatingPost) {
-          // Check if the scroll started from within the post creation widget
           final postCreationContext = widget.postCreationKey.currentContext;
           if (postCreationContext != null && notification.context != null) {
-            final isChildOfPostCreation = notification.context!.findAncestorStateOfType<InFeedPostCreationState>() != null;
+            final isChildOfPostCreation = notification.context!
+                    .findAncestorStateOfType<InFeedPostCreationState>() !=
+                null;
             _isScrollingPostCreation = isChildOfPostCreation;
             return isChildOfPostCreation;
           }
@@ -100,9 +106,9 @@ class _FeedContentState extends State<FeedContent> {
       },
       child: CustomScrollView(
         controller: widget.scrollController,
-        physics: widget.isCreatingPost 
-          ? const NeverScrollableScrollPhysics() 
-          : const AlwaysScrollableScrollPhysics(),
+        physics: widget.isCreatingPost
+            ? const NeverScrollableScrollPhysics()
+            : const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
             padding: EdgeInsets.only(top: widget.topPadding),
@@ -116,12 +122,15 @@ class _FeedContentState extends State<FeedContent> {
                       onCancel: widget.onCancel,
                       onComplete: widget.onComplete,
                       isVisible: widget.isCreatingPost,
+                      onTargetHighlightChanged: widget.onTargetHighlightChanged,
+                      onAIRequest: widget.onAIRequest,  // Pass to wrapper
                     );
                   }
 
                   final adjustedIndex = index - 1;
 
-                  final project = itemService.getProjectAtPosition(adjustedIndex);
+                  final project =
+                      itemService.getProjectAtPosition(adjustedIndex);
                   if (project != null) {
                     final isSelected = project.id == widget.selectedProjectId;
                     final key = isSelected && widget.selectedItemKey != null

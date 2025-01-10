@@ -22,6 +22,8 @@ class FeedMainContent extends StatelessWidget {
   final double topPadding;
   final GlobalKey? selectedItemKey;
   final NotificationModel? selectedNotification;
+  final Function(bool isHighlighted, Animation<double>? animation)? onTargetHighlightChanged;
+  final VoidCallback? onAIRequest;  // New callback for AI functionality
 
   const FeedMainContent({
     super.key,
@@ -34,6 +36,8 @@ class FeedMainContent extends StatelessWidget {
     required this.topPadding,
     this.selectedItemKey,
     this.selectedNotification,
+    this.onTargetHighlightChanged,
+    this.onAIRequest,  // Add to constructor
   });
 
   @override
@@ -77,6 +81,8 @@ class FeedMainContent extends StatelessWidget {
                 selectedProjectId: selectedNotification?.type == NotificationType.project
                     ? selectedNotification?.projectId
                     : null,
+                onTargetHighlightChanged: onTargetHighlightChanged,
+                onAIRequest: onAIRequest,  // Pass to FeedContent
               ),
             ),
           );

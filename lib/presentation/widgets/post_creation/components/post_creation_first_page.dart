@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:myapp/presentation/widgets/common/shadowed_text.dart';
 import 'package:myapp/presentation/widgets/common/shadowed_shape.dart';
 import 'package:myapp/presentation/widgets/common/add_hexagon_icon.dart';
-import 'package:myapp/presentation/widgets/post_creation/components/ai_button_shape.dart';
+import 'package:myapp/presentation/widgets/post_creation/components/ai_button_with_mic.dart';
 
 class PostCreationFirstPage extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
   final bool isLoading;
   final VoidCallback onAddStep;
+  final VoidCallback? onAIRequest;  // New callback for AI functionality
   final List<Widget> steps;
   final PageController pageController;
+  final Function(bool isHighlighted, Animation<double>? animation)? onTargetHighlightChanged;
 
   const PostCreationFirstPage({
     Key? key,
@@ -18,8 +20,10 @@ class PostCreationFirstPage extends StatefulWidget {
     required this.descriptionController,
     required this.isLoading,
     required this.onAddStep,
+    this.onAIRequest,
     required this.steps,
     required this.pageController,
+    this.onTargetHighlightChanged,
   }) : super(key: key);
 
   @override
@@ -27,7 +31,7 @@ class PostCreationFirstPage extends StatefulWidget {
 }
 
 class _PostCreationFirstPageState extends State<PostCreationFirstPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _titleHasText = false;
   bool _descriptionHasText = false;
   bool _isSettingsEnlarged = false;
@@ -35,9 +39,17 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
   String _backgroundType = 'color';
   bool _responseVisibility = false;
   bool _completionLimit = false;
+  
+  // Animation controllers and animations
   late AnimationController _settingsAnimationController;
   late Animation<double> _settingsScaleAnimation;
   late Animation<double> _settingsHeightAnimation;
+  
+  // New state variables for AI button and highlighting
+  bool _isAIHighlighted = false;
+  int _currentHighlightIndex = -1;
+  late AnimationController _highlightController;
+  late Animation<double> _highlightAnimation;
 
   @override
   void initState() {
@@ -65,6 +77,41 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
       parent: _settingsAnimationController,
       curve: Curves.easeOutBack,
     ));
+
+    _highlightController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _highlightAnimation = CurvedAnimation(
+      parent: _highlightController,
+      curve: Curves.easeInOut,
+    );
+
+    _highlightController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        if (_currentHighlightIndex < 4) {
+          setState(() {
+            _currentHighlightIndex++;
+          });
+          _highlightController.reset();
+          _highlightController.forward();
+          
+          // Update target highlight state when index is 4
+          if (_currentHighlightIndex == 4) {
+            widget.onTargetHighlightChanged?.call(true, _highlightAnimation);
+          }
+        } else {
+          setState(() {
+            _isAIHighlighted = true;
+          });
+          // Remove target highlight when AI button is highlighted
+          widget.onTargetHighlightChanged?.call(false, null);
+          // Call AI functionality after highlight sequence
+          widget.onAIRequest?.call();
+        }
+      }
+    });
   }
 
   @override
@@ -72,6 +119,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
     widget.titleController.removeListener(_updateTitleState);
     widget.descriptionController.removeListener(_updateDescriptionState);
     _settingsAnimationController.dispose();
+    _highlightController.dispose();
     super.dispose();
   }
 
@@ -90,6 +138,24 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
       setState(() {
         _descriptionHasText = hasText;
       });
+    }
+  }
+
+  void _handleAIButtonPress() {
+    setState(() {
+      _currentHighlightIndex = 0;
+    });
+    _highlightController.forward();
+  }
+
+  void _handleStepsButtonPress() {
+    if (widget.steps.isNotEmpty) {
+      widget.pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      widget.onAddStep();
     }
   }
 
@@ -119,6 +185,32 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
     );
   }
 
+  Widget _buildHighlightBorder(Widget child, int index) {
+    final isHighlighted = _currentHighlightIndex == index;
+    return Stack(
+      children: [
+        child,
+        if (isHighlighted)
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _highlightAnimation,
+              builder: (context, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.white.withOpacity(_highlightAnimation.value),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildFormFields() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -132,50 +224,12 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TextFormField(
-              controller: widget.titleController,
-              enabled: !widget.isLoading,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 3,
-                    color: Colors.black,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-              decoration: InputDecoration(
-                label: _titleHasText
-                    ? null
-                    : const Center(
-                        child: ShadowedText(
-                          text: 'Title',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _titleHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _titleHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color:
-                            _titleHasText ? Colors.transparent : Colors.white)),
-                hintText: 'Title of Task',
-                hintStyle: const TextStyle(
+            child: _buildHighlightBorder(
+              TextFormField(
+                controller: widget.titleController,
+                enabled: !widget.isLoading,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -187,67 +241,69 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                     ),
                   ],
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                decoration: InputDecoration(
+                  label: _titleHasText
+                      ? null
+                      : const Center(
+                          child: ShadowedText(
+                            text: 'Title',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                  floatingLabelBehavior: FloatingLabelBehavior.auto,
+                  floatingLabelAlignment: FloatingLabelAlignment.center,
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _titleHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _titleHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color:
+                              _titleHasText ? Colors.transparent : Colors.white)),
+                  hintText: 'Title of Task',
+                  hintStyle: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 3,
+                        color: Colors.black,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a title';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a title';
-                }
-                return null;
-              },
+              0,
             ),
           ),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TextFormField(
-              controller: widget.descriptionController,
-              enabled: !widget.isLoading,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 3,
-                    color: Colors.black,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-              decoration: InputDecoration(
-                label: _descriptionHasText
-                    ? null
-                    : const Center(
-                        child: ShadowedText(
-                          text: 'Description',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _descriptionHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _descriptionHasText
-                            ? Colors.transparent
-                            : Colors.white30)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: _descriptionHasText
-                            ? Colors.transparent
-                            : Colors.white)),
-                hintText: 'short summary of the goal',
-                hintStyle: const TextStyle(
+            child: _buildHighlightBorder(
+              TextFormField(
+                controller: widget.descriptionController,
+                enabled: !widget.isLoading,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -259,18 +315,60 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                     ),
                   ],
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                decoration: InputDecoration(
+                  label: _descriptionHasText
+                      ? null
+                      : const Center(
+                          child: ShadowedText(
+                            text: 'Description',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                  floatingLabelBehavior: FloatingLabelBehavior.auto,
+                  floatingLabelAlignment: FloatingLabelAlignment.center,
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _descriptionHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _descriptionHasText
+                              ? Colors.transparent
+                              : Colors.white30)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: _descriptionHasText
+                              ? Colors.transparent
+                              : Colors.white)),
+                  hintText: 'short summary of the goal',
+                  hintStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 3,
+                        color: Colors.black,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a description';
+                  }
+                  return null;
+                },
               ),
-              maxLines: 2,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a description';
-                }
-                return null;
-              },
+              1,
             ),
           ),
         ],
@@ -285,7 +383,6 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
       children: [
         NotificationListener<ScrollNotification>(
           onNotification: (notification) {
-            // Prevent scroll events from propagating to parent
             return true;
           },
           child: _isSettingsEnlarged
@@ -311,169 +408,171 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                               child: Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 24),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Opacity(
-                                      opacity: 0.45,
-                                      child: ShadowedText(
-                                        text: 'TASK SETTINGS',
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w500,
-                                        textColor: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    // Due Date/Time
-                                    Column(
-                                      children: [
-                                        const Icon(Icons.calendar_today,
-                                            color: Colors.white, size: 28),
-                                        const SizedBox(height: 8),
-                                        const ShadowedText(
-                                          text: 'Due Date/Time',
-                                          fontSize: 16,
+                                child: _buildHighlightBorder(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Opacity(
+                                        opacity: 0.45,
+                                        child: ShadowedText(
+                                          text: 'TASK SETTINGS',
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w500,
+                                          textColor: Colors.white,
                                         ),
-                                        const SizedBox(height: 12),
-                                        GestureDetector(
-                                          onTap: () async {
-                                            final date = await showDatePicker(
-                                              context: context,
-                                              initialDate: _dueDateTime ??
-                                                  DateTime.now(),
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime.now().add(
-                                                  const Duration(days: 365)),
-                                            );
-                                            if (date != null) {
-                                              final time = await showTimePicker(
+                                      ),
+                                      const SizedBox(height: 16),
+                                      // Due Date/Time
+                                      Column(
+                                        children: [
+                                          const Icon(Icons.calendar_today,
+                                              color: Colors.white, size: 28),
+                                          const SizedBox(height: 8),
+                                          const ShadowedText(
+                                            text: 'Due Date/Time',
+                                            fontSize: 16,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          GestureDetector(
+                                            onTap: () async {
+                                              final date = await showDatePicker(
                                                 context: context,
-                                                initialTime:
-                                                    TimeOfDay.fromDateTime(
-                                                        _dueDateTime ??
-                                                            DateTime.now()),
+                                                initialDate: _dueDateTime ??
+                                                    DateTime.now(),
+                                                firstDate: DateTime.now(),
+                                                lastDate: DateTime.now().add(
+                                                    const Duration(days: 365)),
                                               );
-                                              if (time != null) {
+                                              if (date != null) {
+                                                final time = await showTimePicker(
+                                                  context: context,
+                                                  initialTime:
+                                                      TimeOfDay.fromDateTime(
+                                                          _dueDateTime ??
+                                                              DateTime.now()),
+                                                );
+                                                if (time != null) {
+                                                  setState(() {
+                                                    _dueDateTime = DateTime(
+                                                      date.year,
+                                                      date.month,
+                                                      date.day,
+                                                      time.hour,
+                                                      time.minute,
+                                                    );
+                                                  });
+                                                }
+                                              }
+                                            },
+                                            child: ShadowedText(
+                                              text: _dueDateTime?.toString() ??
+                                                  'Not set',
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Divider(color: Colors.white30),
+                                      // Background Customization
+                                      Column(
+                                        children: [
+                                          const Icon(Icons.palette,
+                                              color: Colors.white, size: 28),
+                                          const SizedBox(height: 8),
+                                          const ShadowedText(
+                                            text: 'Background Type',
+                                            fontSize: 16,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          DropdownButton<String>(
+                                            value: _backgroundType,
+                                            dropdownColor: Colors.black87,
+                                            underline: Container(
+                                              height: 1,
+                                              color: Colors.white30,
+                                            ),
+                                            style: const TextStyle(
+                                                color: Colors.white),
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
                                                 setState(() {
-                                                  _dueDateTime = DateTime(
-                                                    date.year,
-                                                    date.month,
-                                                    date.day,
-                                                    time.hour,
-                                                    time.minute,
-                                                  );
+                                                  _backgroundType = newValue;
                                                 });
                                               }
-                                            }
-                                          },
-                                          child: ShadowedText(
-                                            text: _dueDateTime?.toString() ??
-                                                'Not set',
-                                            fontSize: 14,
+                                            },
+                                            items: <String>[
+                                              'color',
+                                              'image',
+                                              'video'
+                                            ].map<DropdownMenuItem<String>>(
+                                                (String value) {
+                                              return DropdownMenuItem<String>(
+                                                value: value,
+                                                child: ShadowedText(
+                                                  text: value
+                                                          .substring(0, 1)
+                                                          .toUpperCase() +
+                                                      value.substring(1),
+                                                  fontSize: 14,
+                                                ),
+                                              );
+                                            }).toList(),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Divider(color: Colors.white30),
-                                    // Background Customization
-                                    Column(
-                                      children: [
-                                        const Icon(Icons.palette,
-                                            color: Colors.white, size: 28),
-                                        const SizedBox(height: 8),
-                                        const ShadowedText(
-                                          text: 'Background Type',
-                                          fontSize: 16,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        DropdownButton<String>(
-                                          value: _backgroundType,
-                                          dropdownColor: Colors.black87,
-                                          underline: Container(
-                                            height: 1,
-                                            color: Colors.white30,
+                                        ],
+                                      ),
+                                      const Divider(color: Colors.white30),
+                                      // Response Visibility Toggle
+                                      Column(
+                                        children: [
+                                          const Icon(Icons.visibility,
+                                              color: Colors.white, size: 28),
+                                          const SizedBox(height: 8),
+                                          const ShadowedText(
+                                            text:
+                                                'Respondents see other responses',
+                                            fontSize: 16,
                                           ),
-                                          style: const TextStyle(
-                                              color: Colors.white),
-                                          onChanged: (String? newValue) {
-                                            if (newValue != null) {
+                                          const SizedBox(height: 12),
+                                          Switch(
+                                            value: _responseVisibility,
+                                            onChanged: (bool value) {
                                               setState(() {
-                                                _backgroundType = newValue;
+                                                _responseVisibility = value;
                                               });
-                                            }
-                                          },
-                                          items: <String>[
-                                            'color',
-                                            'image',
-                                            'video'
-                                          ].map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: ShadowedText(
-                                                text: value
-                                                        .substring(0, 1)
-                                                        .toUpperCase() +
-                                                    value.substring(1),
-                                                fontSize: 14,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      ],
-                                    ),
-                                    const Divider(color: Colors.white30),
-                                    // Response Visibility Toggle
-                                    Column(
-                                      children: [
-                                        const Icon(Icons.visibility,
-                                            color: Colors.white, size: 28),
-                                        const SizedBox(height: 8),
-                                        const ShadowedText(
-                                          text:
-                                              'Respondents see other responses',
-                                          fontSize: 16,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Switch(
-                                          value: _responseVisibility,
-                                          onChanged: (bool value) {
-                                            setState(() {
-                                              _responseVisibility = value;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    const Divider(color: Colors.white30),
-                                    // Completion Limit Toggle
-                                    Column(
-                                      children: [
-                                        const Icon(Icons.lock_clock,
-                                            color: Colors.white, size: 28),
-                                        const SizedBox(height: 8),
-                                        const ShadowedText(
-                                          text: 'Complete only once',
-                                          fontSize: 16,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Switch(
-                                          value: _completionLimit,
-                                          onChanged: (bool value) {
-                                            setState(() {
-                                              _completionLimit = value;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      const Divider(color: Colors.white30),
+                                      // Completion Limit Toggle
+                                      Column(
+                                        children: [
+                                          const Icon(Icons.lock_clock,
+                                              color: Colors.white, size: 28),
+                                          const SizedBox(height: 8),
+                                          const ShadowedText(
+                                            text: 'Complete only once',
+                                            fontSize: 16,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Switch(
+                                            value: _completionLimit,
+                                            onChanged: (bool value) {
+                                              setState(() {
+                                                _completionLimit = value;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  2,
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -488,7 +587,6 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                   ),
                 ),
         ),
-        // Bottom container with IgnorePointer
         Positioned(
           bottom: 0,
           left: 0,
@@ -499,7 +597,6 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                 ignoring: _isSettingsEnlarged,
                 child: GestureDetector(
                   onVerticalDragUpdate: (details) {
-                    // Forward vertical drag to the SingleChildScrollView
                     final scrollable = PrimaryScrollController.of(context);
                     if (scrollable != null) {
                       scrollable.position.jumpTo(
@@ -524,75 +621,67 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                         if (_isSettingsEnlarged)
                           const SizedBox(width: 72)
                         else
-                          _buildActionButton(
-                            iconBuilder: () => AnimatedBuilder(
-                              animation: _settingsScaleAnimation,
-                              builder: (context, child) => Transform.scale(
-                                scale: _settingsScaleAnimation.value,
-                                child: Transform.rotate(
-                                  angle:
-                                      _settingsAnimationController.value * -1.0,
-                                  child: ShadowedShape(
-                                    icon: Icons.settings,
-                                    size: 24,
-                                    shadowOpacity: 0.2,
+                          _buildHighlightBorder(
+                            _buildActionButton(
+                              iconBuilder: () => AnimatedBuilder(
+                                animation: _settingsScaleAnimation,
+                                builder: (context, child) => Transform.scale(
+                                  scale: _settingsScaleAnimation.value,
+                                  child: Transform.rotate(
+                                    angle:
+                                        _settingsAnimationController.value * -1.0,
+                                    child: ShadowedShape(
+                                      icon: Icons.settings,
+                                      size: 24,
+                                      shadowOpacity: 0.2,
+                                    ),
                                   ),
                                 ),
                               ),
+                              onPressed: () {
+                                setState(() {
+                                  _isSettingsEnlarged = !_isSettingsEnlarged;
+                                  if (_isSettingsEnlarged) {
+                                    _settingsAnimationController.forward();
+                                  } else {
+                                    _settingsAnimationController.reverse();
+                                  }
+                                });
+                              },
+                              label: _isSettingsEnlarged ? null : 'Settings',
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isSettingsEnlarged = !_isSettingsEnlarged;
-                                if (_isSettingsEnlarged) {
-                                  _settingsAnimationController.forward();
-                                } else {
-                                  _settingsAnimationController.reverse();
-                                }
-                              });
-                            },
-                            label: _isSettingsEnlarged ? null : 'Settings',
+                            2,
                           ),
                         if (!_isSettingsEnlarged) ...[
                           Transform.translate(
                             offset: const Offset(0, 30),
                             child: _buildActionButton(
-                              iconBuilder: () => AIButtonShape(
-                                icon: Icons.auto_awesome,
+                              iconBuilder: () => AIButtonWithMic(
                                 size: 48,
+                                isHighlighted: _isAIHighlighted,
+                                onPressed: _handleAIButtonPress,
                               ),
-                              onPressed: () {
-                                widget.pageController.nextPage(
-                                  duration: const Duration(milliseconds: 500),
-                                  curve: Curves.easeOutBack,
-                                );
-                              },
+                              onPressed: _handleAIButtonPress,
                               label: 'AI',
                               isLarger: true,
                             ),
                           ),
-                          _buildActionButton(
-                            iconBuilder: () => widget.steps.isEmpty
-                                ? AddHexagonIcon(
-                                    size: 24,
-                                    shadowOpacity: 0.2,
-                                  )
-                                : ShadowedShape(
-                                    icon: Icons.format_list_numbered,
-                                    size: 24,
-                                    shadowOpacity: 0.2,
-                                  ),
-                            onPressed: widget.steps.isEmpty
-                                ? widget.onAddStep
-                                : () {
-                                    if (widget.steps.isNotEmpty) {
-                                      widget.pageController.nextPage(
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        curve: Curves.easeInOut,
-                                      );
-                                    }
-                                  },
-                            label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
+                          _buildHighlightBorder(
+                            _buildActionButton(
+                              iconBuilder: () => widget.steps.isEmpty
+                                  ? AddHexagonIcon(
+                                      size: 24,
+                                      shadowOpacity: 0.2,
+                                    )
+                                  : ShadowedShape(
+                                      icon: Icons.format_list_numbered,
+                                      size: 24,
+                                      shadowOpacity: 0.2,
+                                    ),
+                              onPressed: _handleStepsButtonPress,
+                              label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
+                            ),
+                            3,
                           ),
                         ],
                       ],
@@ -600,7 +689,6 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                   ),
                 ),
               ),
-              // Settings button when expanded
               if (_isSettingsEnlarged)
                 Positioned(
                   left: 24,

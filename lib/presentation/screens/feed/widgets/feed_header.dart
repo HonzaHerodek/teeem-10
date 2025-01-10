@@ -12,6 +12,8 @@ class FeedHeader extends StatelessWidget {
   final FeedController? feedController;
   final GlobalKey searchBarKey;
   final GlobalKey filtersKey;
+  final bool isTargetHighlighted;
+  final Animation<double>? targetHighlightAnimation;
 
   const FeedHeader({
     super.key,
@@ -19,6 +21,8 @@ class FeedHeader extends StatelessWidget {
     required this.searchBarKey,
     required this.filtersKey,
     this.feedController,
+    this.isTargetHighlighted = false,
+    this.targetHighlightAnimation,
   });
 
   @override
@@ -36,15 +40,14 @@ class FeedHeader extends StatelessWidget {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header row with buttons and search bar
                 FeedHeaderSearchSection(
                   headerController: headerController,
                   feedController: feedController,
                   searchBarKey: searchBarKey,
                   filtersKey: filtersKey,
+                  isTargetHighlighted: isTargetHighlighted,
+                  targetHighlightAnimation: targetHighlightAnimation,
                 ),
-
-                // Chips below header
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   transitionBuilder: (Widget child, Animation<double> animation) {
@@ -61,7 +64,6 @@ class FeedHeader extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // First row - Profile miniatures
                       SizedBox(
                         height: 80,
                         child: Padding(
@@ -71,8 +73,7 @@ class FeedHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 9), // Spacing between rows
-                      // Second row - Group chips
+                      const SizedBox(height: 9),
                       SizedBox(
                         height: 80,
                         child: Padding(
@@ -82,16 +83,14 @@ class FeedHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 9), // Spacing between rows
-                      // Third row - Special relation filter chips
+                      const SizedBox(height: 9),
                       SizedBox(
                         height: 35,
                         child: FeedHeaderSpecialFiltersSection(
                           headerController: headerController,
                         ),
                       ),
-                      const SizedBox(height: 9), // Spacing between rows
-                      // Fourth row - Trait chips
+                      const SizedBox(height: 9),
                       SizedBox(
                         height: 35,
                         child: FeedHeaderTraitsSection(

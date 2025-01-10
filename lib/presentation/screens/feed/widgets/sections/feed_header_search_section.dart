@@ -9,13 +9,13 @@ import '../../feed_bloc/feed_event.dart';
 import '../feed_search_bar.dart';
 import '../target_icon.dart';
 
-//TODO: repair the opening of notifications and target section together (it should be possible to filter notificatios with target and vice versa
-
 class FeedHeaderSearchSection extends StatefulWidget {
   final FeedHeaderController headerController;
   final FeedController? feedController;
   final GlobalKey searchBarKey;
   final GlobalKey filtersKey;
+  final bool isTargetHighlighted;
+  final Animation<double>? targetHighlightAnimation;
 
   const FeedHeaderSearchSection({
     super.key,
@@ -23,6 +23,8 @@ class FeedHeaderSearchSection extends StatefulWidget {
     required this.searchBarKey,
     required this.filtersKey,
     this.feedController,
+    this.isTargetHighlighted = false,
+    this.targetHighlightAnimation,
   });
 
   @override
@@ -84,7 +86,6 @@ class _FeedHeaderSearchSectionState extends State<FeedHeaderSearchSection> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (!widget.headerController.state.isCreatingPost)
-              // Left Column: Notifications
               SizedBox(
                 width: 56,
                 child: Center(
@@ -100,7 +101,6 @@ class _FeedHeaderSearchSectionState extends State<FeedHeaderSearchSection> {
                 ),
               ),
 
-            // Center Column: Search Bar or Notification Bar
             Expanded(
               child: Center(
                 child: AnimatedSwitcher(
@@ -133,7 +133,6 @@ class _FeedHeaderSearchSectionState extends State<FeedHeaderSearchSection> {
               ),
             ),
 
-            // Right Column: Target Icon
             SizedBox(
               width: 56,
               child: Center(
@@ -141,6 +140,8 @@ class _FeedHeaderSearchSectionState extends State<FeedHeaderSearchSection> {
                   key: widget.headerController.targetIconKey,
                   onTap: widget.headerController.toggleSearch,
                   isActive: widget.headerController.state.isSearchVisible,
+                  isHighlighted: widget.isTargetHighlighted,
+                  highlightAnimation: widget.targetHighlightAnimation,
                 ),
               ),
             ),

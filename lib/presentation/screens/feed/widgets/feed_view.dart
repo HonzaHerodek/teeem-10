@@ -38,6 +38,10 @@ class _FeedViewState extends State<FeedView> {
   Offset? _dimmingSource;
   GlobalKey? _selectedItemKey;
 
+  // Target highlight state
+  bool _isTargetHighlighted = false;
+  Animation<double>? _targetHighlightAnimation;
+
   final _scrollController = ScrollController();
   final _postCreationKey = GlobalKey<InFeedPostCreationState>();
   final _plusActionButtonKey = GlobalKey();
@@ -82,7 +86,6 @@ class _FeedViewState extends State<FeedView> {
       positionTracker: _positionTracker,
       context: context,
     );
-
 
     _dimmingManager = DimmingManager(
       headerController: _headerController,
@@ -199,6 +202,22 @@ class _FeedViewState extends State<FeedView> {
     }
   }
 
+  void _handleTargetHighlightChanged(bool isHighlighted, Animation<double>? animation) {
+    setState(() {
+      _isTargetHighlighted = isHighlighted;
+      _targetHighlightAnimation = animation;
+    });
+  }
+
+  void _handleAIRequest() {
+    // Get the current post creation state
+    final postCreation = _postCreationKey.currentState;
+    if (postCreation != null) {
+      // TODO: Implement AI functionality
+      print('AI Request triggered');
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -251,6 +270,8 @@ class _FeedViewState extends State<FeedView> {
                     topPadding: _layoutManager.getTopPadding(context),
                     selectedItemKey: _selectedItemKey,
                     selectedNotification: _headerController.selectedNotification,
+                    onTargetHighlightChanged: _handleTargetHighlightChanged,
+                    onAIRequest: _handleAIRequest,
                   ),
                 );
               },
@@ -270,6 +291,8 @@ class _FeedViewState extends State<FeedView> {
               feedController: _feedController,
               searchBarKey: _searchBarKey,
               filtersKey: _filtersKey,
+              isTargetHighlighted: _isTargetHighlighted,
+              targetHighlightAnimation: _targetHighlightAnimation,
             ),
             Builder(
               builder: (context) => FeedActionButtons(

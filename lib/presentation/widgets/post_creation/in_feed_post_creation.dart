@@ -12,23 +12,23 @@ import './components/post_creation_cancel_button.dart';
 import './models/post_creation_state.dart';
 import './controllers/in_feed_post_creation_controller.dart';
 
-//TODO: the step type forms need to fit nicely within the post creation frame
-
 class InFeedPostCreation extends StatefulWidget {
   final VoidCallback onCancel;
   final Function(bool success) onComplete;
+  final Function(bool isHighlighted, Animation<double>? animation)? onTargetHighlightChanged;
+  final VoidCallback? onAIRequest;  // New callback for AI functionality
 
   const InFeedPostCreation({
     super.key,
     required this.onCancel,
     required this.onComplete,
+    this.onTargetHighlightChanged,
+    this.onAIRequest,
   });
 
   static PostCreationController? of(BuildContext context) {
-    final state =
-        context.findRootAncestorStateOfType<InFeedPostCreationState>();
+    final state = context.findRootAncestorStateOfType<InFeedPostCreationState>();
     if (state == null) return null;
-
     return LegacyPostCreationController(state);
   }
 
@@ -60,6 +60,15 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
   late final PostCreationController _controller;
 
   late PostCreationState _state;
+
+  void _handleAIRequest() {
+    // Get current title and description
+    final title = _titleController.text;
+    final description = _descriptionController.text;
+
+    // Call the AI request callback
+    widget.onAIRequest?.call();
+  }
 
   @override
   void initState() {
@@ -135,7 +144,6 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
         curve: Curves.easeInOut,
       );
     } else {
-      // If the last step hasn't had a type selected yet, just navigate to it
       _pageController.animateToPage(
         _state.steps.length,
         duration: const Duration(milliseconds: 300),
@@ -163,15 +171,12 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
 
   void _updateStepsAfterRemoval(int index) {
     final newSteps = List<PostStepWidget>.from(_state.steps);
-    final newStepKeys =
-        List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+    final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
 
-    // Store states before removal
     final stepStates = <int, Map<String, dynamic>>{};
     for (var i = 0; i < newSteps.length; i++) {
-      if (i == index) continue; // Skip the step being removed
-      final state =
-          (newSteps[i].key as GlobalKey<PostStepWidgetState>).currentState;
+      if (i == index) continue;
+      final state = (newSteps[i].key as GlobalKey<PostStepWidgetState>).currentState;
       if (state != null) {
         stepStates[i > index ? i - 1 : i] = {
           'stepType': state.getSelectedStepType(),
@@ -183,7 +188,6 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
     newSteps.removeAt(index);
     newStepKeys.removeAt(index);
 
-    // Update step numbers and preserve states
     for (var i = 0; i < newSteps.length; i++) {
       final stepKey = GlobalKey<PostStepWidgetState>();
       newStepKeys[i] = stepKey;
@@ -213,7 +217,6 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
     }
 
     if (_state.currentPage == 1) {
-      // Step type selection page
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -221,14 +224,11 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
       return;
     }
 
-    final stepState = _state.stepKeys[_state.currentPage - 2]
-        .currentState; // -2 to account for step type page
+    final stepState = _state.stepKeys[_state.currentPage - 2].currentState;
     if (stepState != null && stepState.hasSelectedStepType) {
-      // If a step type is selected, reset to honeycomb grid
       setState(() {
         final stepKey = GlobalKey<PostStepWidgetState>();
-        final newStepKeys =
-            List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
+        final newStepKeys = List<GlobalKey<PostStepWidgetState>>.from(_state.stepKeys);
         final newSteps = List<PostStepWidget>.from(_state.steps);
 
         newStepKeys[_state.currentPage - 2] = stepKey;
@@ -248,7 +248,6 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
         );
       });
     } else {
-      // If no step type selected yet, remove the step and go back
       _removeStep(_state.currentPage - 2);
     }
   }
@@ -319,13 +318,14 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                       descriptionController: _descriptionController,
                       isLoading: _state.isLoading,
                       onAddStep: _addStep,
+                      onAIRequest: _handleAIRequest,
                       steps: _state.steps,
                       pageController: _pageController,
+                      onTargetHighlightChanged: widget.onTargetHighlightChanged,
                     ),
                     HexagonStepSelector(
                       stepTypeRepository: getIt<StepTypeRepository>(),
                       onStepFormSubmitted: (stepType, formData) {
-                        // Create a new step with the form data
                         final stepKey = GlobalKey<PostStepWidgetState>();
                         final newStep = PostStepWidget(
                           key: stepKey,
@@ -344,7 +344,6 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                           );
                         });
 
-                        // Navigate to the next page
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -367,30 +366,29 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
     final size = MediaQuery.of(context).size.width - 32;
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        // When post creation is active, prevent scroll events from reaching the feed
         return true;
       },
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-        _buildContent(size),
-        if (_state.isFirstPage)
-          PostCreationCancelButton(
-            isLoading: _state.isLoading,
-            onCancel: widget.onCancel,
+          _buildContent(size),
+          if (_state.isFirstPage)
+            PostCreationCancelButton(
+              isLoading: _state.isLoading,
+              onCancel: widget.onCancel,
+            ),
+          PostCreationNavigation(
+            currentPage: _state.currentPage,
+            stepsCount: _state.steps.length,
+            pageController: _pageController,
+            onAddStep: _addStep,
           ),
-        PostCreationNavigation(
-          currentPage: _state.currentPage,
-          stepsCount: _state.steps.length,
-          pageController: _pageController,
-          onAddStep: _addStep,
-        ),
-        if (!_state.isFirstPage)
-          PostCreationStepButton(
-            isLoading: _state.isLoading,
-            onPressed: _handleCancelButtonPress,
-            hasSelectedStepType: _state.hasSelectedStepType,
-          ),
+          if (!_state.isFirstPage)
+            PostCreationStepButton(
+              isLoading: _state.isLoading,
+              onPressed: _handleCancelButtonPress,
+              hasSelectedStepType: _state.hasSelectedStepType,
+            ),
         ],
       ),
     );

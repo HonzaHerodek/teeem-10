@@ -1,7 +1,73 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../../../data/models/post_model.dart';
 import '../../../core/utils/step_type_utils.dart';
 import '../../../core/utils/step_indicators_utils.dart';
+import 'package:flutter/rendering.dart';
+
+class HexagonPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+  final List<BoxShadow> shadows;
+
+  HexagonPainter({
+    required this.color,
+    required this.borderColor,
+    required this.shadows,
+  });
+
+  Path _createHexagonPath(Size size) {
+    final path = Path();
+    final width = size.width;
+    final height = size.height;
+    final centerX = width / 2;
+    final centerY = height / 2;
+    final radius = width / 2;
+
+    // Start from the rightmost point and move counter-clockwise
+    path.moveTo(centerX + radius, centerY);
+    for (var i = 1; i <= 6; i++) {
+      final angle = i * 60 * math.pi / 180;
+      final x = centerX + radius * math.cos(angle);
+      final y = centerY + radius * math.sin(angle);
+      path.lineTo(x, y);
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = _createHexagonPath(size);
+    
+    // Draw shadows using offset instead of MaskFilter
+    for (final shadow in shadows) {
+      final shadowPath = path.shift(Offset(shadow.blurRadius / 2, shadow.blurRadius / 2));
+      final shadowPaint = Paint()
+        ..color = shadow.color
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(shadowPath, shadowPaint);
+    }
+
+    // Draw fill
+    final fillPaint = Paint()..color = color;
+    canvas.drawPath(path, fillPaint);
+
+    // Draw border
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(HexagonPainter oldDelegate) {
+    return color != oldDelegate.color ||
+        borderColor != oldDelegate.borderColor ||
+        shadows != oldDelegate.shadows;
+  }
+}
 
 class StepDots extends StatefulWidget {
   final List<PostStep> steps;
@@ -123,8 +189,8 @@ class _StepDotsState extends State<StepDots>
       return [
         BoxShadow(
           color: Colors.black.withOpacity(0.2),
-          blurRadius: 4,
-          spreadRadius: 1,
+          blurRadius: 2,
+          spreadRadius: 0,
         ),
       ];
     }
@@ -132,13 +198,13 @@ class _StepDotsState extends State<StepDots>
     return [
       BoxShadow(
         color: Colors.black.withOpacity(0.25),
-        blurRadius: 4,
-        spreadRadius: 1,
+        blurRadius: 2,
+        spreadRadius: 0,
       ),
       BoxShadow(
         color: color.withOpacity(0.3),
-        blurRadius: 8,
-        spreadRadius: 2,
+        blurRadius: 4,
+        spreadRadius: 0,
       ),
     ];
   }
@@ -212,16 +278,14 @@ class _StepDotsState extends State<StepDots>
         width: itemWidth,
         height: 24.0, // Reduced height to place dots higher
         alignment: Alignment.center,
-        child: Container(
+        child: SizedBox(
           width: 10.0,
           height: 10.0,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isCurrentStep ? color : color.withOpacity(0.6),
-            boxShadow: _createDotShadows(color, isCurrentStep),
-            border: Border.all(
-              color: color.withOpacity(0.8),
-              width: 1.5,
+          child: CustomPaint(
+            painter: HexagonPainter(
+              color: isCurrentStep ? color : color.withOpacity(0.6),
+              borderColor: color.withOpacity(0.8),
+              shadows: _createDotShadows(color, isCurrentStep),
             ),
           ),
         ),
