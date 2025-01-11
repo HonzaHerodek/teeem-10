@@ -16,8 +16,8 @@ class PostCreationNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Don't show navigation dots on step type selection page
-    if (currentPage == 1) return const SizedBox.shrink();
+    // Don't show navigation dots on first page or step type selection page
+    if (currentPage == 0 || currentPage == 1) return const SizedBox.shrink();
 
     // Adjust page index to account for step type selection page
     final adjustedCurrentPage = currentPage > 1 ? currentPage - 1 : currentPage;
