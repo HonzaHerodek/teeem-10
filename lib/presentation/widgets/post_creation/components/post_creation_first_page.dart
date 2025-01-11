@@ -9,10 +9,11 @@ class PostCreationFirstPage extends StatefulWidget {
   final TextEditingController descriptionController;
   final bool isLoading;
   final VoidCallback onAddStep;
-  final VoidCallback? onAIRequest;  // New callback for AI functionality
+  final VoidCallback? onAIRequest; // New callback for AI functionality
   final List<Widget> steps;
   final PageController pageController;
-  final Function(bool isHighlighted, Animation<double>? animation)? onTargetHighlightChanged;
+  final Function(bool isHighlighted, Animation<double>? animation)?
+      onTargetHighlightChanged;
 
   const PostCreationFirstPage({
     Key? key,
@@ -39,17 +40,26 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
   String _backgroundType = 'color';
   bool _responseVisibility = false;
   bool _completionLimit = false;
-  
+
   // Animation controllers and animations
   late AnimationController _settingsAnimationController;
   late Animation<double> _settingsScaleAnimation;
   late Animation<double> _settingsHeightAnimation;
-  
+
   // New state variables for AI button and highlighting
   bool _isAIHighlighted = false;
   int _currentHighlightIndex = -1;
   late AnimationController _highlightController;
   late Animation<double> _highlightAnimation;
+
+  // Colors for the highlight animation sequence
+  final List<Color> _highlightColors = [
+    Colors.blue,
+    Colors.purple,
+    Colors.pink,
+    Colors.orange,
+    Colors.green,
+  ];
 
   @override
   void initState() {
@@ -79,36 +89,51 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
     ));
 
     _highlightController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
     _highlightAnimation = CurvedAnimation(
       parent: _highlightController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic,
     );
 
     _highlightController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        if (_currentHighlightIndex < 4) {
+      if (status == AnimationStatus.completed && mounted) {
+        if (_currentHighlightIndex < 3) {
           setState(() {
             _currentHighlightIndex++;
           });
           _highlightController.reset();
           _highlightController.forward();
-          
-          // Update target highlight state when index is 4
-          if (_currentHighlightIndex == 4) {
-            widget.onTargetHighlightChanged?.call(true, _highlightAnimation);
-          }
-        } else {
+        } else if (_currentHighlightIndex == 3) {
+          // After highlighting Steps, trigger target highlight with animation
+          widget.onTargetHighlightChanged?.call(true, _highlightAnimation);
           setState(() {
             _isAIHighlighted = true;
+            _currentHighlightIndex = -1; // Reset highlight index
           });
-          // Remove target highlight when AI button is highlighted
-          widget.onTargetHighlightChanged?.call(false, null);
-          // Call AI functionality after highlight sequence
           widget.onAIRequest?.call();
+          
+          // Keep animation running during highlight
+          _highlightController.repeat(reverse: true);
+          
+          // Clean up target highlight after a delay
+          Future.delayed(const Duration(milliseconds: 2000), () {
+            if (mounted) {
+              widget.onTargetHighlightChanged?.call(false, null);
+              _highlightController.stop();
+            }
+          });
+
+          // Turn off AI button highlight after 5 seconds
+          Future.delayed(const Duration(milliseconds: 5000), () {
+            if (mounted) {
+              setState(() {
+                _isAIHighlighted = false;
+              });
+            }
+          });
         }
       }
     });
@@ -116,6 +141,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
 
   @override
   void dispose() {
+    // Clean up target highlight when disposing
+    widget.onTargetHighlightChanged?.call(false, null);
     widget.titleController.removeListener(_updateTitleState);
     widget.descriptionController.removeListener(_updateDescriptionState);
     _settingsAnimationController.dispose();
@@ -142,6 +169,11 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
   }
 
   void _handleAIButtonPress() {
+    if (_highlightController.isAnimating) {
+      // If animation is running, stop it and clean up
+      _highlightController.stop();
+      widget.onTargetHighlightChanged?.call(false, null);
+    }
     setState(() {
       _currentHighlightIndex = 0;
     });
@@ -195,13 +227,30 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
             child: AnimatedBuilder(
               animation: _highlightAnimation,
               builder: (context, child) {
+                final currentColor = _highlightColors[index];
+                final nextColor =
+                    _highlightColors[(index + 1) % _highlightColors.length];
+
                 return Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: Colors.white.withOpacity(_highlightAnimation.value),
-                      width: 2,
+                      color: Color.lerp(
+                        currentColor,
+                        nextColor,
+                        _highlightAnimation.value,
+                      )!
+                          .withOpacity(0.8),
+                      width: 4.0,
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: currentColor
+                            .withOpacity(0.3 * _highlightAnimation.value),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                 );
               },
@@ -265,8 +314,9 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                               : Colors.white30)),
                   focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                          color:
-                              _titleHasText ? Colors.transparent : Colors.white)),
+                          color: _titleHasText
+                              ? Colors.transparent
+                              : Colors.white)),
                   hintText: 'Title of Task',
                   hintStyle: const TextStyle(
                     fontSize: 24,
@@ -410,7 +460,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                     const EdgeInsets.symmetric(horizontal: 24),
                                 child: _buildHighlightBorder(
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Opacity(
                                         opacity: 0.45,
@@ -444,7 +495,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                                     const Duration(days: 365)),
                                               );
                                               if (date != null) {
-                                                final time = await showTimePicker(
+                                                final time =
+                                                    await showTimePicker(
                                                   context: context,
                                                   initialTime:
                                                       TimeOfDay.fromDateTime(
@@ -628,8 +680,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                 builder: (context, child) => Transform.scale(
                                   scale: _settingsScaleAnimation.value,
                                   child: Transform.rotate(
-                                    angle:
-                                        _settingsAnimationController.value * -1.0,
+                                    angle: _settingsAnimationController.value *
+                                        -1.0,
                                     child: ShadowedShape(
                                       icon: Icons.settings,
                                       size: 24,
@@ -679,7 +731,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                       shadowOpacity: 0.2,
                                     ),
                               onPressed: _handleStepsButtonPress,
-                              label: widget.steps.isEmpty ? 'Add Step' : 'Steps',
+                              label:
+                                  widget.steps.isEmpty ? 'Add Step' : 'Steps',
                             ),
                             3,
                           ),
