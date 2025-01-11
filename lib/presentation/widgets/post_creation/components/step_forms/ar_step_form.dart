@@ -51,94 +51,96 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
     // This would typically use image_picker package
   }
 
+  bool _allowMultipleUses = false;
+
   @override
   Widget buildStepSpecificFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 3D Model upload area
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _modelPath != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.view_in_ar,
-                          size: 32, color: Colors.blue),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Model selected: ${_modelPath!}',
-                        textAlign: TextAlign.center,
-                      ),
-                      TextButton(
-                        onPressed: _pickModel,
-                        child: const Text('Change Model'),
-                      ),
-                    ],
-                  ),
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.view_in_ar,
-                          size: 48, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Supported formats: GLB, GLTF, USDZ',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickModel,
-                        child: const Text('Select 3D Model'),
-                      ),
-                    ],
-                  ),
-                ),
+        // Main options in a row (3 items)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildOptionButton(
+              icon: Icons.upload_file,
+              label: 'Upload',
+              onPressed: _pickModel,
+            ),
+            _buildOptionButton(
+              icon: Icons.link,
+              label: 'URL',
+              onPressed: () {/* TODO: Implement URL input */},
+            ),
+            _buildOptionButton(
+              icon: Icons.preview,
+              label: 'Preview',
+              onPressed: _pickPreviewImage,
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        // Preview image upload
-        Container(
-          height: 120,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _previewImagePath != null
-              ? Image.network(
-                  _previewImagePath!,
-                  fit: BoxFit.cover,
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.image, size: 32, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickPreviewImage,
-                        child: const Text('Select Preview Image'),
-                      ),
-                    ],
+        // Model preview area
+        if (_modelPath != null) ...[
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.view_in_ar, size: 32, color: Colors.blue),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Model selected: ${_modelPath!}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14),
                   ),
-                ),
-        ),
-        const SizedBox(height: 16),
-        // Instructions
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ] else
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.view_in_ar, size: 48, color: Colors.grey.withOpacity(0.7)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Supported formats: GLB, GLTF, USDZ',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        // Basic instructions
         TextFormField(
           controller: _instructionsController,
-          decoration: const InputDecoration(
-            labelText: 'Instructions',
-            hintText:
-                'Enter instructions for interacting with the AR content...',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: 'Enter instructions for interacting with the AR content...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
+          style: const TextStyle(fontSize: 14),
           maxLines: 3,
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -147,37 +149,64 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        // Device requirements
-        TextFormField(
-          controller: _requirementsController,
-          decoration: const InputDecoration(
-            labelText: 'Device Requirements',
-            hintText: 'Enter any specific device requirements...',
-            border: OutlineInputBorder(),
+        if (super.showMoreOptions) ...[
+          const SizedBox(height: 16),
+          // Additional options
+          SwitchListTile(
+            title: const Text(
+              'Respondents can use multiple times',
+              style: TextStyle(fontSize: 14),
+            ),
+            value: _allowMultipleUses,
+            onChanged: (bool value) {
+              setState(() {
+                _allowMultipleUses = value;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
           ),
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        // Required features
-        CheckboxListTile(
-          title: const Text('Requires Gyroscope'),
-          value: _requiresGyroscope,
-          onChanged: (value) {
-            setState(() {
-              _requiresGyroscope = value ?? false;
-            });
-          },
-        ),
-        CheckboxListTile(
-          title: const Text('Requires Camera'),
-          value: _requiresCamera,
-          onChanged: (value) {
-            setState(() {
-              _requiresCamera = value ?? true;
-            });
-          },
-        ),
+          const SizedBox(height: 12),
+          // Device requirements
+          TextFormField(
+            controller: _requirementsController,
+            decoration: InputDecoration(
+              labelText: 'Device Requirements',
+              hintText: 'Enter any specific device requirements...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+            style: const TextStyle(fontSize: 14),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          // Required features
+          CheckboxListTile(
+            title: const Text('Requires Gyroscope', style: TextStyle(fontSize: 14)),
+            value: _requiresGyroscope,
+            onChanged: (value) {
+              setState(() {
+                _requiresGyroscope = value ?? false;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+          CheckboxListTile(
+            title: const Text('Requires Camera', style: TextStyle(fontSize: 14)),
+            value: _requiresCamera,
+            onChanged: (value) {
+              setState(() {
+                _requiresCamera = value ?? true;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
       ],
     );
   }
@@ -191,6 +220,37 @@ class ArStepFormState extends StepTypeFormBaseState<ArStepForm> {
       'requirements': _requirementsController.text,
       'requiresGyroscope': _requiresGyroscope,
       'requiresCamera': _requiresCamera,
+      'allowMultipleUses': _allowMultipleUses,
     };
+  }
+
+  Widget _buildOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(icon, 
+            color: Colors.grey[600],
+          ),
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.grey[100],
+            padding: const EdgeInsets.all(12),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
   }
 }

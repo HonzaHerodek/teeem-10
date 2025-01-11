@@ -1,0 +1,68 @@
+All step types have an optional title and description. The default placeholders for these fields are step type name (Title field) and description of the step type (Description field). Each step type then typically has up to 3 unique “main options” and numerous “other options”.
+
+Consuming step types:
+
+Text:
+Main options: text field with formatting (bold, cursive, underline, stroked, bullet-points, numbering, link)
+Other options: step background (upload/link)
+
+Image: 
+Main options: upload image/image link
+Other options: 
+
+Video:
+Main options: upload video/video link
+Other options: respondents must finish the video (toggle)
+
+Link:
+Main options: link
+Other options: users must click the link / users must do activity on website (toggle)
+
+VR: 
+Main options: upload file / file link
+Other options: respondents can use multiple times (toggle)
+
+AR:
+Main options: upload file / file link
+Other options: respondents can use multiple times (toggle)
+
+Task Author Approval:
+Main options: approved material (step response - e.g. share material, share location)
+Other options: automatic approval (toggle)
+
+
+Interactive step types:
+
+Share material:
+Main options: material type (text, link, image, video, …)
+Other options: allow multiple responses by a respondent (toggle)
+
+Share location: 
+Main options: sharing current location / route (toggle), required location (selection on map with search)
+Other options: tracking time (of location sharing, length of route)
+
+Select:
+Main options: option 1 (e.g. text, image, video, link), option 2 (e.g. text, image, video, link), option 3 (e.g. text, image, video, link), add option
+Other options: multiple selections by a respondent (toggle), users can edit (for X minutes, anytime, never)
+
+Quiz:
+Main options: question 1 (text field, answer type, correct answer), question 2 (text field, answer type, correct answer), question 3 (text field, answer type, correct answer)
+Other options: Users see correct answer after answering (each question / all questions), results message (logic, text field)
+
+Respondent Approval:
+Main options: approved material (steps - e.g.text, image, location)
+Other options: public approval by respondents (toggle)
+
+Share out:
+Main options: sharing platform (Facebook, Instagram, email, WhatsApp, Slack)
+Other options: respondents must include link (toggle)
+
+Download:
+Main option: file (upload, link)
+Other options: respondents can download multiple times (toggle)
+
+Upload:
+Main options: required file type (e.g. text document, image, video)
+Other options: respondents can upload multiple files (toggle)
+
+

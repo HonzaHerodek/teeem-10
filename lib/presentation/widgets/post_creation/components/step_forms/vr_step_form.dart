@@ -52,115 +52,96 @@ class VrStepFormState extends StepTypeFormBaseState<VrStepForm> {
     // This would typically use image_picker package
   }
 
+  bool _allowMultipleUses = false;
+
   @override
   Widget buildStepSpecificFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // VR Scene upload area
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _scenePath != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.vrpano, size: 32, color: Colors.blue),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Scene selected: ${_scenePath!}',
-                        textAlign: TextAlign.center,
-                      ),
-                      TextButton(
-                        onPressed: _pickScene,
-                        child: const Text('Change Scene'),
-                      ),
-                    ],
-                  ),
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.vrpano, size: 48, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Supported formats: FBX, Unity Package, WebXR',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickScene,
-                        child: const Text('Select VR Scene'),
-                      ),
-                    ],
-                  ),
-                ),
-        ),
-        const SizedBox(height: 16),
-        // Preview image upload
-        Container(
-          height: 120,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: _previewImagePath != null
-              ? Image.network(
-                  _previewImagePath!,
-                  fit: BoxFit.cover,
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.image, size: 32, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _pickPreviewImage,
-                        child: const Text('Select Preview Image'),
-                      ),
-                    ],
-                  ),
-                ),
-        ),
-        const SizedBox(height: 16),
-        // View Mode Selection
-        DropdownButtonFormField<String>(
-          value: _selectedViewMode,
-          decoration: const InputDecoration(
-            labelText: 'View Mode',
-            border: OutlineInputBorder(),
-          ),
-          items: const [
-            DropdownMenuItem(
-              value: 'mono',
-              child: Text('Monoscopic (Single View)'),
+        // Main options in a row (3 items)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildOptionButton(
+              icon: Icons.upload_file,
+              label: 'Upload',
+              onPressed: _pickScene,
             ),
-            DropdownMenuItem(
-              value: 'stereo',
-              child: Text('Stereoscopic (Split View)'),
+            _buildOptionButton(
+              icon: Icons.link,
+              label: 'URL',
+              onPressed: () {/* TODO: Implement URL input */},
+            ),
+            _buildOptionButton(
+              icon: Icons.preview,
+              label: 'Preview',
+              onPressed: _pickPreviewImage,
             ),
           ],
-          onChanged: (value) {
-            setState(() {
-              _selectedViewMode = value!;
-            });
-          },
         ),
         const SizedBox(height: 16),
-        // Instructions
+        // Scene preview area
+        if (_scenePath != null) ...[
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.vrpano, size: 32, color: Colors.blue),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Scene selected: ${_scenePath!}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ] else
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.vrpano, size: 48, color: Colors.grey.withOpacity(0.7)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Supported formats: FBX, Unity Package, WebXR',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        // Basic instructions
         TextFormField(
           controller: _instructionsController,
-          decoration: const InputDecoration(
-            labelText: 'Instructions',
+          decoration: InputDecoration(
             hintText: 'Enter instructions for navigating the VR environment...',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
+          style: const TextStyle(fontSize: 14),
           maxLines: 3,
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -169,52 +150,110 @@ class VrStepFormState extends StepTypeFormBaseState<VrStepForm> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        // Device requirements
-        TextFormField(
-          controller: _requirementsController,
-          decoration: const InputDecoration(
-            labelText: 'Device Requirements',
-            hintText: 'Enter any specific VR headset requirements...',
-            border: OutlineInputBorder(),
+        if (super.showMoreOptions) ...[
+          const SizedBox(height: 16),
+          // Additional options
+          SwitchListTile(
+            title: const Text(
+              'Respondents can use multiple times',
+              style: TextStyle(fontSize: 14),
+            ),
+            value: _allowMultipleUses,
+            onChanged: (bool value) {
+              setState(() {
+                _allowMultipleUses = value;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
           ),
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        // Required features
-        CheckboxListTile(
-          title: const Text('Requires 3DOF (Rotation Only)'),
-          value: _requires3dof,
-          onChanged: (value) {
-            setState(() {
-              _requires3dof = value ?? true;
-              if (value == true) {
-                _requires6dof = false;
-              }
-            });
-          },
-        ),
-        CheckboxListTile(
-          title: const Text('Requires 6DOF (Full Movement)'),
-          value: _requires6dof,
-          onChanged: (value) {
-            setState(() {
-              _requires6dof = value ?? false;
-              if (value == true) {
-                _requires3dof = false;
-              }
-            });
-          },
-        ),
-        CheckboxListTile(
-          title: const Text('Requires VR Controllers'),
-          value: _requiresControllers,
-          onChanged: (value) {
-            setState(() {
-              _requiresControllers = value ?? false;
-            });
-          },
-        ),
+          const SizedBox(height: 12),
+          // View Mode Selection
+          DropdownButtonFormField<String>(
+            value: _selectedViewMode,
+            decoration: InputDecoration(
+              labelText: 'View Mode',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: 'mono',
+                child: Text('Monoscopic (Single View)'),
+              ),
+              DropdownMenuItem(
+                value: 'stereo',
+                child: Text('Stereoscopic (Split View)'),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedViewMode = value!;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          // Device requirements
+          TextFormField(
+            controller: _requirementsController,
+            decoration: InputDecoration(
+              labelText: 'Device Requirements',
+              hintText: 'Enter any specific VR headset requirements...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+            style: const TextStyle(fontSize: 14),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          // Required features
+          CheckboxListTile(
+            title: const Text('Requires 3DOF (Rotation Only)', style: TextStyle(fontSize: 14)),
+            value: _requires3dof,
+            onChanged: (value) {
+              setState(() {
+                _requires3dof = value ?? true;
+                if (value == true) {
+                  _requires6dof = false;
+                }
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+          CheckboxListTile(
+            title: const Text('Requires 6DOF (Full Movement)', style: TextStyle(fontSize: 14)),
+            value: _requires6dof,
+            onChanged: (value) {
+              setState(() {
+                _requires6dof = value ?? false;
+                if (value == true) {
+                  _requires3dof = false;
+                }
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+          CheckboxListTile(
+            title: const Text('Requires VR Controllers', style: TextStyle(fontSize: 14)),
+            value: _requiresControllers,
+            onChanged: (value) {
+              setState(() {
+                _requiresControllers = value ?? false;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
       ],
     );
   }
@@ -230,6 +269,37 @@ class VrStepFormState extends StepTypeFormBaseState<VrStepForm> {
       'requires3dof': _requires3dof,
       'requires6dof': _requires6dof,
       'requiresControllers': _requiresControllers,
+      'allowMultipleUses': _allowMultipleUses,
     };
+  }
+
+  Widget _buildOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(icon, 
+            color: Colors.grey[600],
+          ),
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.grey[100],
+            padding: const EdgeInsets.all(12),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
   }
 }

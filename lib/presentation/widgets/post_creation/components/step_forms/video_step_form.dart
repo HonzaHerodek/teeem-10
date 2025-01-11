@@ -50,183 +50,95 @@ class VideoStepFormState extends StepTypeFormBaseState<VideoStepForm> {
     // This would typically use image_picker package
   }
 
+  bool _mustFinishVideo = false;
+
   @override
   Widget buildStepSpecificFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Video upload area with 16:9 aspect ratio
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.withOpacity(0.3)),
-              borderRadius: BorderRadius.circular(8),
+        // Main options in a row (3 items)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildOptionButton(
+              icon: Icons.video_library,
+              label: 'Gallery',
+              onPressed: _pickVideo,
             ),
-            child: _selectedVideoPath != null
-                ? Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.check_circle, 
-                              color: Colors.green[400],
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Video Selected',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: IconButton(
-                          icon: const Icon(Icons.edit, size: 20),
-                          onPressed: _pickVideo,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ),
-                    ],
-                  )
-                : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.video_library,
-                          size: 36,
-                          color: Colors.grey.withOpacity(0.7),
-                        ),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: _pickVideo,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Select Video',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
+            _buildOptionButton(
+              icon: Icons.videocam,
+              label: 'Record',
+              onPressed: () {/* TODO: Implement video recording */},
+            ),
+            _buildOptionButton(
+              icon: Icons.link,
+              label: 'URL',
+              onPressed: () {/* TODO: Implement URL input */},
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        // Thumbnail upload area with 16:9 aspect ratio but smaller height
-        SizedBox(
-          height: 100,
-          child: AspectRatio(
+        const SizedBox(height: 16),
+        // Video preview area
+        if (_selectedVideoPath != null) ...[
+          AspectRatio(
             aspectRatio: 16 / 9,
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.withOpacity(0.3)),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: _thumbnailPath != null
-                  ? Stack(
-                      fit: StackFit.expand,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            _thumbnailPath!,
-                            fit: BoxFit.cover,
-                          ),
+                        Icon(Icons.check_circle, 
+                          color: Colors.green[400],
+                          size: 20,
                         ),
-                        Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: IconButton(
-                            icon: const Icon(Icons.edit, size: 18),
-                            onPressed: _pickThumbnail,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Video Selected',
+                          style: TextStyle(fontSize: 14),
                         ),
                       ],
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.image,
-                            size: 24,
-                            color: Colors.grey.withOpacity(0.7),
-                          ),
-                          const SizedBox(height: 4),
-                          ElevatedButton(
-                            onPressed: _pickThumbnail,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Select Thumbnail',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ],
+                    ),
+                  ),
+                  if (_thumbnailPath != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _thumbnailPath!,
+                        fit: BoxFit.cover,
                       ),
                     ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        // Duration field with validation
-        TextFormField(
-          controller: _durationController,
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Duration (mm:ss)',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+        ] else
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.video_library,
+                  size: 36,
+                  color: Colors.grey.withOpacity(0.7),
+                ),
+              ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-            prefixIcon: const Icon(Icons.timer, size: 18),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter the duration';
-            }
-            final durationRegex = RegExp(r'^\d{2}:\d{2}$');
-            if (!durationRegex.hasMatch(value)) {
-              return 'Use format: mm:ss';
-            }
-            final parts = value.split(':');
-            final minutes = int.parse(parts[0]);
-            final seconds = int.parse(parts[1]);
-            if (seconds >= 60) {
-              return 'Invalid seconds value';
-            }
-            return null;
-          },
-        ),
         const SizedBox(height: 12),
-        // Caption field
+        // Basic details
         TextFormField(
           controller: _captionController,
           style: const TextStyle(fontSize: 14),
@@ -248,30 +160,91 @@ class VideoStepFormState extends StepTypeFormBaseState<VideoStepForm> {
             return null;
           },
         ),
-        const SizedBox(height: 12),
-        // Transcript field
-        TextFormField(
-          controller: _transcriptController,
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Enter video transcript for accessibility...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+        if (super.showMoreOptions) ...[
+          const SizedBox(height: 16),
+          // Additional options
+          SwitchListTile(
+            title: const Text(
+              'Respondents must finish the video',
+              style: TextStyle(fontSize: 14),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
+            value: _mustFinishVideo,
+            onChanged: (bool value) {
+              setState(() {
+                _mustFinishVideo = value;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: 12),
+          // Thumbnail selection
+          OutlinedButton.icon(
+            onPressed: _pickThumbnail,
+            icon: const Icon(Icons.image),
+            label: const Text('Set Custom Thumbnail'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
           ),
-          maxLines: 3,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter a transcript';
-            }
-            return null;
-          },
-        ),
+          const SizedBox(height: 12),
+          // Duration field
+          TextFormField(
+            controller: _durationController,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Duration (mm:ss)',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              prefixIcon: const Icon(Icons.timer, size: 18),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the duration';
+              }
+              final durationRegex = RegExp(r'^\d{2}:\d{2}$');
+              if (!durationRegex.hasMatch(value)) {
+                return 'Use format: mm:ss';
+              }
+              final parts = value.split(':');
+              final minutes = int.parse(parts[0]);
+              final seconds = int.parse(parts[1]);
+              if (seconds >= 60) {
+                return 'Invalid seconds value';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          // Transcript field
+          TextFormField(
+            controller: _transcriptController,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Enter video transcript for accessibility...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+            maxLines: 3,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a transcript';
+              }
+              return null;
+            },
+          ),
+        ],
       ],
     );
   }
@@ -284,6 +257,37 @@ class VideoStepFormState extends StepTypeFormBaseState<VideoStepForm> {
       'duration': _durationController.text,
       'caption': _captionController.text,
       'transcript': _transcriptController.text,
+      'mustFinishVideo': _mustFinishVideo,
     };
+  }
+
+  Widget _buildOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(icon, 
+            color: Colors.grey[600],
+          ),
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.grey[100],
+            padding: const EdgeInsets.all(12),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
   }
 }
