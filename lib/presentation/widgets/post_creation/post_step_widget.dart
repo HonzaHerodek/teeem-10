@@ -248,6 +248,7 @@ class PostStepWidgetState extends State<PostStepWidget>
         : Colors.grey;
 
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Container(
         key: ValueKey('form_${_selectedStepType?.id}'),
         decoration: BoxDecoration(
@@ -320,44 +321,42 @@ class PostStepWidgetState extends State<PostStepWidget>
     super.build(context);
     final size = MediaQuery.of(context).size.width - 32;
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: _showForm
-                    ? const Offset(-0.3, 0) // Slide from left when showing form
-                    : const Offset(
-                        0.3, 0), // Slide from right when showing grid
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
-          );
-        },
-        child: _showForm
-            ? _buildStepForm()
-            : SizedBox(
-                width: size * 1.0,
-                height: size * 1.0,
-                child: HoneycombGrid(
-                  cellSize: 65,
-                  spacing: 0,
-                  config: HoneycombConfig.area(
-                    maxWidth: size * 1.0,
-                    maxItemsPerRow: math.min(3, widget.stepTypes.length),
-                  ),
-                  children: widget.stepTypes
-                      .map((type) => _buildStepTypeMiniature(type))
-                      .toList(),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: _showForm
+                  ? const Offset(-0.3, 0) // Slide from left when showing form
+                  : const Offset(0.3, 0), // Slide from right when showing grid
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: _showForm
+          ? SizedBox(
+              width: size,
+              child: _buildStepForm(),
+            )
+          : SizedBox(
+              width: size,
+              height: size,
+              child: HoneycombGrid(
+                cellSize: 65,
+                spacing: 0,
+                config: HoneycombConfig.area(
+                  maxWidth: size * 1.0,
+                  maxItemsPerRow: math.min(3, widget.stepTypes.length),
                 ),
+                children: widget.stepTypes
+                    .map((type) => _buildStepTypeMiniature(type))
+                    .toList(),
               ),
-      ),
+            ),
     );
   }
 }
