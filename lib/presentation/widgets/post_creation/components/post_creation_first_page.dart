@@ -9,7 +9,7 @@ class PostCreationFirstPage extends StatefulWidget {
   final TextEditingController descriptionController;
   final bool isLoading;
   final VoidCallback onAddStep;
-  final VoidCallback? onAIRequest; // New callback for AI functionality
+  final VoidCallback? onAIRequest;
   final List<Widget> steps;
   final PageController pageController;
   final Function(bool isHighlighted, Animation<double>? animation)?
@@ -51,13 +51,13 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
   int _currentHighlightIndex = -1;
   late AnimationController _highlightController;
   late Animation<double> _highlightAnimation;
+  String _aiButtonText = 'AI';
 
   // Colors for the highlight animation sequence
   final List<Color> _highlightColors = [
-    Colors.blue,
     Colors.purple,
-    Colors.pink,
-    Colors.orange,
+    Colors.yellow,
+    Colors.blue,
     Colors.green,
   ];
 
@@ -103,34 +103,48 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
         if (_currentHighlightIndex < 3) {
           setState(() {
             _currentHighlightIndex++;
+            // Update text based on what we're about to highlight
+            if (_currentHighlightIndex == 0 || _currentHighlightIndex == 1) {
+              _aiButtonText = 'checking task';
+            } else if (_currentHighlightIndex == 2) {
+              _aiButtonText = 'checking settings';
+            } else if (_currentHighlightIndex == 3) {
+              _aiButtonText = 'checking steps';
+            }
           });
+
           _highlightController.reset();
           _highlightController.forward();
         } else if (_currentHighlightIndex == 3) {
           // After highlighting Steps, trigger target highlight with animation
           widget.onTargetHighlightChanged?.call(true, _highlightAnimation);
-          setState(() {
-            _isAIHighlighted = true;
-            _currentHighlightIndex = -1; // Reset highlight index
-          });
-          widget.onAIRequest?.call();
-          
-          // Keep animation running during highlight
           _highlightController.repeat(reverse: true);
-          
-          // Clean up target highlight after a delay
+          setState(() {
+            _aiButtonText = 'checking target';
+          });
+
+          // Clean up target highlight after 2 seconds and start AI highlight
           Future.delayed(const Duration(milliseconds: 2000), () {
             if (mounted) {
               widget.onTargetHighlightChanged?.call(false, null);
               _highlightController.stop();
-            }
-          });
 
-          // Turn off AI button highlight after 5 seconds
-          Future.delayed(const Duration(milliseconds: 5000), () {
-            if (mounted) {
+              // Start AI highlight sequence
               setState(() {
-                _isAIHighlighted = false;
+                _isAIHighlighted = true;
+                _currentHighlightIndex = -1; // Reset highlight index
+                _aiButtonText = 'hold to speak';
+              });
+              widget.onAIRequest?.call();
+
+              // Turn off AI button highlight after 5 seconds
+              Future.delayed(const Duration(milliseconds: 5000), () {
+                if (mounted) {
+                  setState(() {
+                    _isAIHighlighted = false;
+                    _aiButtonText = 'AI';
+                  });
+                }
               });
             }
           });
@@ -175,7 +189,9 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
       widget.onTargetHighlightChanged?.call(false, null);
     }
     setState(() {
-      _currentHighlightIndex = 0;
+      _currentHighlightIndex =
+          -1; // Start at -1 since we increment before highlighting
+      _aiButtonText = 'checking task';
     });
     _highlightController.forward();
   }
@@ -231,6 +247,8 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                 final nextColor =
                     _highlightColors[(index + 1) % _highlightColors.length];
 
+                // Use circular shape for settings, steps, and target buttons
+                final bool useCircularShape = index == 2 || index == 3;
                 return Container(
                   decoration: BoxDecoration(
                     border: Border.all(
@@ -242,7 +260,10 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                           .withOpacity(0.8),
                       width: 4.0,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    shape:
+                        useCircularShape ? BoxShape.circle : BoxShape.rectangle,
+                    borderRadius:
+                        useCircularShape ? null : BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: currentColor
@@ -714,7 +735,7 @@ class _PostCreationFirstPageState extends State<PostCreationFirstPage>
                                 onPressed: _handleAIButtonPress,
                               ),
                               onPressed: _handleAIButtonPress,
-                              label: 'AI',
+                              label: _aiButtonText,
                               isLarger: true,
                             ),
                           ),

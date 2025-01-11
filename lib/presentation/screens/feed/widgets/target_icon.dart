@@ -38,13 +38,29 @@ class TargetIcon extends StatelessWidget {
             child: AnimatedBuilder(
               animation: highlightAnimation!,
               builder: (context, child) {
+                final colors = [Colors.purple, Colors.yellow, Colors.blue, Colors.green];
+                final currentColorIndex = (highlightAnimation!.value * (colors.length - 1)).floor();
+                final nextColorIndex = (currentColorIndex + 1) % colors.length;
+                final progress = (highlightAnimation!.value * (colors.length - 1)) - currentColorIndex;
+                
                 return Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withOpacity(highlightAnimation!.value),
-                      width: 2,
+                      color: Color.lerp(
+                        colors[currentColorIndex],
+                        colors[nextColorIndex],
+                        progress,
+                      )!.withOpacity(0.8),
+                      width: 4.0,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors[currentColorIndex].withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                 );
               },
