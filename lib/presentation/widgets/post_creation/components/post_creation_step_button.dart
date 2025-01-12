@@ -4,12 +4,14 @@ class PostCreationStepButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
   final bool hasSelectedStepType;
+  final bool isGridButton;
 
   const PostCreationStepButton({
     Key? key,
     required this.isLoading,
     required this.onPressed,
     required this.hasSelectedStepType,
+    this.isGridButton = false,
   }) : super(key: key);
 
   @override
@@ -28,7 +30,7 @@ class PostCreationStepButton extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(8),
             child: Icon(
-              hasSelectedStepType ? Icons.edit : Icons.close,
+              isGridButton ? Icons.grid_on : (hasSelectedStepType ? Icons.edit : Icons.close),
               color: Colors.white,
             ),
           ),

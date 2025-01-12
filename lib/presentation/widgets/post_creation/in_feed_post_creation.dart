@@ -16,7 +16,7 @@ class InFeedPostCreation extends StatefulWidget {
   final VoidCallback onCancel;
   final Function(bool success) onComplete;
   final Function(bool isHighlighted, Animation<double>? animation)? onTargetHighlightChanged;
-  final VoidCallback? onAIRequest;  // New callback for AI functionality
+  final VoidCallback? onAIRequest;
 
   const InFeedPostCreation({
     super.key,
@@ -57,16 +57,15 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _pageController = PageController();
+  final _hexagonSelectorKey = GlobalKey<HexagonStepSelectorState>();
   late final PostCreationController _controller;
 
   late PostCreationState _state;
+  bool _isHexagonFormVisible = false;
 
   void _handleAIRequest() {
-    // Get current title and description
     final title = _titleController.text;
     final description = _descriptionController.text;
-
-    // Call the AI request callback
     widget.onAIRequest?.call();
   }
 
@@ -324,7 +323,13 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
                       onTargetHighlightChanged: widget.onTargetHighlightChanged,
                     ),
                     HexagonStepSelector(
+                      key: _hexagonSelectorKey,
                       stepTypeRepository: getIt<StepTypeRepository>(),
+                      onFormVisibilityChanged: (isVisible) {
+                        setState(() {
+                          _isHexagonFormVisible = isVisible;
+                        });
+                      },
                       onStepFormSubmitted: (stepType, formData) {
                         final stepKey = GlobalKey<PostStepWidgetState>();
                         final newStep = PostStepWidget(
@@ -383,11 +388,57 @@ class InFeedPostCreationState extends State<InFeedPostCreation> {
             pageController: _pageController,
             onAddStep: _addStep,
           ),
-          if (!_state.isFirstPage)
-            PostCreationStepButton(
-              isLoading: _state.isLoading,
-              onPressed: _handleCancelButtonPress,
-              hasSelectedStepType: _state.hasSelectedStepType,
+          if (_state.currentPage > 1 || (_state.currentPage == 1 && _isHexagonFormVisible))
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PostCreationStepButton(
+                        isLoading: _state.isLoading,
+                        onPressed: _handleCancelButtonPress,
+                        hasSelectedStepType: _state.hasSelectedStepType,
+                      ),
+                      const SizedBox(width: 8),
+                      PostCreationStepButton(
+                        isLoading: _state.isLoading,
+                        onPressed: () {
+                          if (_state.currentPage == 1 && _isHexagonFormVisible) {
+                            // If we're in hexagon view with form visible, close the form
+                            _hexagonSelectorKey.currentState?.closeForm();
+                          } else {
+                            // Otherwise navigate to grid view
+                            _pageController.animateToPage(
+                              1,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        hasSelectedStepType: false,
+                        isGridButton: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (_state.currentPage == 1 && !_isHexagonFormVisible)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: PostCreationStepButton(
+                    isLoading: _state.isLoading,
+                    onPressed: _handleCancelButtonPress,
+                    hasSelectedStepType: false,
+                  ),
+                ),
+              ),
             ),
         ],
       ),

@@ -8,21 +8,32 @@ import 'step_forms/step_type_form_creator.dart';
 class HexagonStepSelector extends StatefulWidget {
   final StepTypeRepository stepTypeRepository;
   final Function(StepTypeModel, Map<String, dynamic>) onStepFormSubmitted;
+  final Function(bool) onFormVisibilityChanged;
 
   const HexagonStepSelector({
-    Key? key,
+    super.key,
     required this.stepTypeRepository,
     required this.onStepFormSubmitted,
-  }) : super(key: key);
+    required this.onFormVisibilityChanged,
+  });
 
   @override
-  State<HexagonStepSelector> createState() => _HexagonStepSelectorState();
+  HexagonStepSelectorState createState() => HexagonStepSelectorState();
 }
 
-class _HexagonStepSelectorState extends State<HexagonStepSelector> {
+class HexagonStepSelectorState extends State<HexagonStepSelector> {
   late final HexagonStepInput stepInput;
   StepTypeModel? _selectedStepType;
   bool _isLoading = true;
+
+  void closeForm() {
+    if (_selectedStepType != null) {
+      setState(() {
+        _selectedStepType = null;
+      });
+      widget.onFormVisibilityChanged(false);
+    }
+  }
 
   @override
   void initState() {
@@ -49,6 +60,7 @@ class _HexagonStepSelectorState extends State<HexagonStepSelector> {
       setState(() {
         _selectedStepType = stepInput.getStepTypeFromInfo(stepInfo);
       });
+      widget.onFormVisibilityChanged(true);
     }
   }
 
@@ -68,12 +80,16 @@ class _HexagonStepSelectorState extends State<HexagonStepSelector> {
           Positioned.fill(
             child: StepTypeFormCreator.createForm(
               stepType: _selectedStepType!,
-              onCancel: () => setState(() => _selectedStepType = null),
+              onCancel: () {
+                setState(() => _selectedStepType = null);
+                widget.onFormVisibilityChanged(false);
+              },
               onSave: (formData) {
                 // Each form implementation will handle its own validation
                 // and call onSave only when validation passes
                 widget.onStepFormSubmitted(_selectedStepType!, formData);
                 setState(() => _selectedStepType = null);
+                widget.onFormVisibilityChanged(false);
               },
             ),
           ),
