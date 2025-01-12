@@ -32,7 +32,8 @@ class TextStepFormState extends StepTypeFormBaseState<TextStepForm> {
   String get titlePlaceholder => 'e.g., Introduction to Flutter';
 
   @override
-  String get descriptionPlaceholder => 'e.g., A brief overview of what Flutter is and why it\'s great for cross-platform development';
+  String get descriptionPlaceholder =>
+      'e.g., A brief overview of what Flutter is and why it\'s great for cross-platform development';
 
   bool _isBold = false;
   bool _isItalic = false;
@@ -106,7 +107,8 @@ class TextStepFormState extends StepTypeFormBaseState<TextStepForm> {
               ),
               // Character count
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   border: Border(
                     top: BorderSide(color: Colors.grey.withOpacity(0.3)),
@@ -171,14 +173,16 @@ class TextStepFormState extends StepTypeFormBaseState<TextStepForm> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: Icon(icon, 
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
+          icon: Icon(
+            icon,
+            color:
+                isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
           ),
           onPressed: onPressed,
           style: IconButton.styleFrom(
-            backgroundColor: isSelected 
-              ? Theme.of(context).primaryColor.withOpacity(0.1) 
-              : Colors.transparent,
+            backgroundColor: isSelected
+                ? Theme.of(context).primaryColor.withOpacity(0.1)
+                : Colors.transparent,
           ),
         ),
         Text(

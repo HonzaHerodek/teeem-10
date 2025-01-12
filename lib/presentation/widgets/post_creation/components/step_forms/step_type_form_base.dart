@@ -106,7 +106,7 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
   // To be implemented by each step type form
   String get titlePlaceholder;
   String get descriptionPlaceholder;
-  
+
   // To be implemented by each step type form
   Widget buildStepSpecificFields();
 
@@ -137,179 +137,188 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
     final screenSize = MediaQuery.of(context).size;
     final size = screenSize.width;
     final contentWidth = size * 0.85; // Slightly wider content area
-    
-    return Stack(
-      children: [
-        CustomPaint(
-          painter: HexagonPainter(color: Colors.white),
-          size: Size(size, screenSize.height),
-        ),
-        ClipPath(
+
+    return Stack(children: [
+      CustomPaint(
+        painter: HexagonPainter(color: Colors.white),
+        size: Size(size, screenSize.height),
+      ),
+      ClipPath(
           clipper: HexagonClipper(),
           child: SizedBox(
             width: size,
             height: screenSize.height,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Stack(
-          children: [
-            Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Fixed header section
-                  Container(
-                    padding: const EdgeInsets.only(top: 8, bottom: 16),
+                  Form(
+                    key: formKey,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Title field with reduced width
-                        Center(
-                          child: SizedBox(
-                            width: contentWidth * 0.5,
-                            height: 40,
-                            child: TextFormField(
-                              controller: titleController,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: titlePlaceholder,
-                                hintStyle: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 14,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.5),
+                        // Fixed header section
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Title field
+                              Center(
+                                child: SizedBox(
+                                  width: contentWidth * 0.5,
+                                  height: 40,
+                                  child: TextFormField(
+                                    controller: titleController,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 14),
+                                    decoration: InputDecoration(
+                                      hintText: titlePlaceholder,
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey[400],
+                                        fontSize: 14,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.withOpacity(0.5),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    validator:
+                                        null, // Title field is now optional
                                   ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.3),
-                                  ),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
                                 ),
                               ),
-                              validator: null, // Title field is now optional
-                            ),
+                              const SizedBox(height: 12),
+                              // Description field with reduced width
+                              Center(
+                                child: SizedBox(
+                                  width: contentWidth,
+                                  height: 60,
+                                  child: TextFormField(
+                                    controller: descriptionController,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 13),
+                                    maxLines: 2,
+                                    decoration: InputDecoration(
+                                      hintText: descriptionPlaceholder,
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey[400],
+                                        fontSize: 13,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.withOpacity(0.5),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    validator:
+                                        null, // Description field is now optional
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        // Description field with reduced width
-                        Center(
-                          child: SizedBox(
-                            width: contentWidth,
-                            height: 60,
-                            child: TextFormField(
-                              controller: descriptionController,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 13),
-                              maxLines: 2,
-                              decoration: InputDecoration(
-                                hintText: descriptionPlaceholder,
-                                hintStyle: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 13,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.5),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.3),
-                                  ),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
+                        // Main content area
+                        if (showMoreOptions) ...[
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  buildStepSpecificFields(),
+                                  const Divider(height: 16),
+                                  buildMoreOptions(),
+                                ],
                               ),
-                              validator: null, // Description field is now optional
+                            ),
+                          ),
+                        ] else ...[
+                          SizedBox(
+                            height: 140,
+                            child: SingleChildScrollView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: buildStepSpecificFields(),
+                            ),
+                          ),
+                        ],
+                        // More options button
+                        Center(
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () => setState(() {
+                              showMoreOptions = !showMoreOptions;
+                            }),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  showMoreOptions
+                                      ? 'Less Options'
+                                      : 'More Options',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Icon(
+                                  showMoreOptions
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                  color: Colors.grey[600],
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Scrollable content area
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Container(
-                            width: contentWidth,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: buildStepSpecificFields(),
-                          ),
-                          if (showMoreOptions) ...[
-                            const Divider(height: 24),
-                            Container(
-                              width: contentWidth,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: buildMoreOptions(),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Fixed More Options button at bottom
-                  Container(
-                    padding: const EdgeInsets.only(top: 8, bottom: 8),
-                    child: Center(
-                      child: TextButton(
-                        onPressed: () => setState(() {
-                          showMoreOptions = !showMoreOptions;
-                        }),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              showMoreOptions ? 'Less Options' : 'More Options',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                            Icon(
-                              showMoreOptions 
-                                ? Icons.keyboard_arrow_up 
-                                : Icons.keyboard_arrow_down,
-                              color: Colors.grey[600],
-                            ),
-                          ],
-                        ),
-                      ),
+                  // Close button overlay
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: widget.onCancel,
                     ),
                   ),
                 ],
               ),
             ),
-            // Close button overlay
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                icon: const Icon(Icons.close, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: widget.onCancel,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ))]);
+          ))
+    ]);
   }
 }
