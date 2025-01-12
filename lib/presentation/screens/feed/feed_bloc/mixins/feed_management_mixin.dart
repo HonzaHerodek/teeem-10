@@ -74,32 +74,48 @@ mixin FeedManagementMixin on Bloc<FeedEvent, FeedState> {
         throw Exception('User not authenticated');
       }
 
-      // Get posts and projects with timeout and error handling
+      // Load posts first
       List<PostModel> posts;
-      List<ProjectModel> projects;
-      
       try {
-        final results = await Future.wait([
-          postRepository.getPosts()
-            .timeout(_timeoutDuration,
-              onTimeout: () => throw Exception('Failed to load posts: timeout')),
-          projectRepository.getProjects()
-            .timeout(_timeoutDuration,
-              onTimeout: () => throw Exception('Failed to load projects: timeout')),
-        ]);
-        
+        posts = await postRepository.getPosts()
+          .timeout(_timeoutDuration,
+            onTimeout: () => throw Exception('Failed to load posts: timeout'));
         if (isClosed) return;
-        
-        posts = results[0] as List<PostModel>;
-        projects = results[1] as List<ProjectModel>;
       } catch (e) {
-        throw Exception('Failed to load feed data: ${e.toString()}');
+        throw Exception('Failed to load posts: ${e.toString()}');
       }
 
-      // Filter posts safely
-      List<PostModel> filteredPosts;
+      // Load projects separately with delay to prevent memory spikes
+      List<ProjectModel> projects;
       try {
-        filteredPosts = filterService.filterPosts(posts, currentUser);
+        // Add small delay to prevent memory spikes
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (isClosed) return;
+        
+        projects = await projectRepository.getProjects()
+          .timeout(_timeoutDuration,
+            onTimeout: () => throw Exception('Failed to load projects: timeout'));
+        if (isClosed) return;
+      } catch (e) {
+        // If projects fail to load, continue with empty list
+        projects = [];
+      }
+
+      // Filter posts safely in chunks to prevent UI blocking
+      List<PostModel> filteredPosts = [];
+      try {
+        const chunkSize = 10;
+        for (var i = 0; i < posts.length; i += chunkSize) {
+          if (isClosed) return;
+          
+          final chunk = posts.skip(i).take(chunkSize).toList();
+          filteredPosts.addAll(filterService.filterPosts(chunk, currentUser));
+          
+          // Add small delay between chunks to prevent UI blocking
+          if (i + chunkSize < posts.length) {
+            await Future.delayed(const Duration(milliseconds: 50));
+          }
+        }
       } catch (e) {
         throw Exception('Failed to filter posts: ${e.toString()}');
       }
@@ -111,21 +127,37 @@ mixin FeedManagementMixin on Bloc<FeedEvent, FeedState> {
       if (!isClosed && _isLoading) {
         if (isLoadMore && state is FeedSuccess) {
           final currentState = state as FeedSuccess;
+          // For load more, keep existing projects to prevent reloading
           emit(FeedSuccess(
             posts: [...currentState.posts, ...filteredPosts],
-            projects: projects,
+            projects: currentState.projects,
             currentUserId: currentUser.id,
             selectedProjectId: currentState.selectedProjectId,
           ));
         } else {
+          // Emit posts first
           emit(FeedSuccess(
             posts: filteredPosts,
-            projects: projects,
+            projects: const [], // Empty projects initially
             currentUserId: currentUser.id,
             selectedProjectId: state is FeedSuccess 
               ? (state as FeedSuccess).selectedProjectId 
               : null,
           ));
+          
+          // Then emit projects separately if we have them
+          if (projects.isNotEmpty && !isClosed && _isLoading) {
+            await Future.delayed(const Duration(milliseconds: 100));
+            if (!isClosed && _isLoading && state is FeedSuccess) {
+              final currentState = state as FeedSuccess;
+              emit(FeedSuccess(
+                posts: currentState.posts,
+                projects: projects,
+                currentUserId: currentUser.id,
+                selectedProjectId: currentState.selectedProjectId,
+              ));
+            }
+          }
         }
       }
     } catch (e) {

@@ -17,8 +17,30 @@ class FilterService {
   }
 
   List<PostModel> filterPosts(List<PostModel> posts, UserModel currentUser) {
-    // First apply targeting criteria filter
-    var filteredPosts = posts.where((post) => _shouldShowPost(post, currentUser)).toList();
+    // Early return for empty posts
+    if (posts.isEmpty) return [];
+
+    // Pre-compute frequently used values
+    final userInterests = currentUser.targetingCriteria?.interests ?? [];
+    final userSkills = currentUser.targetingCriteria?.skills ?? [];
+    final searchLower = _searchQuery.toLowerCase();
+    final hasTargetingCriteria = currentUser.targetingCriteria != null;
+    final userFollowingSet = Set<String>.from(currentUser.following);
+
+    // First apply targeting criteria filter with pre-computed values
+    var filteredPosts = posts.where((post) {
+      // Check if post is active
+      if (post.status != PostStatus.active) return false;
+
+      // Check targeting criteria
+      if (post.targetingCriteria != null && hasTargetingCriteria) {
+        if (!post.isTargetedTo(currentUser.targetingCriteria!)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
 
     // Then apply the selected filter type
     switch (_currentFilter) {
@@ -50,32 +72,37 @@ class FilterService {
 
       // Special relation filters
       case FilterType.similarToMe:
-        // Filter posts by users with similar traits
+        // Early return if user has no traits
+        if (userInterests.isEmpty && userSkills.isEmpty) {
+          filteredPosts = [];
+          break;
+        }
+        
+        // Create sets for faster lookups
+        final userInterestsSet = Set<String>.from(userInterests);
+        final userSkillsSet = Set<String>.from(userSkills);
+        
         filteredPosts = filteredPosts.where((post) {
-          if (currentUser.targetingCriteria == null) return false;
-          
-          final userInterests = currentUser.targetingCriteria?.interests ?? [];
-          final userSkills = currentUser.targetingCriteria?.skills ?? [];
-          
-          return post.userTraits.any((trait) => 
-            userInterests.contains(trait.value) ||
-            userSkills.contains(trait.value)
+          // Convert traits to a set for faster lookup
+          final traitValues = post.userTraits.map((t) => t.value).toSet();
+          return traitValues.any((value) => 
+            userInterestsSet.contains(value) || userSkillsSet.contains(value)
           );
         }).toList();
         break;
 
       case FilterType.iRespondedTo:
         // Filter posts user has commented on
-        filteredPosts = filteredPosts.where((post) {
-          return post.comments.contains(currentUser.id);
-        }).toList();
+        filteredPosts = filteredPosts.where((post) => 
+          post.comments.contains(currentUser.id)
+        ).toList();
         break;
 
       case FilterType.iFollow:
-        // Filter posts by followed users
-        filteredPosts = filteredPosts.where((post) {
-          return currentUser.following.contains(post.userId);
-        }).toList();
+        // Filter posts by followed users using pre-computed set
+        filteredPosts = filteredPosts.where((post) => 
+          userFollowingSet.contains(post.userId)
+        ).toList();
         break;
 
       case FilterType.myFollowers:
@@ -89,15 +116,16 @@ class FilterService {
 
       case FilterType.traits:
         // Filter posts based on trait matching
-        if (_searchQuery.isNotEmpty) {
+        if (searchLower.isNotEmpty) {
           filteredPosts = filteredPosts.where((post) {
+            // Pre-compute trait lists
             final interests = post.targetingCriteria?.interests ?? [];
             final skills = post.targetingCriteria?.skills ?? [];
-            final traits = [...interests, ...skills];
             
-            return traits.any((trait) => 
-              trait.toLowerCase().contains(_searchQuery)
-            );
+            // Create a set for faster lookups
+            final traits = {...interests, ...skills}.map((t) => t.toLowerCase()).toSet();
+            
+            return traits.any((trait) => trait.contains(searchLower));
           }).toList();
         }
         break;
@@ -105,11 +133,12 @@ class FilterService {
       case FilterType.none:
       default:
         // Basic search if query exists
-        if (_searchQuery.isNotEmpty) {
-          filteredPosts = filteredPosts.where((post) =>
-            post.title.toLowerCase().contains(_searchQuery) ||
-            post.description.toLowerCase().contains(_searchQuery)
-          ).toList();
+        if (searchLower.isNotEmpty) {
+          filteredPosts = filteredPosts.where((post) {
+            final title = post.title.toLowerCase();
+            final description = post.description.toLowerCase();
+            return title.contains(searchLower) || description.contains(searchLower);
+          }).toList();
         }
         break;
     }
