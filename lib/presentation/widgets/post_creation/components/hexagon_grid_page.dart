@@ -16,12 +16,13 @@ class HexagonGridPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<HexagonGridPage> createState() => _HexagonGridPageState();
+  State<HexagonGridPage> createState() => HexagonGridPageState();
 }
 
-class _HexagonGridPageState extends State<HexagonGridPage> {
+class HexagonGridPageState extends State<HexagonGridPage> {
   bool isLoading = false;
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
 
   @override
   void dispose() {
@@ -32,13 +33,13 @@ class _HexagonGridPageState extends State<HexagonGridPage> {
   void _centerOnSearchIcon(BuildContext context, BoxConstraints constraints) {
     final centerX = constraints.maxWidth / 2;
     final centerY = constraints.maxHeight / 2;
-    
+
     final matrix = Matrix4.identity()
       ..translate(
         centerX - (constraints.maxWidth * 2 / 2),
         centerY - (constraints.maxHeight * 2 / 2),
       );
-    
+
     _transformationController.value = matrix;
   }
 
@@ -92,43 +93,88 @@ class HexagonGrid extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<HexagonGrid> createState() => _HexagonGridState();
+  State<HexagonGrid> createState() => HexagonGridState();
 }
 
-class _HexagonGridState extends State<HexagonGrid> {
+class HexagonGridState extends State<HexagonGrid> {
   final GridInitializer gridInitializer = GridInitializer();
-  final List<HexagonPaint> hexagons = [];
-  bool _initialized = false;
+  List<HexagonPaint> hexagons = [];
+  Size? lastSize;
+  final TransformationController _transformationController =
+      TransformationController();
 
-  void _initializeGrid(final double screenWidth, final double screenHeight) {
-    if (!_initialized) {
-      hexagons.clear();
-      hexagons.addAll(gridInitializer.getHexagons(
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  void _centerOnSearchIcon(BuildContext context, BoxConstraints constraints) {
+    final centerX = constraints.maxWidth / 2;
+    final centerY = constraints.maxHeight / 2;
+
+    final matrix = Matrix4.identity()
+      ..translate(
+        centerX - (constraints.maxWidth * 2 / 2),
+        centerY - (constraints.maxHeight * 2 / 2),
+      );
+
+    _transformationController.value = matrix;
+  }
+
+  void _initializeGrid(double screenWidth, double screenHeight) {
+    final newSize = Size(screenWidth, screenHeight);
+    if (lastSize != newSize || hexagons.isEmpty) {
+      hexagons = gridInitializer.getHexagons(
         screenWidth,
         screenHeight,
         widget.onHexagonClicked,
         widget.stepInput,
-      ));
-      _initialized = true;
+      );
+      lastSize = newSize;
     }
   }
 
-  @override
-  void didUpdateWidget(HexagonGrid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.stepInput != widget.stepInput) {
-      _initialized = false;
-      setState(() {});
+  void refreshGrid() {
+    if (lastSize != null) {
+      setState(() {
+        hexagons = gridInitializer.getHexagons(
+          lastSize!.width,
+          lastSize!.height,
+          widget.onHexagonClicked,
+          widget.stepInput,
+        );
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        _initializeGrid(constraints.maxWidth, constraints.maxHeight);
-        return Stack(children: hexagons);
-      },
+    return Container(
+      padding: EdgeInsets.all(8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _centerOnSearchIcon(context, constraints);
+          });
+
+          _initializeGrid(constraints.maxWidth, constraints.maxHeight);
+
+          return InteractiveViewer(
+            transformationController: _transformationController,
+            constrained: false,
+            panEnabled: true,
+            scaleEnabled: false,
+            boundaryMargin: EdgeInsets.all(double.infinity),
+            child: Container(
+              width: constraints.maxWidth * 2,
+              height: constraints.maxHeight * 2,
+              color: Colors.transparent,
+              child: Stack(children: hexagons),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -236,7 +282,7 @@ class HexagonPaint extends StatefulWidget {
   final Color color;
   final bool showSearchIcon;
   final StepInfo? stepInfo;
-  final GlobalKey<_HexagonPaintState> key = GlobalKey<_HexagonPaintState>();
+  final GlobalKey<HexagonPaintState> key = GlobalKey<HexagonPaintState>();
 
   HexagonPaint({
     required this.model,
@@ -247,10 +293,10 @@ class HexagonPaint extends StatefulWidget {
   }) : super(key: model.key);
 
   @override
-  _HexagonPaintState createState() => _HexagonPaintState();
+  HexagonPaintState createState() => HexagonPaintState();
 }
 
-class _HexagonPaintState extends State<HexagonPaint> {
+class HexagonPaintState extends State<HexagonPaint> {
   @override
   Widget build(BuildContext context) {
     return Positioned(

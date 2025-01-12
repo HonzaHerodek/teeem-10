@@ -54,13 +54,26 @@ class HexagonStepSelectorState extends State<HexagonStepSelector> {
     }
   }
 
-  void _handleHexagonClick() {
+  // Reference to the grid state
+  final GlobalKey<HexagonGridState> _gridKey = GlobalKey();
+
+  void _handleHexagonClick(int index) {
     final stepInfo = stepInput.getSelectedStepInfo();
     if (stepInfo != null) {
-      setState(() {
-        _selectedStepType = stepInput.getStepTypeFromInfo(stepInfo);
-      });
-      widget.onFormVisibilityChanged(true);
+      final selectedType = stepInput.getStepTypeFromInfo(stepInfo);
+      if (selectedType != null) {
+        // Add step to grid
+        stepInput.addStep(selectedType);
+        
+        // Force grid refresh
+        _gridKey.currentState?.refreshGrid();
+        
+        // Update selected type and show form
+        setState(() {
+          _selectedStepType = selectedType;
+        });
+        widget.onFormVisibilityChanged(true);
+      }
     }
   }
 
@@ -72,9 +85,12 @@ class HexagonStepSelectorState extends State<HexagonStepSelector> {
 
     return Stack(
       children: [
-        HexagonGridPage(
-          onHexagonClicked: _handleHexagonClick,
-          stepInput: stepInput,
+        Center(
+          child: HexagonGrid(
+            key: _gridKey,
+            onHexagonClicked: _handleHexagonClick,
+            stepInput: stepInput,
+          ),
         ),
         if (_selectedStepType != null)
           Positioned.fill(
@@ -85,8 +101,6 @@ class HexagonStepSelectorState extends State<HexagonStepSelector> {
                 widget.onFormVisibilityChanged(false);
               },
               onSave: (formData) {
-                // Each form implementation will handle its own validation
-                // and call onSave only when validation passes
                 widget.onStepFormSubmitted(_selectedStepType!, formData);
                 setState(() => _selectedStepType = null);
                 widget.onFormVisibilityChanged(false);

@@ -172,9 +172,13 @@ class HexagonStepInput {
   // Add a step during post creation
   void addStep(StepTypeModel stepType) {
     if (_addedStepIndices.length < gridLayout['added_steps']!.length) {
-      final index = gridLayout['added_steps']![_addedStepIndices.length];
-      _addStepTypeToHexagon(stepType, index);
-      _addedStepIndices.add(index);
+      // Always add to the leftmost position (index 0)
+      _addedStepIndices.insert(0, gridLayout['added_steps']![0]);
+      _reorderAddedSteps(); // This will shift existing steps right
+      _addStepTypeToHexagon(stepType, gridLayout['added_steps']![0]);
+      
+      // Force grid reinitialization
+      _updateHexagonSteps();
     }
   }
 
