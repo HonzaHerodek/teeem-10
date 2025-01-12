@@ -21,14 +21,14 @@ class HexagonStepInput {
 
   // Grid layout for step types (9x9 grid)
   static const Map<String, List<int>> gridLayout = {
-    // Available step types on the right side
+    // Available step types
     'consuming': [
-      23, 24, 25, // Row 2
-      32, 33, 34, // Row 3
+      22, 23, 24, // Row 2 (shifted left)
+      31, 32, 33, // Row 3 (shifted left)
     ],
     'interactive': [
-      50, 51, 52, // Row 5
-      59, 60, 61, // Row 6
+      49, 50, 51, // Row 5 (shifted left)
+      58, 59, 60, // Row 6 (shifted left)
     ],
     'admin': [
       41, 42, 43, // Row 4 (same as search)

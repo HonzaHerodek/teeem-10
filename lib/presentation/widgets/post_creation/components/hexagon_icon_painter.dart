@@ -71,19 +71,7 @@ class HexagonIconPainter {
   }
 
   static void paintStepInfo(Canvas canvas, StepInfo stepInfo, Offset center, double radius) {
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: stepInfo.name,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: radius * 0.25,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-
+    // Paint icon first
     final iconPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(stepInfo.icon.codePoint),
@@ -97,6 +85,26 @@ class HexagonIconPainter {
     );
     iconPainter.layout();
 
+    // Paint text with word wrapping
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: stepInfo.name,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: radius * 0.22, // Slightly smaller to fit two lines
+          fontWeight: FontWeight.bold,
+          height: 1.1, // Tighter line height for better fit
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+    );
+    
+    // Layout with constrained width to force wrapping
+    textPainter.layout(maxWidth: radius * 1.5);
+
+    // Position icon above text
     iconPainter.paint(
       canvas,
       Offset(
@@ -105,6 +113,7 @@ class HexagonIconPainter {
       ),
     );
 
+    // Position text below icon
     textPainter.paint(
       canvas,
       Offset(
