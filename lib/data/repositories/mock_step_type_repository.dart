@@ -218,6 +218,213 @@ class MockStepTypeRepository implements StepTypeRepository {
         ),
       ],
     ),
+    // Interactive Step Types
+    StepTypeModel(
+      id: 'share_material',
+      name: 'Share Material',
+      description: 'Share various types of material',
+      icon: 'share',
+      color: '#E91E63', // Pink for sharing
+      options: [
+        StepTypeOption(
+          id: 'materialType',
+          label: 'Material Type',
+          type: 'select',
+          config: {
+            'options': ['text', 'link', 'image', 'video'],
+          },
+        ),
+        StepTypeOption(
+          id: 'allowMultiple',
+          label: 'Allow Multiple Responses',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'share_location',
+      name: 'Share Location',
+      description: 'Share location or route',
+      icon: 'location_on',
+      color: '#FF5722', // Deep Orange for location
+      options: [
+        StepTypeOption(
+          id: 'isRoute',
+          label: 'Share Route',
+          type: 'boolean',
+        ),
+        StepTypeOption(
+          id: 'requiredLocation',
+          label: 'Required Location',
+          type: 'location',
+        ),
+        StepTypeOption(
+          id: 'trackingTime',
+          label: 'Tracking Time',
+          type: 'number',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'select',
+      name: 'Select',
+      description: 'Selection from multiple options',
+      icon: 'check_box',
+      color: '#9C27B0', // Purple for selection
+      options: [
+        StepTypeOption(
+          id: 'options',
+          label: 'Options',
+          type: 'array',
+          config: {
+            'item': {
+              'type': 'object',
+              'properties': {
+                'content': {'type': 'text'},
+                'type': {'type': 'select', 'options': ['text', 'image', 'video', 'link']},
+              },
+            },
+          },
+        ),
+        StepTypeOption(
+          id: 'allowMultiple',
+          label: 'Allow Multiple Selections',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'share_out',
+      name: 'Share Out',
+      description: 'Share to external platforms',
+      icon: 'share',
+      color: '#00BCD4', // Cyan for external sharing
+      options: [
+        StepTypeOption(
+          id: 'platform',
+          label: 'Platform',
+          type: 'select',
+          config: {
+            'options': ['Facebook', 'Instagram', 'Email', 'WhatsApp', 'Slack'],
+          },
+        ),
+        StepTypeOption(
+          id: 'requireLink',
+          label: 'Require Link',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'download',
+      name: 'Download',
+      description: 'Download file',
+      icon: 'download',
+      color: '#4CAF50', // Green for download
+      options: [
+        StepTypeOption(
+          id: 'fileUrl',
+          label: 'File URL',
+          type: 'text',
+        ),
+        StepTypeOption(
+          id: 'allowMultiple',
+          label: 'Allow Multiple Downloads',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'upload',
+      name: 'Upload',
+      description: 'Upload file',
+      icon: 'upload',
+      color: '#FF9800', // Orange for upload
+      options: [
+        StepTypeOption(
+          id: 'fileType',
+          label: 'Required File Type',
+          type: 'select',
+          config: {
+            'options': ['text', 'image', 'video', 'document'],
+          },
+        ),
+        StepTypeOption(
+          id: 'allowMultiple',
+          label: 'Allow Multiple Files',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    // Admin Step Types
+    StepTypeModel(
+      id: 'task_author_approval',
+      name: 'Task Author Approval',
+      description: 'Approval by task author',
+      icon: 'admin_panel_settings',
+      color: '#673AB7', // Deep Purple for admin
+      options: [
+        StepTypeOption(
+          id: 'approvedMaterial',
+          label: 'Approved Material',
+          type: 'select',
+          config: {
+            'options': ['share_material', 'share_location'],
+          },
+        ),
+        StepTypeOption(
+          id: 'autoApprove',
+          label: 'Automatic Approval',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'respondent_approval',
+      name: 'Respondent Approval',
+      description: 'Approval by respondents',
+      icon: 'how_to_vote',
+      color: '#2196F3', // Blue for voting
+      options: [
+        StepTypeOption(
+          id: 'approvedMaterial',
+          label: 'Approved Material',
+          type: 'select',
+          config: {
+            'options': ['text', 'image', 'location'],
+          },
+        ),
+        StepTypeOption(
+          id: 'publicApproval',
+          label: 'Public Approval',
+          type: 'boolean',
+        ),
+      ],
+    ),
+    StepTypeModel(
+      id: 'conditional_route',
+      name: 'Conditional Route',
+      description: 'Route based on conditions',
+      icon: 'route',
+      color: '#795548', // Brown for routing
+      options: [
+        StepTypeOption(
+          id: 'previousActivity',
+          label: 'Activity on Previous Step',
+          type: 'select',
+        ),
+        StepTypeOption(
+          id: 'previousValue',
+          label: 'Value on Previous Step',
+          type: 'select',
+        ),
+        StepTypeOption(
+          id: 'repeatable',
+          label: 'Users Can Repeat',
+          type: 'boolean',
+        ),
+      ],
+    ),
   ];
 
   @override

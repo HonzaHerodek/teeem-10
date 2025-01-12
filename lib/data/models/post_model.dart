@@ -7,6 +7,7 @@ import 'traits/user_trait_model.dart';
 part 'post_model.g.dart';
 
 enum StepType {
+  // Consuming Step Types
   @JsonValue('text')
   text,
   @JsonValue('image')
@@ -21,12 +22,34 @@ enum StepType {
   link,
   @JsonValue('code')
   code,
-  @JsonValue('quiz')
-  quiz,
+  @JsonValue('vr')
+  vr,
   @JsonValue('ar')
   ar,
-  @JsonValue('vr')
-  vr
+
+  // Interactive Step Types
+  @JsonValue('share_material')
+  shareMaterial,
+  @JsonValue('share_location')
+  shareLocation,
+  @JsonValue('select')
+  select,
+  @JsonValue('quiz')
+  quiz,
+  @JsonValue('share_out')
+  shareOut,
+  @JsonValue('download')
+  download,
+  @JsonValue('upload')
+  upload,
+
+  // Admin Step Types
+  @JsonValue('task_author_approval')
+  taskAuthorApproval,
+  @JsonValue('respondent_approval')
+  respondentApproval,
+  @JsonValue('conditional_route')
+  conditionalRoute
 }
 
 enum PostStatus {

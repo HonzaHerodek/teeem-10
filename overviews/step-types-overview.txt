@@ -1,6 +1,6 @@
 All step types have an optional title and description. The default placeholders for these fields are step type name (Title field) and description of the step type (Description field). Each step type then typically has up to 3 unique “main options” and numerous “other options”.
 
-Consuming step types:
+CONSUMING STEP TYPES:
 
 Text:
 Main options: text field with formatting (bold, cursive, underline, stroked, bullet-points, numbering, link)
@@ -26,12 +26,8 @@ AR:
 Main options: upload file / file link
 Other options: respondents can use multiple times (toggle)
 
-Task Author Approval:
-Main options: approved material (step response - e.g. share material, share location)
-Other options: automatic approval (toggle)
 
-
-Interactive step types:
+INTERACTIVE STEP TYPES:
 
 Share material:
 Main options: material type (text, link, image, video, …)
@@ -49,10 +45,6 @@ Quiz:
 Main options: question 1 (text field, answer type, correct answer), question 2 (text field, answer type, correct answer), question 3 (text field, answer type, correct answer)
 Other options: Users see correct answer after answering (each question / all questions), results message (logic, text field)
 
-Respondent Approval:
-Main options: approved material (steps - e.g.text, image, location)
-Other options: public approval by respondents (toggle)
-
 Share out:
 Main options: sharing platform (Facebook, Instagram, email, WhatsApp, Slack)
 Other options: respondents must include link (toggle)
@@ -66,3 +58,16 @@ Main options: required file type (e.g. text document, image, video)
 Other options: respondents can upload multiple files (toggle)
 
 
+ADMIN STEP TYPES:
+
+Task Author Approval:
+Main options: approved material (step response - e.g. share material, share location)
+Other options: automatic approval (toggle)
+
+Respondent Approval:
+Main options: approved material (steps - e.g.text, image, location)
+Other options: public approval by respondents (toggle)
+
+Conditional route:
+Main options: activity on previous step (selection), value on previous step (selection)
+Other options: users can repeat this step (toggle)

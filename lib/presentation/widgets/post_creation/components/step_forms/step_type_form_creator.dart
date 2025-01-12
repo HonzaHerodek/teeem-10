@@ -12,6 +12,15 @@ import 'link_step_form.dart';
 import 'quiz_step_form.dart';
 import 'ar_step_form.dart';
 import 'vr_step_form.dart';
+import 'share_material_step_form.dart';
+import 'share_location_step_form.dart';
+import 'select_step_form.dart';
+import 'share_out_step_form.dart';
+import 'download_step_form.dart';
+import 'upload_step_form.dart';
+import 'task_author_approval_step_form.dart';
+import 'respondent_approval_step_form.dart';
+import 'conditional_route_step_form.dart';
 
 class StepTypeFormCreator {
   static StepTypeFormBase createForm({
@@ -95,6 +104,69 @@ class StepTypeFormCreator {
         );
       case StepType.vr:
         return VrStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.shareMaterial:
+        return ShareMaterialStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.shareLocation:
+        return ShareLocationStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.select:
+        return SelectStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.shareOut:
+        return ShareOutStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.download:
+        return DownloadStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.upload:
+        return UploadStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.taskAuthorApproval:
+        return TaskAuthorApprovalStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.respondentApproval:
+        return RespondentApprovalStepForm(
+          key: key,
+          stepType: stepType,
+          onCancel: onCancel,
+          onSave: onSave,
+        );
+      case StepType.conditionalRoute:
+        return ConditionalRouteStepForm(
           key: key,
           stepType: stepType,
           onCancel: onCancel,

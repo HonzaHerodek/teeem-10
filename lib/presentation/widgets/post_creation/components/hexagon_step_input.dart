@@ -19,19 +19,27 @@ class HexagonStepInput {
   static const int numberOfCentralHexagons = 3;
   int? _selectedIndex;
 
-  // Central indices in 9x9 grid to accommodate all step types
-  static const List<int> centralIndices = [
-    39, // Left of center (4,3)
-    41, // Right of center (4,5)
-    31, // Top of center (3,4)
-    49, // Bottom of center (5,4)
-    38, // Top-left of center (4,2)
-    40, // Center-right (4,4)
-    42, // Top-right of center (4,6)
-    47, // Bottom-left of center (5,2)
-    48, // Bottom-center (5,3)
-    50, // Bottom-right of center (5,5)
-  ];
+  // Grid layout for step types (9x9 grid)
+  static const Map<String, List<int>> gridLayout = {
+    // Available step types on the right side
+    'consuming': [
+      23, 24, 25, // Row 2
+      32, 33, 34, // Row 3
+    ],
+    'interactive': [
+      50, 51, 52, // Row 5
+      59, 60, 61, // Row 6
+    ],
+    'admin': [
+      41, 42, 43, // Row 4 (same as search)
+    ],
+    // Core elements
+    'search': [40], // Center (4,4)
+    'added_steps': [37, 38, 39], // Left of search (4,1-3)
+  };
+
+  // Track added steps during post creation
+  final List<int> _addedStepIndices = [];
 
   IconData _getIconData(String iconName) {
     switch (iconName) {
@@ -80,22 +88,124 @@ class HexagonStepInput {
 
   void _updateHexagonSteps() {
     if (_stepTypes != null) {
-      for (var i = 0; i < _stepTypes!.length && i < centralIndices.length; i++) {
-        try {
-          final stepType = _stepTypes![i];
-          _hexagonSteps[centralIndices[i]] = StepInfo(
-            color: Color(int.parse(stepType.color.replaceAll('#', '0xFF'))),
-            name: stepType.name,
-            icon: _getIconData(stepType.icon),
-          );
-        } catch (e) {
-          _hexagonSteps[centralIndices[i]] = StepInfo(
-            color: HexagonColorManager.defaultColor,
-            name: '',
-            icon: Icons.help_outline,
-          );
-        }
+      // Clear existing steps
+      _hexagonSteps.clear();
+
+      // Sort step types by category
+      // Get consuming types (content types)
+      var consumingTypes = _stepTypes!.where((t) => [
+        'text', 'image', 'video', 'link', 'vr', 'ar'
+      ].contains(t.id.toLowerCase())).toList();
+
+      // Get interactive types
+      var interactiveTypes = _stepTypes!.where((t) => [
+        'share_material', 'share_location', 'select', 'quiz', 
+        'share_out', 'download', 'upload'
+      ].contains(t.id.toLowerCase())).toList();
+
+      // Get admin types
+      var adminTypes = _stepTypes!.where((t) => [
+        'task_author_approval', 'respondent_approval', 'conditional_route'
+      ].contains(t.id.toLowerCase())).toList();
+
+      // Sort types by their order in the overview
+      consumingTypes.sort((a, b) => [
+        'text', 'image', 'video', 'link', 'vr', 'ar'
+      ].indexOf(a.id.toLowerCase()) - 
+      ['text', 'image', 'video', 'link', 'vr', 'ar']
+      .indexOf(b.id.toLowerCase()));
+
+      interactiveTypes.sort((a, b) => [
+        'share_material', 'share_location', 'select', 'quiz', 
+        'share_out', 'download', 'upload'
+      ].indexOf(a.id.toLowerCase()) - 
+      ['share_material', 'share_location', 'select', 'quiz', 
+        'share_out', 'download', 'upload']
+      .indexOf(b.id.toLowerCase()));
+
+      adminTypes.sort((a, b) => [
+        'task_author_approval', 'respondent_approval', 'conditional_route'
+      ].indexOf(a.id.toLowerCase()) - 
+      ['task_author_approval', 'respondent_approval', 'conditional_route']
+      .indexOf(b.id.toLowerCase()));
+
+      // Place consuming types (above search)
+      for (var i = 0; i < consumingTypes.length && i < gridLayout['consuming']!.length; i++) {
+        _addStepTypeToHexagon(consumingTypes[i], gridLayout['consuming']![i]);
       }
+
+      // Place interactive types (below search)
+      for (var i = 0; i < interactiveTypes.length && i < gridLayout['interactive']!.length; i++) {
+        _addStepTypeToHexagon(interactiveTypes[i], gridLayout['interactive']![i]);
+      }
+
+      // Place admin types (right of search)
+      for (var i = 0; i < adminTypes.length && i < gridLayout['admin']!.length; i++) {
+        _addStepTypeToHexagon(adminTypes[i], gridLayout['admin']![i]);
+      }
+
+      // Add search hexagon
+      _hexagonSteps[gridLayout['search']![0]] = StepInfo(
+        color: Colors.blue,
+        name: 'Search',
+        icon: Icons.search,
+      );
+    }
+  }
+
+  void _addStepTypeToHexagon(StepTypeModel stepType, int index) {
+    try {
+      _hexagonSteps[index] = StepInfo(
+        color: Color(int.parse(stepType.color.replaceAll('#', '0xFF'))),
+        name: stepType.name,
+        icon: _getIconData(stepType.icon),
+      );
+    } catch (e) {
+      _hexagonSteps[index] = StepInfo(
+        color: HexagonColorManager.defaultColor,
+        name: '',
+        icon: Icons.help_outline,
+      );
+    }
+  }
+
+  // Add a step during post creation
+  void addStep(StepTypeModel stepType) {
+    if (_addedStepIndices.length < gridLayout['added_steps']!.length) {
+      final index = gridLayout['added_steps']![_addedStepIndices.length];
+      _addStepTypeToHexagon(stepType, index);
+      _addedStepIndices.add(index);
+    }
+  }
+
+  // Remove a step during post creation
+  void removeStep(int index) {
+    if (_addedStepIndices.contains(index)) {
+      _hexagonSteps.remove(index);
+      _addedStepIndices.remove(index);
+      // Shift remaining added steps to maintain contiguous layout
+      _reorderAddedSteps();
+    }
+  }
+
+  // Reorder added steps to maintain contiguous layout from left to right
+  void _reorderAddedSteps() {
+    final steps = _addedStepIndices
+        .map((index) => _hexagonSteps[index])
+        .where((step) => step != null)
+        .toList();
+    
+    // Clear existing added steps
+    for (var index in List.from(_addedStepIndices)) {
+      _hexagonSteps.remove(index);
+    }
+    _addedStepIndices.clear();
+
+    // Re-add steps in order
+    for (var i = 0; i < steps.length; i++) {
+      final index = gridLayout['added_steps']![i];
+      _hexagonSteps[index] = steps[i]!;
+      _addedStepIndices.add(index);
     }
   }
 
@@ -129,5 +239,24 @@ class HexagonStepInput {
 
   StepInfo? getStepInfoForHexagon(int index) {
     return _hexagonSteps[index];
+  }
+
+  // Get all available step type indices
+  List<int> get availableStepTypeIndices {
+    return [
+      ...gridLayout['consuming']!,
+      ...gridLayout['interactive']!,
+      ...gridLayout['admin']!,
+    ];
+  }
+
+  // Check if an index is in the added steps section
+  bool isAddedStepIndex(int index) {
+    return gridLayout['added_steps']!.contains(index);
+  }
+
+  // Check if an index is the search hexagon
+  bool isSearchIndex(int index) {
+    return gridLayout['search']![0] == index;
   }
 }
