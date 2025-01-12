@@ -121,6 +121,13 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
   // To be implemented by each step type form
   Map<String, dynamic> getStepSpecificFormData();
 
+  // To be implemented by each step type form to build additional options UI
+  Widget buildMoreOptions() {
+    // Default implementation returns an empty container
+    // Subclasses can override this to provide their own UI
+    return Container();
+  }
+
   // State for More Options expansion
   @protected
   bool showMoreOptions = false;
@@ -189,12 +196,7 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
                                   vertical: 8,
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter a title';
-                                }
-                                return null;
-                              },
+                              validator: null, // Title field is now optional
                             ),
                           ),
                         ),
@@ -232,12 +234,7 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
                                   vertical: 8,
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter a description';
-                                }
-                                return null;
-                              },
+                              validator: null, // Description field is now optional
                             ),
                           ),
                         ),
@@ -247,10 +244,22 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
                   // Scrollable content area
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Container(
-                        width: contentWidth,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: buildStepSpecificFields(),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: contentWidth,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: buildStepSpecificFields(),
+                          ),
+                          if (showMoreOptions) ...[
+                            const Divider(height: 24),
+                            Container(
+                              width: contentWidth,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: buildMoreOptions(),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
@@ -259,16 +268,9 @@ abstract class StepTypeFormBaseState<T extends StepTypeFormBase>
                     padding: const EdgeInsets.only(top: 8, bottom: 8),
                     child: Center(
                       child: TextButton(
-                        onPressed: () {
-                          if (formKey.currentState?.validate() ?? false) {
-                            formKey.currentState?.save();
-                            final formData = getFormData();
-                            widget.onSave(formData);
-                            setState(() {
-                              showMoreOptions = !showMoreOptions;
-                            });
-                          }
-                        },
+                        onPressed: () => setState(() {
+                          showMoreOptions = !showMoreOptions;
+                        }),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
