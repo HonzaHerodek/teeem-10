@@ -1,73 +1,41 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/repositories/step_type_repository.dart';
+// Firebase imports commented out for development
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/step_type_model.dart';
+import '../../domain/repositories/step_type_repository.dart';
 
 class FirebaseStepTypeRepository implements StepTypeRepository {
-  final FirebaseFirestore _firestore;
+  // Firebase instance commented out for development
+  // final FirebaseFirestore _firestore;
 
-  FirebaseStepTypeRepository({
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirebaseStepTypeRepository();
 
   @override
   Future<List<StepTypeModel>> getStepTypes() async {
-    try {
-      final snapshot = await _firestore.collection('stepTypes').get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return StepTypeModel.fromJson(data);
-      }).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch step types: $e');
-    }
+    // Mock implementation
+    throw UnimplementedError('Using mock repository instead');
   }
 
   @override
   Future<StepTypeModel> getStepTypeById(String id) async {
-    try {
-      final doc = await _firestore.collection('stepTypes').doc(id).get();
-      if (!doc.exists) {
-        throw Exception('Step type not found');
-      }
-      final data = doc.data()!;
-      data['id'] = doc.id;
-      return StepTypeModel.fromJson(data);
-    } catch (e) {
-      throw Exception('Failed to fetch step type: $e');
-    }
+    // Mock implementation
+    throw UnimplementedError('Using mock repository instead');
   }
 
   @override
   Future<void> createStepType(StepTypeModel stepType) async {
-    try {
-      await _firestore
-          .collection('stepTypes')
-          .doc(stepType.id)
-          .set(stepType.toJson());
-    } catch (e) {
-      throw Exception('Failed to create step type: $e');
-    }
+    // Mock implementation
+    throw UnimplementedError('Using mock repository instead');
   }
 
   @override
   Future<void> updateStepType(StepTypeModel stepType) async {
-    try {
-      await _firestore
-          .collection('stepTypes')
-          .doc(stepType.id)
-          .update(stepType.toJson());
-    } catch (e) {
-      throw Exception('Failed to update step type: $e');
-    }
+    // Mock implementation
+    throw UnimplementedError('Using mock repository instead');
   }
 
   @override
   Future<void> deleteStepType(String id) async {
-    try {
-      await _firestore.collection('stepTypes').doc(id).delete();
-    } catch (e) {
-      throw Exception('Failed to delete step type: $e');
-    }
+    // Mock implementation
+    throw UnimplementedError('Using mock repository instead');
   }
 }

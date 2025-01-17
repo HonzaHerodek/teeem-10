@@ -60,9 +60,10 @@ class _FeedViewState extends State<FeedView> {
   List<Rect> _getExcludedRects() {
     final excludedAreas = _layoutManager.getExcludedAreas(context);
     return excludedAreas.map((key) {
-      final RenderBox? renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? renderBox =
+          key.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox == null) return Rect.zero;
-      
+
       final position = renderBox.localToGlobal(Offset.zero);
       return position & renderBox.size;
     }).toList();
@@ -176,10 +177,10 @@ class _FeedViewState extends State<FeedView> {
       });
     });
     _headerController.addListener(() => _stateManager.updateManagers(
-      isProfileOpen: _isProfileOpen,
-      isCreatingPost: _isCreatingPost,
-      selectedItemKey: _selectedItemKey,
-    ));
+          isProfileOpen: _isProfileOpen,
+          isCreatingPost: _isCreatingPost,
+          selectedItemKey: _selectedItemKey,
+        ));
     context.read<FeedBloc>().stream.listen(_handleFeedState);
   }
 
@@ -194,7 +195,8 @@ class _FeedViewState extends State<FeedView> {
               final itemId = notification.type == NotificationType.post
                   ? notification.postId!
                   : notification.projectId!;
-              _notificationManager.moveToItem(itemId, notification.type == NotificationType.project);
+              _notificationManager.moveToItem(
+                  itemId, notification.type == NotificationType.project);
             }
           }
         });
@@ -202,7 +204,8 @@ class _FeedViewState extends State<FeedView> {
     }
   }
 
-  void _handleTargetHighlightChanged(bool isHighlighted, Animation<double>? animation) {
+  void _handleTargetHighlightChanged(
+      bool isHighlighted, Animation<double>? animation) {
     setState(() {
       _isTargetHighlighted = isHighlighted;
       _targetHighlightAnimation = animation;
@@ -227,137 +230,139 @@ class _FeedViewState extends State<FeedView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: LayoutBuilder(
-      builder: (context, _) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _layoutManager.updateDimming();
-        });
+        body: LayoutBuilder(
+          builder: (context, _) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _layoutManager.updateDimming();
+            });
 
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            Consumer2<BackgroundColorProvider, BackgroundAnimationProvider>(
-              builder: (context, colorProvider, animationProvider, _) {
-                return BackgroundAnimationManager(
-                  type: animationProvider.animationType,
-                  color: colorProvider.backgroundColor,
-                  child: FeedMainContent(
-                    scrollController: _scrollController,
-                    feedController: _feedController,
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Consumer2<BackgroundColorProvider, BackgroundAnimationProvider>(
+                  builder: (context, colorProvider, animationProvider, _) {
+                    return BackgroundAnimationManager(
+                      type: animationProvider.animationType,
+                      color: colorProvider.backgroundColor,
+                      child: FeedMainContent(
+                        scrollController: _scrollController,
+                        feedController: _feedController,
+                        isCreatingPost: _isCreatingPost,
+                        postCreationKey: _postCreationKey,
+                        onCancel: () {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              setState(() {
+                                _isCreatingPost = false;
+                                _headerController.setCreatingPost(false);
+                              });
+                            }
+                          });
+                        },
+                        onComplete: (success, project) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              setState(() {
+                                _isCreatingPost = false;
+                                _headerController.setCreatingPost(false);
+                              });
+                              if (success) _feedController.refresh();
+                            }
+                          });
+                        },
+                        topPadding: _layoutManager.getTopPadding(context),
+                        selectedItemKey: _selectedItemKey,
+                        selectedNotification:
+                            _headerController.selectedNotification,
+                        onTargetHighlightChanged: _handleTargetHighlightChanged,
+                        onAIRequest: _handleAIRequest,
+                      ),
+                    );
+                  },
+                ).withDimming(
+                  isDimmed: _isDimmed,
+                  config: _dimmingConfig,
+                  excludedConfigs: _excludedConfigs,
+                  source: _dimmingSource,
+                  onDimmedAreaTap: () {
+                    if (_headerController.state.isSearchVisible) {
+                      _headerController.closeSearch();
+                    }
+                  },
+                ),
+                FeedHeader(
+                  headerController: _headerController,
+                  feedController: _feedController,
+                  searchBarKey: _searchBarKey,
+                  filtersKey: _filtersKey,
+                  isTargetHighlighted: _isTargetHighlighted,
+                  targetHighlightAnimation: _targetHighlightAnimation,
+                ),
+                Builder(
+                  builder: (context) => FeedActionButtons(
+                    plusActionButtonKey: _plusActionButtonKey,
+                    profileButtonKey: _profileButtonKey,
                     isCreatingPost: _isCreatingPost,
-                    postCreationKey: _postCreationKey,
-                    onCancel: () {
+                    headerController: _headerController,
+                    onProfileTap: () {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
-                          setState(() {
-                            _isCreatingPost = false;
-                            _headerController.setCreatingPost(false);
-                          });
+                          setState(() => _isProfileOpen = !_isProfileOpen);
+                          _stateManager
+                              .handleProfileStateChange(_isProfileOpen);
                         }
                       });
                     },
-                    onComplete: (success, project) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          setState(() {
-                            _isCreatingPost = false;
-                            _headerController.setCreatingPost(false);
-                          });
-                          if (success) _feedController.refresh();
+                    onActionButtonTap: () async {
+                      if (_isCreatingPost) {
+                        final controller = InFeedPostCreation.of(context);
+                        if (controller != null) {
+                          try {
+                            await controller.save();
+                            _stateManager.handlePostComplete(true);
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to save post: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            _stateManager.handlePostComplete(false);
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Error: Could not save post'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          _stateManager.handlePostComplete(false);
                         }
-                      });
-                    },
-                    topPadding: _layoutManager.getTopPadding(context),
-                    selectedItemKey: _selectedItemKey,
-                    selectedNotification: _headerController.selectedNotification,
-                    onTargetHighlightChanged: _handleTargetHighlightChanged,
-                    onAIRequest: _handleAIRequest,
-                  ),
-                );
-              },
-            ).withDimming(
-              isDimmed: _isDimmed,
-              config: _dimmingConfig,
-              excludedConfigs: _excludedConfigs,
-              source: _dimmingSource,
-              onDimmedAreaTap: () {
-                if (_headerController.state.isSearchVisible) {
-                  _headerController.closeSearch();
-                }
-              },
-            ),
-            FeedHeader(
-              headerController: _headerController,
-              feedController: _feedController,
-              searchBarKey: _searchBarKey,
-              filtersKey: _filtersKey,
-              isTargetHighlighted: _isTargetHighlighted,
-              targetHighlightAnimation: _targetHighlightAnimation,
-            ),
-            Builder(
-              builder: (context) => FeedActionButtons(
-                plusActionButtonKey: _plusActionButtonKey,
-                profileButtonKey: _profileButtonKey,
-                isCreatingPost: _isCreatingPost,
-                headerController: _headerController,
-                onProfileTap: () {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      setState(() => _isProfileOpen = !_isProfileOpen);
-                      _stateManager.handleProfileStateChange(_isProfileOpen);
-                    }
-                  });
-                },
-                onActionButtonTap: () async {
-                  if (_isCreatingPost) {
-                    final controller = InFeedPostCreation.of(context);
-                    if (controller != null) {
-                      try {
-                        await controller.save();
-                        _stateManager.handlePostComplete(true);
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to save post: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        _stateManager.handlePostComplete(false);
+                      } else {
+                        setState(() {
+                          _isCreatingPost = true;
+                          _headerController.setCreatingPost(true);
+                        });
                       }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Error: Could not save post'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      _stateManager.handlePostComplete(false);
-                    }
-                  } else {
-                    setState(() {
-                      _isCreatingPost = true;
-                      _headerController.setCreatingPost(true);
+                    },
+                  ),
+                ),
+                SlidingPanel(
+                  isOpen: _isProfileOpen,
+                  onClose: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        setState(() => _isProfileOpen = false);
+                        _stateManager.handleProfileStateChange(false);
+                      }
                     });
-                  }
-                },
-              ),
-            ),
-            SlidingPanel(
-              isOpen: _isProfileOpen,
-              onClose: () {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    setState(() => _isProfileOpen = false);
-                    _stateManager.handleProfileStateChange(false);
-                  }
-                });
-              },
-              excludeFromOverlay: _getExcludedRects(),
-              child: const ProfileScreen(),
-            ),
-          ],
-        );
-      },
-    ),
-  );
+                  },
+                  excludeFromOverlay: _getExcludedRects(),
+                  child: const ProfileScreen(),
+                ),
+              ],
+            );
+          },
+        ),
+      );
 }

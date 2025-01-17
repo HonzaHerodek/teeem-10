@@ -82,14 +82,14 @@ class _UserTraitsListState extends State<UserTraitsList> {
     final spacing = 15.0;
     final buttonWidth = 48.0 + spacing;
     final minItemWidth = 80.0;
-    
+
     // Create trait widgets with dynamic widths based on content
     final traitWidgets = _filteredTraits.map((trait) {
       final traitType = widget.traitTypes.firstWhere(
         (t) => t.id == trait.traitTypeId,
         orElse: () => throw Exception('Trait type not found'),
       );
-      
+
       // Calculate width based on longer of type name or value
       final typeTextSpan = TextSpan(
         text: traitType.name,
@@ -103,21 +103,22 @@ class _UserTraitsListState extends State<UserTraitsList> {
         text: typeTextSpan,
         textDirection: TextDirection.ltr,
       )..layout();
-      
+
       final valueTextPainter = TextPainter(
         text: valueTextSpan,
         textDirection: TextDirection.ltr,
       )..layout();
 
       // Use the wider of the two texts
-      final textWidth = typeTextPainter.width > valueTextPainter.width 
-          ? typeTextPainter.width 
+      final textWidth = typeTextPainter.width > valueTextPainter.width
+          ? typeTextPainter.width
           : valueTextPainter.width;
 
       // Add padding and ensure minimum width
       // Icon width (height) + horizontal padding (24) + text width
-      final contentWidth = (widget.itemHeight + 24 + textWidth).clamp(minItemWidth, 300.0);
-      
+      final contentWidth =
+          (widget.itemHeight + 24 + textWidth).clamp(minItemWidth, 300.0);
+
       return UserTraitChip(
         trait: trait,
         traitType: traitType,
@@ -143,19 +144,19 @@ class _UserTraitsListState extends State<UserTraitsList> {
 
     // Helper function to find best row for next trait
     int findBestRow(Widget trait) {
-      final traitWidth = trait is UserTraitChip ? (trait.width ?? 0) + spacing : 0;
-      
+      final traitWidth =
+          trait is UserTraitChip ? (trait.width ?? 0) + spacing : 0;
+
       // Check which row has enough space and would be most balanced
       for (int i = 0; i < 3; i++) {
-        final maxWidth = i < 2 ? 
-          (i == 0 ? firstRowWidth : secondRowWidth) : 
-          thirdRowWidth;
-        
+        final maxWidth =
+            i < 2 ? (i == 0 ? firstRowWidth : secondRowWidth) : thirdRowWidth;
+
         if (rowWidths[i] + traitWidth <= maxWidth) {
           return i;
         }
       }
-      
+
       // If no row has enough space, find the one with most remaining space
       return rowWidths.indexOf(rowWidths.reduce((a, b) => a < b ? a : b));
     }
@@ -164,7 +165,7 @@ class _UserTraitsListState extends State<UserTraitsList> {
     while (remainingTraits.isNotEmpty) {
       final trait = remainingTraits.removeAt(0);
       final bestRow = findBestRow(trait);
-      
+
       rows[bestRow].add(trait);
       if (trait is UserTraitChip) {
         rowWidths[bestRow] += (trait.width ?? 0) + spacing;
