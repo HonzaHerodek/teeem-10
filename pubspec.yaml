@@ -17,10 +17,10 @@ dependencies:
   equatable: ^2.0.5
   get_it: ^8.0.2
   json_annotation: ^4.8.1
-  firebase_core: ^2.15.1
-  firebase_auth: ^4.9.0
-  cloud_firestore: ^4.9.1
-  firebase_storage: ^11.2.6
+  # firebase_core: ^2.15.1
+  # firebase_auth: ^4.9.0
+  # cloud_firestore: ^4.9.1
+  # firebase_storage: ^11.2.6
   path_provider: ^2.1.1
   connectivity_plus: ^6.1.0
   cached_network_image: ^3.2.3

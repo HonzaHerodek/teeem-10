@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/injection.dart';
@@ -31,33 +30,7 @@ class ProfileScreen extends StatelessWidget {
         postRepository: getIt<PostRepository>(),
         ratingService: getIt<RatingService>(),
       )..add(const ProfileStarted()),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.black.withOpacity(0.75),
-              Colors.black.withOpacity(0.65),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 25,
-              spreadRadius: 8,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: const SafeArea(
-              child: ProfileView(),
-            ),
-          ),
-        ),
-      ),
+      child: const ProfileView(),
     );
   }
 }
@@ -80,25 +53,6 @@ class _ProfileViewState extends State<ProfileView> {
   final ProfileScrollController _scrollController = ProfileScrollController();
   final GlobalKey _settingsKey = GlobalKey();
   final GlobalKey _addInsKey = GlobalKey();
-
-  void _scrollToContent(GlobalKey key) {
-    if (key.currentContext != null) {
-      final RenderBox renderBox = key.currentContext!.findRenderObject() as RenderBox;
-      final position = renderBox.localToGlobal(Offset.zero);
-      final targetScroll = _scrollController.scrollController.position.pixels + 
-                         position.dy - 
-                         120; // Offset to show some content above
-
-      _scrollController.scrollController.animateTo(
-        targetScroll.clamp(
-          0.0,
-          _scrollController.scrollController.position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOutCubic,
-      );
-    }
-  }
 
   @override
   void initState() {
@@ -156,25 +110,74 @@ class _ProfileViewState extends State<ProfileView> {
   Future<void> _loadSettings() async {
     try {
       final settingsData = await getIt<SettingsRepository>().loadSettings();
-      if (settingsData != null) {
+      if (settingsData != null && mounted) {
         setState(() {
           _settings = ProfileSettingsModel.fromJson(settingsData);
         });
       }
     } catch (e) {
-      print('Error loading settings: $e');
+      debugPrint('Error loading settings: $e');
     }
   }
 
   Future<void> _saveSettings(ProfileSettingsModel newSettings) async {
     try {
       await getIt<SettingsRepository>().saveSettings(newSettings.toJson());
-      setState(() {
-        _settings = newSettings;
-      });
+      if (mounted) {
+        setState(() {
+          _settings = newSettings;
+        });
+      }
     } catch (e) {
-      print('Error saving settings: $e');
+      debugPrint('Error saving settings: $e');
     }
+  }
+
+  void _toggleSection(String section) {
+    if (!mounted) return;
+    
+    setState(() {
+      switch (section) {
+        case 'traits':
+          _showTraits = !_showTraits;
+          if (_showTraits) {
+            _showNetwork = false;
+            _showSettings = false;
+            _showAddIns = false;
+          }
+          break;
+        case 'network':
+          _showNetwork = !_showNetwork;
+          if (_showNetwork) {
+            _showTraits = false;
+            _showSettings = false;
+            _showAddIns = false;
+          }
+          break;
+        case 'settings':
+          _showSettings = !_showSettings;
+          if (_showSettings) {
+            _showTraits = false;
+            _showNetwork = false;
+            _showAddIns = false;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollController.scrollToWidget(_settingsKey);
+            });
+          }
+          break;
+        case 'addins':
+          _showAddIns = !_showAddIns;
+          if (_showAddIns) {
+            _showTraits = false;
+            _showNetwork = false;
+            _showSettings = false;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollController.scrollToWidget(_addInsKey);
+            });
+          }
+          break;
+      }
+    });
   }
 
   Widget _buildContent(BuildContext context, ProfileState state) {
@@ -185,9 +188,7 @@ class _ProfileViewState extends State<ProfileView> {
     if (_showTraits) {
       return WillPopScope(
         onWillPop: () async {
-          setState(() {
-            _showTraits = false;
-          });
+          _toggleSection('traits');
           return false;
         },
         child: ProfileTraitsView(
@@ -198,9 +199,7 @@ class _ProfileViewState extends State<ProfileView> {
     } else if (_showNetwork) {
       return WillPopScope(
         onWillPop: () async {
-          setState(() {
-            _showNetwork = false;
-          });
+          _toggleSection('network');
           return false;
         },
         child: Container(
@@ -217,204 +216,176 @@ class _ProfileViewState extends State<ProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ProfileBloc, ProfileState>(
-      listener: (context, state) {
-        if (state.hasError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error!),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state.isLoading && !_isAddingTrait) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-            ),
-          );
-        }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.black.withOpacity(0.75),
+            Colors.black.withOpacity(0.65),
+          ],
+        ),
+      ),
+      child: BlocConsumer<ProfileBloc, ProfileState>(
+        listener: (context, state) {
+          if (state.hasError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.error!),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state.isLoading && !_isAddingTrait) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+              ),
+            );
+          }
 
-        if (state.user == null) {
-          return ErrorView(
-            message: state.error ?? 'Failed to load profile',
-            onRetry: () {
-              context.read<ProfileBloc>().add(const ProfileStarted());
-            },
-          );
-        }
+          if (state.user == null) {
+            return ErrorView(
+              message: state.error ?? 'Failed to load profile',
+              onRetry: () {
+                context.read<ProfileBloc>().add(const ProfileStarted());
+              },
+            );
+          }
 
-        return CustomScrollView(
-          controller: _scrollController.scrollController,
-          physics: _scrollController.physics,
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  ProfileHeaderSection(
-                    state: state,
-                    onTraitsPressed: () {
-                      setState(() {
-                        _showTraits = !_showTraits;
-                        _showNetwork = false;
-                        if (_showSettings) {
-                          _showSettings = false;
-                        }
-                      });
-                    },
-                    onNetworkPressed: () {
-                      setState(() {
-                        _showNetwork = !_showNetwork;
-                        _showTraits = false;
-                        if (_showSettings) {
-                          _showSettings = false;
-                        }
-                      });
-                    },
-                    showTraits: _showTraits,
-                    showNetwork: _showNetwork,
-                  ),
-                  _buildContent(context, state),
-                  if (_showTraits || _showNetwork) const SizedBox(height: 16),
-                  if (!_showTraits && !_showNetwork) ...[
-                    Text(
-                      state.user?.username ?? '',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+          return CustomScrollView(
+            controller: _scrollController.scrollController,
+            physics: _scrollController.physics,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    ProfileHeaderSection(
+                      state: state,
+                      onTraitsPressed: () => _toggleSection('traits'),
+                      onNetworkPressed: () => _toggleSection('network'),
+                      showTraits: _showTraits,
+                      showNetwork: _showNetwork,
                     ),
-                    const SizedBox(height: 16),
-                  ],
-                  const Divider(color: Colors.white24),
-                  if (state.userPosts.isNotEmpty)
-                    ProfilePostsGrid(
-                      posts: state.userPosts,
-                      currentUserId: state.user!.id,
-                      onLike: (post) {
-                        // TODO: Implement like functionality
-                      },
-                      onComment: (post) {
-                        // TODO: Implement comment functionality
-                      },
-                      onShare: (post) {
-                        // TODO: Implement share functionality
-                      },
-                      onRate: (rating, post) {
-                        context.read<ProfileBloc>().add(
-                              ProfileRatingReceived(
-                                rating,
-                                state.user!.id,
-                                userId: state.user!.id,
-                              ),
-                            );
-                      },
-                    ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.black.withOpacity(0.8),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.settings,
-                            color: Colors.white,
-                            size: _showSettings ? 32 : 28,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _showSettings = !_showSettings;
-                              if (_showSettings) {
-                                _showAddIns = false;
-                                _showTraits = false;
-                                _showNetwork = false;
-                                // Wait for the next frame to ensure the content is rendered
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  _scrollToContent(_settingsKey);
-                                });
-                              }
-                            });
-                          },
-                        ),
+                    _buildContent(context, state),
+                    if (_showTraits || _showNetwork) const SizedBox(height: 16),
+                    if (!_showTraits && !_showNetwork) ...[
+                      Text(
+                        state.user?.username ?? '',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                       ),
-                      const SizedBox(width: 16),
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.black.withOpacity(0.8),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.extension,
-                            color: Colors.white,
-                            size: _showAddIns ? 32 : 28,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _showAddIns = !_showAddIns;
-                              if (_showAddIns) {
-                                _showSettings = false;
-                                _showTraits = false;
-                                _showNetwork = false;
-                                // Wait for the next frame to ensure the content is rendered
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  _scrollToContent(_addInsKey);
-                                });
-                              }
-                            });
-                          },
-                        ),
-                      ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (_showSettings)
-                    Container(
-                      key: _settingsKey,
-                      child: ProfileSettingsView(
-                        settings: _settings,
-                        onSettingsChanged: _saveSettings,
-                      ),
-                    ),
-                  if (_showAddIns)
-                    Container(
-                      key: _addInsKey,
-                      child: ProfileAddInsView(
-                        addIns: _addIns,
-                        onAddInsChanged: (newAddIns) {
-                          setState(() {
-                            _addIns = newAddIns;
-                          });
+                    const Divider(color: Colors.white24),
+                    if (state.userPosts.isNotEmpty)
+                      ProfilePostsGrid(
+                        posts: state.userPosts,
+                        currentUserId: state.user!.id,
+                        onLike: (post) {
+                          // TODO: Implement like functionality
+                        },
+                        onComment: (post) {
+                          // TODO: Implement comment functionality
+                        },
+                        onShare: (post) {
+                          // TODO: Implement share functionality
+                        },
+                        onRate: (rating, post) {
+                          context.read<ProfileBloc>().add(
+                                ProfileRatingReceived(
+                                  rating,
+                                  state.user!.id,
+                                  userId: state.user!.id,
+                                ),
+                              );
                         },
                       ),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withOpacity(0.8),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                              size: _showSettings ? 32 : 28,
+                            ),
+                            onPressed: () => _toggleSection('settings'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withOpacity(0.8),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.extension,
+                              color: Colors.white,
+                              size: _showAddIns ? 32 : 28,
+                            ),
+                            onPressed: () => _toggleSection('addins'),
+                          ),
+                        ),
+                      ],
                     ),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
-            if (state.userPosts.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Text(
-                    'No posts yet',
-                    style: TextStyle(color: Colors.white70),
-                  ),
+                    const SizedBox(height: 16),
+                    if (_showSettings)
+                      Container(
+                        key: _settingsKey,
+                        child: ProfileSettingsView(
+                          settings: _settings,
+                          onSettingsChanged: _saveSettings,
+                        ),
+                      ),
+                    if (_showAddIns)
+                      Container(
+                        key: _addInsKey,
+                        child: ProfileAddInsView(
+                          addIns: _addIns,
+                          onAddInsChanged: (newAddIns) {
+                            if (mounted) {
+                              setState(() {
+                                _addIns = newAddIns;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    const SizedBox(height: 32),
+                  ],
                 ),
               ),
-          ],
-        );
-      },
+              if (state.userPosts.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      'No posts yet',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
