@@ -160,9 +160,6 @@ class _ProfileViewState extends State<ProfileView> {
             _showTraits = false;
             _showNetwork = false;
             _showAddIns = false;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _scrollController.scrollToWidget(_settingsKey);
-            });
           }
           break;
         case 'addins':
@@ -171,16 +168,24 @@ class _ProfileViewState extends State<ProfileView> {
             _showTraits = false;
             _showNetwork = false;
             _showSettings = false;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _scrollController.scrollToWidget(_addInsKey);
-            });
           }
           break;
       }
     });
+
+    // Delay scrolling to allow state to update
+    if ((_showSettings || _showAddIns) && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_showSettings) {
+          _scrollController.scrollToWidget(_settingsKey);
+        } else if (_showAddIns) {
+          _scrollController.scrollToWidget(_addInsKey);
+        }
+      });
+    }
   }
 
-  Widget _buildContent(BuildContext context, ProfileState state) {
+  Widget _buildLazyLoadedSection(BuildContext context, ProfileState state) {
     if (state.user == null) {
       return const SizedBox.shrink();
     }
@@ -191,9 +196,18 @@ class _ProfileViewState extends State<ProfileView> {
           _toggleSection('traits');
           return false;
         },
-        child: ProfileTraitsView(
-          userId: state.user!.id,
-          isLoading: _isAddingTrait,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight * 0.7,
+              ),
+              child: ProfileTraitsView(
+                userId: state.user!.id,
+                isLoading: _isAddingTrait,
+              ),
+            );
+          },
         ),
       );
     } else if (_showNetwork) {
@@ -202,11 +216,15 @@ class _ProfileViewState extends State<ProfileView> {
           _toggleSection('network');
           return false;
         },
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          child: const ProfileNetworkView(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight * 0.7,
+              ),
+              child: const ProfileNetworkView(),
+            );
+          },
         ),
       );
     }
@@ -256,35 +274,54 @@ class _ProfileViewState extends State<ProfileView> {
             );
           }
 
-          return CustomScrollView(
-            controller: _scrollController.scrollController,
-            physics: _scrollController.physics,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    ProfileHeaderSection(
-                      state: state,
-                      onTraitsPressed: () => _toggleSection('traits'),
-                      onNetworkPressed: () => _toggleSection('network'),
-                      showTraits: _showTraits,
-                      showNetwork: _showNetwork,
-                    ),
-                    _buildContent(context, state),
-                    if (_showTraits || _showNetwork) const SizedBox(height: 16),
-                    if (!_showTraits && !_showNetwork) ...[
-                      Text(
-                        state.user?.username ?? '',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+          return NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              // Prevent horizontal scroll from interfering with sliding panel
+              if (notification is ScrollUpdateNotification &&
+                  notification.metrics.axis == Axis.horizontal) {
+                return true;
+              }
+              return false;
+            },
+            child: CustomScrollView(
+              controller: _scrollController.scrollController,
+              physics: const NeverScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      ProfileHeaderSection(
+                        state: state,
+                        onTraitsPressed: () => _toggleSection('traits'),
+                        onNetworkPressed: () => _toggleSection('network'),
+                        showTraits: _showTraits,
+                        showNetwork: _showNetwork,
                       ),
-                      const SizedBox(height: 16),
                     ],
-                    const Divider(color: Colors.white24),
-                    if (state.userPosts.isNotEmpty)
-                      ProfilePostsGrid(
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildLazyLoadedSection(context, state),
+                ),
+                if (!_showTraits && !_showNetwork) ...[
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        Text(
+                          state.user?.username ?? '',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Divider(color: Colors.white24),
+                      ],
+                    ),
+                  ),
+                  if (state.userPosts.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: ProfilePostsGrid(
                         posts: state.userPosts,
                         currentUserId: state.user!.id,
                         onLike: (post) {
@@ -306,83 +343,89 @@ class _ProfileViewState extends State<ProfileView> {
                               );
                         },
                       ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.black.withOpacity(0.8),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.settings,
-                              color: Colors.white,
-                              size: _showSettings ? 32 : 28,
-                            ),
-                            onPressed: () => _toggleSection('settings'),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.black.withOpacity(0.8),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.extension,
-                              color: Colors.white,
-                              size: _showAddIns ? 32 : 28,
-                            ),
-                            onPressed: () => _toggleSection('addins'),
-                          ),
-                        ),
-                      ],
                     ),
-                    const SizedBox(height: 16),
-                    if (_showSettings)
-                      Container(
-                        key: _settingsKey,
-                        child: ProfileSettingsView(
-                          settings: _settings,
-                          onSettingsChanged: _saveSettings,
-                        ),
+                ],
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withOpacity(0.8),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.settings,
+                                color: Colors.white,
+                                size: _showSettings ? 32 : 28,
+                              ),
+                              onPressed: () => _toggleSection('settings'),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withOpacity(0.8),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.extension,
+                                color: Colors.white,
+                                size: _showAddIns ? 32 : 28,
+                              ),
+                              onPressed: () => _toggleSection('addins'),
+                            ),
+                          ),
+                        ],
                       ),
-                    if (_showAddIns)
-                      Container(
-                        key: _addInsKey,
-                        child: ProfileAddInsView(
-                          addIns: _addIns,
-                          onAddInsChanged: (newAddIns) {
-                            if (mounted) {
-                              setState(() {
-                                _addIns = newAddIns;
-                              });
-                            }
-                          },
+                      const SizedBox(height: 16),
+                      if (_showSettings)
+                        Container(
+                          key: _settingsKey,
+                          child: ProfileSettingsView(
+                            settings: _settings,
+                            onSettingsChanged: _saveSettings,
+                          ),
                         ),
-                      ),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-              if (state.userPosts.isEmpty)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Text(
-                      'No posts yet',
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                      if (_showAddIns)
+                        Container(
+                          key: _addInsKey,
+                          child: ProfileAddInsView(
+                            addIns: _addIns,
+                            onAddInsChanged: (newAddIns) {
+                              if (mounted) {
+                                setState(() {
+                                  _addIns = newAddIns;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 32),
+                    ],
                   ),
                 ),
-            ],
+                if (state.userPosts.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        'No posts yet',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       ),
