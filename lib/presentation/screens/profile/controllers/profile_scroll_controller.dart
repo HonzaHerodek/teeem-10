@@ -40,17 +40,6 @@ class ProfileScrollController {
         parent: AlwaysScrollableScrollPhysics(),
       );
 
-  // Enable/disable scrolling
-  void setScrollingEnabled(bool enabled) {
-    if (scrollController.hasClients) {
-      if (!enabled) {
-        scrollController.position.hold(() {});
-      } else {
-        scrollController.position.release();
-      }
-    }
-  }
-
   void dispose() {
     scrollController.dispose();
   }
