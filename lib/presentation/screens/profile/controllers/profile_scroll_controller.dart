@@ -15,8 +15,7 @@ class ProfileScrollController {
             WidgetsBinding.instance.window.physicalSize.height /
                 WidgetsBinding.instance.window.devicePixelRatio;
         final widgetHeight = renderBox.size.height;
-        final bottomPadding = 20.0;
-
+        
         // Calculate target scroll position to show the widget
         final targetScroll =
             scrollController.position.pixels + position.dy - 100;
@@ -28,18 +27,29 @@ class ProfileScrollController {
               0.0,
               scrollController.position.maxScrollExtent,
             ),
-            duration: duration ??
-                const Duration(milliseconds: 800), // Longer duration
-            curve: Curves.easeInOutCubic, // More fluid curve
+            duration: duration ?? const Duration(milliseconds: 500), // Shorter duration for better responsiveness
+            curve: Curves.easeOut, // Less bouncy curve
           );
         }
       }
     });
   }
 
-  ScrollPhysics get physics => const BouncingScrollPhysics(
+  // Use ClampingScrollPhysics to prevent overscroll effects that might interfere with sliding panel
+  ScrollPhysics get physics => const ClampingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       );
+
+  // Enable/disable scrolling
+  void setScrollingEnabled(bool enabled) {
+    if (scrollController.hasClients) {
+      if (!enabled) {
+        scrollController.position.hold(() {});
+      } else {
+        scrollController.position.release();
+      }
+    }
+  }
 
   void dispose() {
     scrollController.dispose();

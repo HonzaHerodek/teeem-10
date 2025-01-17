@@ -38,7 +38,7 @@ class PostRowHeader extends StatelessWidget {
           if (backgroundIcon != null)
             Positioned(
               left: 24 + title.length * 20 + 8,
-              top: 24, // Aligned with text top padding
+              top: 24,
               child: SizedBox(
                 width: 72,
                 height: 72,
@@ -80,6 +80,8 @@ class ProfilePostsGrid extends StatelessWidget {
     IconData? backgroundIcon,
     bool showHeartButton = false,
   }) {
+    if (posts.isEmpty) return const SizedBox.shrink();
+
     const double postSize = 140.0;
     const double rowHeight = 140.0;
 
@@ -92,72 +94,122 @@ class ProfilePostsGrid extends StatelessWidget {
         ),
         SizedBox(
           height: rowHeight,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            physics: const BouncingScrollPhysics(),
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: CompactPostCard(
-                  post: post,
-                  width: postSize,
-                  height: postSize,
-                  circular: true,
-                  showHeartButton: showHeartButton,
-                  onUnsave: showHeartButton ? () {
-                    context.read<ProfileBloc>().add(ProfilePostUnsaved(post.id));
-                  } : null,
-                ),
-              );
+          child: NotificationListener<ScrollNotification>(
+            // Prevent horizontal scroll events from bubbling up
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                return true; // Stop notification propagation
+              }
+              return false;
             },
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              physics: const BouncingScrollPhysics(),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                // Lazy load posts as they come into view
+                if (index >= posts.length) {
+                  return const SizedBox(width: postSize);
+                }
+                
+                final post = posts[index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: CompactPostCard(
+                    post: post,
+                    width: postSize,
+                    height: postSize,
+                    circular: true,
+                    showHeartButton: showHeartButton,
+                    onUnsave: showHeartButton ? () {
+                      context.read<ProfileBloc>().add(ProfilePostUnsaved(post.id));
+                    } : null,
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],
     );
   }
 
+  List<PostModel> _getPostsForSection(String section) {
+    final int pageSize = 5; // Limit number of posts per section
+    
+    switch (section) {
+      case 'active':
+        return posts
+            .where((post) => post.status == PostStatus.active)
+            .take(pageSize)
+            .toList();
+      case 'draft':
+        return posts
+            .where((post) => post.status == PostStatus.draft)
+            .take(pageSize)
+            .toList();
+      case 'created':
+        return posts
+            .where((post) => post.userId == currentUserId)
+            .take(pageSize)
+            .toList();
+      case 'published':
+        return posts
+            .where((post) => post.status == PostStatus.published)
+            .take(pageSize)
+            .toList();
+      default:
+        return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final savedPosts = posts.take(3).toList();
-    final unfinishedPosts = posts.skip(3).take(3).toList();
-    final createdPosts = posts.skip(1).take(3).toList();
-    final completedPosts = posts.skip(2).take(3).toList();
+    // Lazy load sections only when they have posts
+    final sections = [
+      {
+        'title': 'Active',
+        'posts': _getPostsForSection('active'),
+        'icon': Icons.play_circle_rounded,
+        'showHeart': false,
+      },
+      {
+        'title': 'Drafts',
+        'posts': _getPostsForSection('draft'),
+        'icon': Icons.pending_rounded,
+        'showHeart': false,
+      },
+      {
+        'title': 'Created',
+        'posts': _getPostsForSection('created'),
+        'icon': Icons.add_circle_rounded,
+        'showHeart': false,
+      },
+      {
+        'title': 'Published',
+        'posts': _getPostsForSection('published'),
+        'icon': Icons.check_circle_rounded,
+        'showHeart': false,
+      },
+    ].where((section) => (section['posts'] as List).isNotEmpty);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildPostRow(
-          context,
-          title: 'Saved',
-          posts: savedPosts,
-          backgroundIcon: Icons.favorite_rounded,
-          showHeartButton: true,
-        ),
-        const SizedBox(height: 24),
-        _buildPostRow(
-          context,
-          title: 'Unfinished',
-          posts: unfinishedPosts,
-          backgroundIcon: Icons.pending_rounded,
-        ),
-        const SizedBox(height: 24),
-        _buildPostRow(
-          context,
-          title: 'Created',
-          posts: createdPosts,
-          backgroundIcon: Icons.add_circle_rounded,
-        ),
-        const SizedBox(height: 24),
-        _buildPostRow(
-          context,
-          title: 'Completed',
-          posts: completedPosts,
-          backgroundIcon: Icons.check_circle_rounded,
-        ),
-      ],
+      children: sections.map((section) {
+        return Column(
+          children: [
+            _buildPostRow(
+              context,
+              title: section['title'] as String,
+              posts: section['posts'] as List<PostModel>,
+              backgroundIcon: section['icon'] as IconData,
+              showHeartButton: section['showHeart'] as bool,
+            ),
+            const SizedBox(height: 24),
+          ],
+        );
+      }).toList(),
     );
   }
 }
