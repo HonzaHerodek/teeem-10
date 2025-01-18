@@ -28,7 +28,9 @@ class CompactPostCard extends StatefulWidget {
 
 class _CompactPostCardState extends State<CompactPostCard>
     with TickerProviderStateMixin, ExpandableContentMixin {
-  final ScrollController _scrollController = ScrollController();
+  // Use a single ScrollController for all instances
+  static final ScrollController _sharedScrollController = ScrollController();
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -36,89 +38,71 @@ class _CompactPostCardState extends State<CompactPostCard>
     initializeExpandableContent();
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   void _handleExpand(bool expanded) {
+    if (!mounted) return;
     setState(() {
+      _isExpanded = expanded;
       updateExpandedState(expanded);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: PhysicalModel(
-        color: Colors.transparent,
-        shadowColor: Colors.grey[850]!,
-        elevation: 25,
-        shape: BoxShape.circle,
-        clipBehavior: Clip.none,
-        child: GestureDetector(
-          onTap: () => _handleExpand(!isExpanded), // Add tap to expand
-          onVerticalDragStart: handleVerticalDragStart,
-          onVerticalDragUpdate: (details) => handleVerticalDragUpdate(
-            details,
-            onExpand: () => _handleExpand(true),
-            onCollapse: () => _handleExpand(false),
-          ),
-          onVerticalDragEnd: handleVerticalDragEnd,
-          onVerticalDragCancel: handleVerticalDragCancel,
-          behavior: HitTestBehavior.opaque, // Changed from translucent to opaque
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Material(
+          color: Colors.transparent,
           child: Container(
             width: widget.width,
             height: widget.height,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.black.withOpacity(0.6),
+              // Use box shadow instead of PhysicalModel for better performance
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey[850]!.withOpacity(0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: ClipOval(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  AnimatedProfilePicture(
-                    imageUrl: widget.post.userProfileImage,
-                    username: widget.post.username,
-                    headerHeight: widget.height,
-                    postSize: widget.width,
-                    animation: controller,
-                    isExpanded: isExpanded,
-                    onTap: () => _handleExpand(!isExpanded),
-                    showFullScreenWhenExpanded: false,
-                  ),
-                  AnimatedBuilder(
-                    animation: controller,
-                    builder: (context, child) {
-                      return Stack(
-                        children: [
-                          // Non-expanded content (title, description)
-                          Opacity(
-                            opacity: 1.0 - controller.value,
-                            child: ExpandablePostContent(
-                              isExpanded: false,
-                              animation: controller,
-                              scrollController: _scrollController,
-                              title: widget.post.title,
-                              description: widget.post.description,
-                              rating: widget.post.ratingStats.averageRating,
-                              totalRatings: widget.post.ratings.length,
-                              steps: widget.post.steps,
-                              showHeartButton: widget.showHeartButton,
-                              onUnsave: widget.onUnsave,
-                              width: widget.width,
-                            ),
-                          ),
-                          // Expanded content
-                          Opacity(
-                            opacity: controller.value,
-                            child: ExpandablePostContent(
+              child: GestureDetector(
+                onTap: () => _handleExpand(!_isExpanded),
+                onVerticalDragStart: handleVerticalDragStart,
+                onVerticalDragUpdate: (details) => handleVerticalDragUpdate(
+                  details,
+                  onExpand: () => _handleExpand(true),
+                  onCollapse: () => _handleExpand(false),
+                ),
+                onVerticalDragEnd: handleVerticalDragEnd,
+                onVerticalDragCancel: handleVerticalDragCancel,
+                behavior: HitTestBehavior.opaque,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Profile picture
+                    AnimatedProfilePicture(
+                      imageUrl: widget.post.userProfileImage,
+                      username: widget.post.username,
+                      headerHeight: widget.height,
+                      postSize: widget.width,
+                      animation: controller,
+                      isExpanded: _isExpanded,
+                      onTap: () => _handleExpand(!_isExpanded),
+                      showFullScreenWhenExpanded: false,
+                    ),
+                    // Content
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _isExpanded
+                          ? ExpandablePostContent(
+                              key: const ValueKey('expanded'),
                               isExpanded: true,
                               animation: controller,
-                              scrollController: _scrollController,
+                              scrollController: _sharedScrollController,
                               post: widget.post,
                               title: widget.post.title,
                               description: widget.post.description,
@@ -128,13 +112,24 @@ class _CompactPostCardState extends State<CompactPostCard>
                               showHeartButton: widget.showHeartButton,
                               onUnsave: widget.onUnsave,
                               width: widget.width,
+                            )
+                          : ExpandablePostContent(
+                              key: const ValueKey('collapsed'),
+                              isExpanded: false,
+                              animation: controller,
+                              scrollController: _sharedScrollController,
+                              title: widget.post.title,
+                              description: widget.post.description,
+                              rating: widget.post.ratingStats.averageRating,
+                              totalRatings: widget.post.ratings.length,
+                              steps: widget.post.steps,
+                              showHeartButton: widget.showHeartButton,
+                              onUnsave: widget.onUnsave,
+                              width: widget.width,
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

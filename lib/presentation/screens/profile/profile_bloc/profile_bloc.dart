@@ -34,31 +34,50 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState>
     Emitter<ProfileState> emit,
   ) async {
     try {
-      print('ProfileBloc - Starting profile load'); // Debug log
-      emit(state.copyWith(isLoading: true, error: null));
+      // Stage 1: Load basic user data
+      emit(state.copyWith(
+        isLoading: true,
+        error: null,
+        loadingStage: ProfileLoadingStage.userData,
+      ));
 
       final currentUser = await userRepository.getCurrentUser();
-      print('ProfileBloc - Current user: ${currentUser?.id}'); // Debug log
       if (currentUser == null) {
         throw AppException('User not found');
       }
 
-      print(
-          'ProfileBloc - Loading user data for ID: ${currentUser.id}'); // Debug log
-      final userPosts = await postRepository.getPosts(userId: currentUser.id);
-      final ratingStats =
-          await ratingService.getUserRatingStats(currentUser.id);
+      emit(state.copyWith(
+        user: currentUser,
+        loadingStage: ProfileLoadingStage.posts,
+      ));
 
-      print(
-          'ProfileBloc - User traits count: ${currentUser.traits.length}'); // Debug log
+      // Stage 2: Load posts (after small delay to prevent UI blocking)
+      await Future.delayed(const Duration(milliseconds: 100));
+      final userPosts = await postRepository.getPosts(userId: currentUser.id);
+      
+      emit(state.copyWith(
+        userPosts: userPosts,
+        loadingStage: ProfileLoadingStage.ratings,
+      ));
+
+      // Stage 3: Load ratings
+      await Future.delayed(const Duration(milliseconds: 100));
+      final ratingStats = await ratingService.getUserRatingStats(currentUser.id);
+
+      emit(state.copyWith(
+        ratingStats: ratingStats,
+        loadingStage: ProfileLoadingStage.traits,
+      ));
+
+      // Stage 4: Load traits (if needed)
+      await Future.delayed(const Duration(milliseconds: 100));
+      // Traits are already part of the user model, just update stage
+      
       emit(state.copyWith(
         isLoading: false,
-        user: currentUser,
-        userPosts: userPosts,
-        ratingStats: ratingStats,
-        error: null,
+        loadingStage: ProfileLoadingStage.complete,
       ));
-      print('ProfileBloc - Profile loaded successfully'); // Debug log
+
     } catch (e) {
       _logger.e('Error in ProfileBloc._onProfileStarted', error: e);
       emit(state.copyWith(
@@ -73,16 +92,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState>
     Emitter<ProfileState> emit,
   ) async {
     try {
-      emit(state.copyWith(isLoading: true, error: null));
+      emit(state.copyWith(
+        isLoading: true,
+        error: null,
+        loadingStage: ProfileLoadingStage.userData,
+      ));
 
       final currentUser = await userRepository.getCurrentUser();
       if (currentUser == null) {
         throw AppException('User not found');
       }
 
+      await Future.delayed(const Duration(milliseconds: 100));
       final userPosts = await postRepository.getPosts(userId: currentUser.id);
-      final ratingStats =
-          await ratingService.getUserRatingStats(currentUser.id);
+      
+      await Future.delayed(const Duration(milliseconds: 100));
+      final ratingStats = await ratingService.getUserRatingStats(currentUser.id);
 
       emit(state.copyWith(
         isLoading: false,
@@ -90,6 +115,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState>
         userPosts: userPosts,
         ratingStats: ratingStats,
         error: null,
+        loadingStage: ProfileLoadingStage.complete,
       ));
     } catch (e) {
       _logger.e('Error in ProfileBloc._onProfileRefreshed', error: e);
@@ -109,8 +135,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState>
         throw AppException('User not found');
       }
 
+      emit(state.copyWith(loadingStage: ProfileLoadingStage.posts));
       final userPosts = await postRepository.getPosts(userId: state.user!.id);
-      emit(state.copyWith(userPosts: userPosts, error: null));
+      
+      emit(state.copyWith(
+        userPosts: userPosts,
+        error: null,
+        loadingStage: ProfileLoadingStage.complete,
+      ));
     } catch (e) {
       _logger.e('Error in ProfileBloc._onProfilePostsRequested', error: e);
       emit(state.copyWith(
@@ -128,13 +160,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState>
         throw AppException('User not found');
       }
 
+      emit(state.copyWith(loadingStage: ProfileLoadingStage.ratings));
       await ratingService.rateUser(state.user!.id, event.raterId, event.rating);
-      final ratingStats =
-          await ratingService.getUserRatingStats(state.user!.id);
+      final ratingStats = await ratingService.getUserRatingStats(state.user!.id);
 
       emit(state.copyWith(
         ratingStats: ratingStats,
         error: null,
+        loadingStage: ProfileLoadingStage.complete,
       ));
     } catch (e) {
       _logger.e('Error in ProfileBloc._onProfileRatingReceived', error: e);

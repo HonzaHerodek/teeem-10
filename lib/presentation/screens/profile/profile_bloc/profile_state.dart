@@ -1,53 +1,52 @@
-import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../data/models/post_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/models/rating_model.dart';
 
-class ProfileState extends Equatable {
-  final bool isInitial;
+enum ProfileLoadingStage {
+  initial,
+  userData,
+  posts,
+  ratings,
+  traits,
+  complete,
+}
+
+@immutable
+class ProfileState {
   final bool isLoading;
   final UserModel? user;
   final List<PostModel> userPosts;
   final RatingStats? ratingStats;
   final String? error;
+  final ProfileLoadingStage loadingStage;
 
   const ProfileState({
-    this.isInitial = true,
     this.isLoading = false,
     this.user,
     this.userPosts = const [],
     this.ratingStats,
     this.error,
+    this.loadingStage = ProfileLoadingStage.initial,
   });
 
   bool get hasError => error != null;
 
   ProfileState copyWith({
-    bool? isInitial,
     bool? isLoading,
     UserModel? user,
     List<PostModel>? userPosts,
     RatingStats? ratingStats,
     String? error,
+    ProfileLoadingStage? loadingStage,
   }) {
     return ProfileState(
-      // If user is provided or isInitial is explicitly set to false, set isInitial to false
-      isInitial: isInitial ?? (user != null ? false : this.isInitial),
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
       userPosts: userPosts ?? this.userPosts,
       ratingStats: ratingStats ?? this.ratingStats,
       error: error,
+      loadingStage: loadingStage ?? this.loadingStage,
     );
   }
-
-  @override
-  List<Object?> get props => [
-        isInitial,
-        isLoading,
-        user,
-        userPosts,
-        ratingStats,
-        error,
-      ];
 }

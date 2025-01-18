@@ -162,16 +162,16 @@ class _SlidingPanelState extends State<SlidingPanel>
                   child: Container(
                     width: panelWidth,
                     height: double.infinity,
+                    color: Colors.black,
                     // Only build and maintain the child widget when the panel is open
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: widget.isOpen 
-                        ? KeyedSubtree(
-                            key: ValueKey(widget.isOpen),
-                            child: widget.child,
+                    child: widget.isOpen
+                        ? RepaintBoundary(
+                            child: KeyedSubtree(
+                              key: ValueKey(widget.isOpen),
+                              child: widget.child,
+                            ),
                           )
                         : const SizedBox.shrink(),
-                    ),
                   ),
                 ),
               ),

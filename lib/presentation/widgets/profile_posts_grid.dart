@@ -17,39 +17,41 @@ class PostRowHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Text(
-              title.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.w100,
-                letterSpacing: 1.2,
-                height: 1.2,
-              ),
-            ),
-          ),
-          if (backgroundIcon != null)
-            Positioned(
-              left: 24 + title.length * 20 + 8,
-              top: 24,
-              child: SizedBox(
-                width: 72,
-                height: 72,
-                child: Icon(
-                  backgroundIcon!,
-                  size: 72,
-                  color: Colors.white.withOpacity(0.08),
+    return RepaintBoundary(
+      child: SizedBox(
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Text(
+                title.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w100,
+                  letterSpacing: 1.2,
+                  height: 1.2,
                 ),
               ),
             ),
-        ],
+            if (backgroundIcon != null)
+              Positioned(
+                left: 24 + title.length * 20 + 8,
+                top: 24,
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: Icon(
+                    backgroundIcon!,
+                    size: 72,
+                    color: Colors.white.withOpacity(0.08),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -85,62 +87,65 @@ class ProfilePostsGrid extends StatelessWidget {
     const double postSize = 140.0;
     const double rowHeight = 140.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        PostRowHeader(
-          title: title,
-          backgroundIcon: backgroundIcon,
-        ),
-        SizedBox(
-          height: rowHeight,
-          child: NotificationListener<ScrollNotification>(
-            // Prevent horizontal scroll events from bubbling up
-            onNotification: (notification) {
-              if (notification is ScrollUpdateNotification) {
-                return true; // Stop notification propagation
-              }
-              return false;
-            },
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              physics: const BouncingScrollPhysics(),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                // Lazy load posts as they come into view
-                if (index >= posts.length) {
-                  return const SizedBox(width: postSize);
-                }
+    return RepaintBoundary(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PostRowHeader(
+            title: title,
+            backgroundIcon: backgroundIcon,
+          ),
+          SizedBox(
+            height: rowHeight,
+            child: NotificationListener<ScrollNotification>(
+              // Prevent all scroll notifications from bubbling up
+              onNotification: (notification) => true,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                // Use ClampingScrollPhysics for better mobile performance
+                physics: const ClampingScrollPhysics(),
+                // Improve memory usage with caching
+                cacheExtent: postSize * 2,
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  if (index >= posts.length) {
+                    return const SizedBox(width: postSize);
+                  }
 
-                final post = posts[index];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: CompactPostCard(
-                    post: post,
-                    width: postSize,
-                    height: postSize,
-                    circular: true,
-                    showHeartButton: showHeartButton,
-                    onUnsave: showHeartButton
-                        ? () {
-                            context
-                                .read<ProfileBloc>()
-                                .add(ProfilePostUnsaved(post.id));
-                          }
-                        : null,
-                  ),
-                );
-              },
+                  final post = posts[index];
+                  return RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: CompactPostCard(
+                        key: ValueKey(post.id),
+                        post: post,
+                        width: postSize,
+                        height: postSize,
+                        circular: true,
+                        showHeartButton: showHeartButton,
+                        onUnsave: showHeartButton
+                            ? () {
+                                context
+                                    .read<ProfileBloc>()
+                                    .add(ProfilePostUnsaved(post.id));
+                              }
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   List<PostModel> _getPostsForSection(String section) {
-    final int pageSize = 5; // Limit number of posts per section
+    // Reduce page size for better mobile performance
+    final int pageSize = 3;
 
     switch (section) {
       case 'active':
@@ -170,7 +175,7 @@ class ProfilePostsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Lazy load sections only when they have posts
+    // Load sections lazily and only when they have posts
     final sections = [
       {
         'title': 'Active',
@@ -198,22 +203,24 @@ class ProfilePostsGrid extends StatelessWidget {
       },
     ].where((section) => (section['posts'] as List).isNotEmpty);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: sections.map((section) {
-        return Column(
-          children: [
-            _buildPostRow(
-              context,
-              title: section['title'] as String,
-              posts: section['posts'] as List<PostModel>,
-              backgroundIcon: section['icon'] as IconData,
-              showHeartButton: section['showHeart'] as bool,
-            ),
-            const SizedBox(height: 24),
-          ],
-        );
-      }).toList(),
+    return RepaintBoundary(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: sections.map((section) {
+          return Column(
+            children: [
+              _buildPostRow(
+                context,
+                title: section['title'] as String,
+                posts: section['posts'] as List<PostModel>,
+                backgroundIcon: section['icon'] as IconData,
+                showHeartButton: section['showHeart'] as bool,
+              ),
+              const SizedBox(height: 24),
+            ],
+          );
+        }).toList(),
+      ),
     );
   }
 }

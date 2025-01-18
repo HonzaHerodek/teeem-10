@@ -24,12 +24,13 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Create ProfileBloc lazily only when the screen is actually built
     return BlocProvider(
       create: (context) => ProfileBloc(
         userRepository: getIt<UserRepository>(),
         postRepository: getIt<PostRepository>(),
         ratingService: getIt<RatingService>(),
-      )..add(const ProfileStarted()),
+      ),
       child: const ProfileView(),
     );
   }
@@ -106,6 +107,64 @@ class _ProfileViewState extends State<ProfileView> {
     });
   }
 
+  Widget _buildLoadingIndicator(ProfileLoadingStage stage) {
+    String message = '';
+    double progress = 0.0;
+    
+    switch (stage) {
+      case ProfileLoadingStage.initial:
+        message = 'Preparing...';
+        progress = 0.1;
+        break;
+      case ProfileLoadingStage.userData:
+        message = 'Loading profile...';
+        progress = 0.25;
+        break;
+      case ProfileLoadingStage.posts:
+        message = 'Loading posts...';
+        progress = 0.5;
+        break;
+      case ProfileLoadingStage.ratings:
+        message = 'Loading ratings...';
+        progress = 0.75;
+        break;
+      case ProfileLoadingStage.traits:
+        message = 'Loading traits...';
+        progress = 0.9;
+        break;
+      case ProfileLoadingStage.complete:
+        message = 'Complete';
+        progress = 1.0;
+        break;
+    }
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 100,
+            height: 100,
+            child: CircularProgressIndicator(
+              value: progress,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+              strokeWidth: 8,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileBloc, ProfileState>(
@@ -118,14 +177,16 @@ class _ProfileViewState extends State<ProfileView> {
             ),
           );
         }
+
+        // Start loading when the widget is first built
+        if (state.loadingStage == ProfileLoadingStage.initial) {
+          context.read<ProfileBloc>().add(const ProfileStarted());
+        }
       },
       builder: (context, state) {
-        if (state.isLoading && !_isAddingTrait) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-            ),
-          );
+        // Show loading indicator until complete
+        if (state.loadingStage != ProfileLoadingStage.complete && !_isAddingTrait) {
+          return _buildLoadingIndicator(state.loadingStage);
         }
 
         if (state.user == null) {
@@ -137,120 +198,128 @@ class _ProfileViewState extends State<ProfileView> {
           );
         }
 
-        return SingleChildScrollView(
-          controller: _scrollController.scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Basic profile info
-              ProfileHeaderSection(
-                state: state,
-                onTraitsPressed: () => _toggleSection('traits'),
-                onNetworkPressed: () => _toggleSection('network'),
-                showTraits: _showTraits,
-                showNetwork: _showNetwork,
-              ),
-
-              // Active section
-              if (_showTraits)
-                ProfileTraitsView(
-                  userId: state.user!.id,
-                  isLoading: _isAddingTrait,
-                ),
-              if (_showNetwork) const ProfileNetworkView(),
-              if (_showSettings)
-                ProfileSettingsView(
-                  settings: _settings,
-                  onSettingsChanged: (newSettings) {
-                    if (mounted) setState(() => _settings = newSettings);
-                  },
-                ),
-              if (_showAddIns)
-                ProfileAddInsView(
-                  addIns: _addIns,
-                  onAddInsChanged: (newAddIns) {
-                    if (mounted) setState(() => _addIns = newAddIns);
-                  },
-                ),
-
-              // Posts section (only shown when no other section is active)
-              if (!_showTraits &&
-                  !_showNetwork &&
-                  !_showSettings &&
-                  !_showAddIns)
-                Column(
+        // Main content with optimized scrolling
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            // Prevent scroll notifications from bubbling up
+            return true;
+          },
+          child: CustomScrollView(
+            controller: _scrollController.scrollController,
+            physics: const ClampingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      state.user?.username ?? '',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                    // Basic profile info
+                    ProfileHeaderSection(
+                      state: state,
+                      onTraitsPressed: () => _toggleSection('traits'),
+                      onNetworkPressed: () => _toggleSection('network'),
+                      showTraits: _showTraits,
+                      showNetwork: _showNetwork,
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(color: Colors.white24),
-                    if (state.userPosts.isNotEmpty)
-                      ProfilePostsGrid(
-                        posts: state.userPosts,
-                        currentUserId: state.user!.id,
-                        onLike: (post) {},
-                        onComment: (post) {},
-                        onShare: (post) {},
-                        onRate: (rating, post) {
-                          context.read<ProfileBloc>().add(
-                                ProfileRatingReceived(
-                                  rating,
-                                  state.user!.id,
-                                  userId: state.user!.id,
-                                ),
-                              );
+
+                    // Active section - only build the active section
+                    if (_showTraits)
+                      ProfileTraitsView(
+                        userId: state.user!.id,
+                        isLoading: _isAddingTrait,
+                      )
+                    else if (_showNetwork)
+                      const ProfileNetworkView()
+                    else if (_showSettings)
+                      ProfileSettingsView(
+                        settings: _settings,
+                        onSettingsChanged: (newSettings) {
+                          if (mounted) setState(() => _settings = newSettings);
                         },
+                      )
+                    else if (_showAddIns)
+                      ProfileAddInsView(
+                        addIns: _addIns,
+                        onAddInsChanged: (newAddIns) {
+                          if (mounted) setState(() => _addIns = newAddIns);
+                        },
+                      )
+                    // Posts section
+                    else
+                      Column(
+                        children: [
+                          Text(
+                            state.user?.username ?? '',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Divider(color: Colors.white24),
+                          if (state.userPosts.isNotEmpty)
+                            ProfilePostsGrid(
+                              posts: state.userPosts,
+                              currentUserId: state.user!.id,
+                              onLike: (post) {},
+                              onComment: (post) {},
+                              onShare: (post) {},
+                              onRate: (rating, post) {
+                                context.read<ProfileBloc>().add(
+                                      ProfileRatingReceived(
+                                        rating,
+                                        state.user!.id,
+                                        userId: state.user!.id,
+                                      ),
+                                    );
+                              },
+                            ),
+                        ],
                       ),
+
+                    // Bottom buttons
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withOpacity(0.8),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                              size: _showSettings ? 32 : 28,
+                            ),
+                            onPressed: () => _toggleSection('settings'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withOpacity(0.8),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.extension,
+                              color: Colors.white,
+                              size: _showAddIns ? 32 : 28,
+                            ),
+                            onPressed: () => _toggleSection('addins'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
-
-              // Bottom buttons
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.8),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.settings,
-                        color: Colors.white,
-                        size: _showSettings ? 32 : 28,
-                      ),
-                      onPressed: () => _toggleSection('settings'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.8),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.extension,
-                        color: Colors.white,
-                        size: _showAddIns ? 32 : 28,
-                      ),
-                      onPressed: () => _toggleSection('addins'),
-                    ),
-                  ),
-                ],
               ),
-              const SizedBox(height: 32),
             ],
           ),
         );
