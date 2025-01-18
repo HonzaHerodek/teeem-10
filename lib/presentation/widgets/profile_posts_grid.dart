@@ -112,7 +112,7 @@ class ProfilePostsGrid extends StatelessWidget {
                 if (index >= posts.length) {
                   return const SizedBox(width: postSize);
                 }
-                
+
                 final post = posts[index];
                 return Padding(
                   padding: const EdgeInsets.only(right: 16),
@@ -122,9 +122,13 @@ class ProfilePostsGrid extends StatelessWidget {
                     height: postSize,
                     circular: true,
                     showHeartButton: showHeartButton,
-                    onUnsave: showHeartButton ? () {
-                      context.read<ProfileBloc>().add(ProfilePostUnsaved(post.id));
-                    } : null,
+                    onUnsave: showHeartButton
+                        ? () {
+                            context
+                                .read<ProfileBloc>()
+                                .add(ProfilePostUnsaved(post.id));
+                          }
+                        : null,
                   ),
                 );
               },
@@ -137,7 +141,7 @@ class ProfilePostsGrid extends StatelessWidget {
 
   List<PostModel> _getPostsForSection(String section) {
     final int pageSize = 5; // Limit number of posts per section
-    
+
     switch (section) {
       case 'active':
         return posts

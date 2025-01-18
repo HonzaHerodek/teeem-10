@@ -8,7 +8,8 @@ import 'mixins/trait_management_mixin.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
 
-class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with TraitManagementMixin {
+class ProfileBloc extends Bloc<ProfileEvent, ProfileState>
+    with TraitManagementMixin {
   @override
   final UserRepository userRepository;
   final PostRepository postRepository;
@@ -42,11 +43,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with TraitManagementM
         throw AppException('User not found');
       }
 
-      print('ProfileBloc - Loading user data for ID: ${currentUser.id}'); // Debug log
+      print(
+          'ProfileBloc - Loading user data for ID: ${currentUser.id}'); // Debug log
       final userPosts = await postRepository.getPosts(userId: currentUser.id);
-      final ratingStats = await ratingService.getUserRatingStats(currentUser.id);
+      final ratingStats =
+          await ratingService.getUserRatingStats(currentUser.id);
 
-      print('ProfileBloc - User traits count: ${currentUser.traits.length}'); // Debug log
+      print(
+          'ProfileBloc - User traits count: ${currentUser.traits.length}'); // Debug log
       emit(state.copyWith(
         isLoading: false,
         user: currentUser,
@@ -77,7 +81,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with TraitManagementM
       }
 
       final userPosts = await postRepository.getPosts(userId: currentUser.id);
-      final ratingStats = await ratingService.getUserRatingStats(currentUser.id);
+      final ratingStats =
+          await ratingService.getUserRatingStats(currentUser.id);
 
       emit(state.copyWith(
         isLoading: false,
@@ -124,7 +129,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with TraitManagementM
       }
 
       await ratingService.rateUser(state.user!.id, event.raterId, event.rating);
-      final ratingStats = await ratingService.getUserRatingStats(state.user!.id);
+      final ratingStats =
+          await ratingService.getUserRatingStats(state.user!.id);
 
       emit(state.copyWith(
         ratingStats: ratingStats,
@@ -148,7 +154,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with TraitManagementM
       }
 
       // Remove the post from saved posts
-      final updatedPosts = state.userPosts.where((post) => post.id != event.postId).toList();
+      final updatedPosts =
+          state.userPosts.where((post) => post.id != event.postId).toList();
 
       // Update state with the post removed
       emit(state.copyWith(
